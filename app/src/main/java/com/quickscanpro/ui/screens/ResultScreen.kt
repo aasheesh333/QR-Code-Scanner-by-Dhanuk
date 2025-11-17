@@ -24,6 +24,8 @@ import com.quickscanpro.ads.InterstitialAdManager
 import com.quickscanpro.database.ScanResult
 import com.quickscanpro.ui.composables.GradientButton
 import com.quickscanpro.viewmodel.HistoryViewModel
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,9 +33,10 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val viewModel: HistoryViewModel = viewModel()
+    val decodedData = URLDecoder.decode(data, StandardCharsets.UTF_8.toString())
 
-    LaunchedEffect(key1 = data) {
-        viewModel.insert(ScanResult(content = data))
+    LaunchedEffect(key1 = decodedData) {
+        viewModel.insert(ScanResult(content = decodedData))
         InterstitialAdManager.showAd(context)
     }
 
@@ -60,27 +63,27 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = data)
+            Text(text = decodedData)
             Spacer(modifier = Modifier.height(16.dp))
             Row {
                 GradientButton(onClick = {
-                    clipboardManager.setText(AnnotatedString(data))
+                    clipboardManager.setText(AnnotatedString(decodedData))
                 }, text = "Copy")
                 Spacer(modifier = Modifier.width(16.dp))
                 GradientButton(onClick = {
                     val sendIntent: Intent = Intent().apply {
                         action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, data)
+                        putExtra(Intent.EXTRA_TEXT, decodedData)
                         type = "text/plain"
                     }
                     val shareIntent = Intent.createChooser(sendIntent, null)
                     context.startActivity(shareIntent)
                 }, text = "Share")
             }
-            if (isUrl(data)) {
+            if (isUrl(decodedData)) {
                 Spacer(modifier = Modifier.height(16.dp))
                 GradientButton(onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(data))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(decodedData))
                     context.startActivity(intent)
                 }, text = "Open URL")
             }
@@ -88,9 +91,9 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
     }
 }
 
-private fun isUrl(data: String): Boolean {
+private fun isUrl(decodedData: String): Boolean {
     return try {
-        Uri.parse(data).scheme in listOf("http", "https")
+        Uri.parse(decodedData).scheme in listOf("http", "httpshttps")
     } catch (e: Exception) {
         false
     }

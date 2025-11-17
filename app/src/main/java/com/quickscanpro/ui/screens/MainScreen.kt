@@ -28,12 +28,16 @@ fun MainScreen() {
     }
 }
 
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+
 @Composable
 fun Navigation(navController: NavHostController) {
     NavHost(navController, startDestination = BottomNavItem.Home.route) {
         composable(BottomNavItem.Home.route) {
             HomeScreen(onScan = { result ->
-                navController.navigate("result/$result")
+                val encodedUrl = URLEncoder.encode(result, StandardCharsets.UTF_8.toString())
+                navController.navigate("result/$encodedUrl")
             })
         }
         composable(BottomNavItem.History.route) {
