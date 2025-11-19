@@ -49,8 +49,8 @@ This is a complete Android application for scanning QR codes and barcodes. It's 
 
 ### Change AdMob IDs
 
-1.  Open `app/src/main/java/com/quickscanpro/config/AdMobConfig.kt`.
-2.  Replace the placeholder ad unit IDs with your own.
+1.  Open `app/src/main/java/com/quickscanpro/config/AppConfig.kt`.
+2.  Replace the placeholder ad unit IDs in the `AdMob` object with your own.
 3.  Open `app/src/main/AndroidManifest.xml` and replace the placeholder AdMob App ID with your own.
 
 ## Build Release APK and AAB

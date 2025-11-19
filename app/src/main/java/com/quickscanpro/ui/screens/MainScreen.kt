@@ -44,14 +44,32 @@ fun Navigation(navController: NavHostController) {
             HistoryScreen()
         }
         composable(BottomNavItem.About.route) {
-            AboutScreen(onNavigateToPrivacyPolicy = { navController.navigate("privacy_policy") })
+            AboutScreen(
+                onNavigateToAboutUs = { navController.navigate("about_us") },
+                onNavigateToContactUs = { navController.navigate("contact_us") },
+                onNavigateToPrivacyPolicy = { navController.navigate("privacy_policy") },
+                onNavigateToPermissions = { navController.navigate("permissions") },
+                onNavigateToTerms = { navController.navigate("terms") }
+            )
         }
         composable("result/{data}") { backStackEntry ->
             val data = backStackEntry.arguments?.getString("data") ?: ""
             ResultScreen(data = data, onNavigateBack = { navController.popBackStack() })
         }
+        composable("about_us") {
+            AboutUsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable("contact_us") {
+            ContactUsScreen(onNavigateBack = { navController.popBackStack() })
+        }
         composable("privacy_policy") {
             PrivacyPolicyScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable("permissions") {
+            PermissionsUsageScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable("terms") {
+            TermsAndConditionsScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

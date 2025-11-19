@@ -93,7 +93,7 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
 
 private fun isUrl(decodedData: String): Boolean {
     return try {
-        Uri.parse(decodedData).scheme in listOf("http", "httpshttps")
+        Uri.parse(decodedData).scheme in listOf("http", "https")
     } catch (e: Exception) {
         false
     }
