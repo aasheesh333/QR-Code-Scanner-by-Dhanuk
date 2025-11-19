@@ -14,6 +14,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.quickscanpro.ui.navigation.BottomNavItem
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,9 +29,6 @@ fun MainScreen() {
         }
     }
 }
-
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 @Composable
 fun Navigation(navController: NavHostController) {
