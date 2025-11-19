@@ -25,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -36,7 +37,6 @@ import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
 import com.quickscanpro.config.AdMobConfig
 import com.quickscanpro.ui.composables.BannerAd
-import com.quickscanpro.ui.composables.GradientButton
 import com.quickscanpro.viewmodel.ThemeViewModel
 import java.io.IOException
 
@@ -79,7 +79,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text(text = "QuickScan Pro") },
                 actions = {
                     Switch(
@@ -93,8 +93,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background),
+                .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (hasCamPermission) {
@@ -102,9 +101,9 @@ fun HomeScreen(onScan: (String) -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .padding(16.dp),
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
                     shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(8.dp)
+                    elevation = CardDefaults.cardElevation(2.dp)
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         var scanned by remember { mutableStateOf(false) }
@@ -155,20 +154,30 @@ fun HomeScreen(onScan: (String) -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    GradientButton(
+                    Button(
                         onClick = {
                             cameraControl?.enableTorch(cameraControl?.torchState?.value != 1)
                         },
-                        text = "Torch"
-                    )
-                    GradientButton(
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = com.quickscanpro.R.drawable.ic_flash_on),
+                            contentDescription = "Torch"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Torch")
+                    }
+                    OutlinedButton(
                         onClick = {
                             galleryLauncher.launch("image/*")
                         },
-                        text = "Scan from Gallery"
-                    )
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(text = "Scan from Gallery")
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
