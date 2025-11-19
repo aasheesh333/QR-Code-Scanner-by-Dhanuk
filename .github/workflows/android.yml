@@ -3,9 +3,7 @@ name: Build Android APK
 on:
   push:
     branches:
-      - main
-      - master
-      - develop
+      - '**'
 
 jobs:
   build:
