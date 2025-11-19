@@ -16,7 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quickscanpro.R
-import com.quickscanpro.config.AdMobConfig
+import com.quickscanpro.ads.AdMobConfig
 import com.quickscanpro.database.ScanResult
 import com.quickscanpro.ui.composables.BannerAd
 import com.quickscanpro.viewmodel.HistoryViewModel
@@ -74,7 +74,7 @@ fun HistoryScreen() {
                     }
                 }
             }
-            BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HISTORY)
+            BannerAd(adUnitId = AdMobConfig.bannerAdUnitId)
         }
     }
 }

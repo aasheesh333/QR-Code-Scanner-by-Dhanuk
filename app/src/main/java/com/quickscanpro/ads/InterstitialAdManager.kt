@@ -8,7 +8,6 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.quickscanpro.config.AdMobConfig
 
 object InterstitialAdManager {
 
@@ -17,7 +16,7 @@ object InterstitialAdManager {
     fun loadAd(context: Context) {
         InterstitialAd.load(
             context,
-            com.quickscanpro.config.AppConfig.AdMob.INTERSTITIAL_AD_UNIT_ID,
+            AdMobConfig.interstitialAdUnitId,
             AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {

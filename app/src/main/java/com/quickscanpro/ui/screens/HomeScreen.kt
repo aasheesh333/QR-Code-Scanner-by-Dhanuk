@@ -11,6 +11,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -35,7 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
-import com.quickscanpro.config.AdMobConfig
+import com.quickscanpro.ads.AdMobConfig
 import com.quickscanpro.ui.composables.BannerAd
 import com.quickscanpro.viewmodel.ThemeViewModel
 import java.io.IOException
@@ -75,7 +76,8 @@ fun HomeScreen(onScan: (String) -> Unit) {
         }
     )
 
-    var cameraControl: CameraControl? by remember { mutableStateOf(null) }
+    var camera: Camera? by remember { mutableStateOf(null) }
+    var isTorchOn by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -134,13 +136,12 @@ fun HomeScreen(onScan: (String) -> Unit) {
                                     val cameraProvider = cameraProviderFuture.get()
                                     try {
                                         cameraProvider.unbindAll()
-                                        val camera = cameraProvider.bindToLifecycle(
+                                        camera = cameraProvider.bindToLifecycle(
                                             lifecycleOwner,
                                             selector,
                                             preview,
                                             imageAnalysis
                                         )
-                                        cameraControl = camera.cameraControl
                                     } catch (e: Exception) {
                                         // Handle exceptions
                                     }
@@ -159,7 +160,8 @@ fun HomeScreen(onScan: (String) -> Unit) {
                 ) {
                     Button(
                         onClick = {
-                            cameraControl?.enableTorch(cameraControl?.torchState?.value != 1)
+                            isTorchOn = !isTorchOn
+                            camera?.cameraControl?.enableTorch(isTorchOn)
                         },
                         shape = RoundedCornerShape(8.dp)
                     ) {
@@ -180,7 +182,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
                     }
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
+                BannerAd(adUnitId = AdMobConfig.bannerAdUnitId)
             } else {
                 Text(text = "Please grant camera permission to use this app.")
             }
