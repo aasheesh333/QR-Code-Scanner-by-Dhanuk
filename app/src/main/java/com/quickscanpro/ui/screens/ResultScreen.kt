@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -22,7 +23,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quickscanpro.R
 import com.quickscanpro.ads.InterstitialAdManager
 import com.quickscanpro.database.ScanResult
-import com.quickscanpro.ui.composables.GradientButton
 import com.quickscanpro.viewmodel.HistoryViewModel
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -66,11 +66,13 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
             Text(text = decodedData)
             Spacer(modifier = Modifier.height(16.dp))
             Row {
-                GradientButton(onClick = {
+                Button(onClick = {
                     clipboardManager.setText(AnnotatedString(decodedData))
-                }, text = "Copy")
+                }) {
+                    Text("Copy")
+                }
                 Spacer(modifier = Modifier.width(16.dp))
-                GradientButton(onClick = {
+                Button(onClick = {
                     val sendIntent: Intent = Intent().apply {
                         action = Intent.ACTION_SEND
                         putExtra(Intent.EXTRA_TEXT, decodedData)
@@ -78,14 +80,18 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
                     }
                     val shareIntent = Intent.createChooser(sendIntent, null)
                     context.startActivity(shareIntent)
-                }, text = "Share")
+                }) {
+                    Text("Share")
+                }
             }
             if (isUrl(decodedData)) {
                 Spacer(modifier = Modifier.height(16.dp))
-                GradientButton(onClick = {
+                Button(onClick = {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(decodedData))
                     context.startActivity(intent)
-                }, text = "Open URL")
+                }) {
+                    Text("Open URL")
+                }
             }
         }
     }
