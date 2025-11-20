@@ -3,8 +3,7 @@ name: Build Signed APK
 on:
   push:
     branches:
-      - main
-      - master
+      - '**'   # Run on ALL branches
 
 jobs:
   build:
@@ -30,6 +29,9 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
+      - name: Grant rights to gradlew
+        run: chmod +x ./gradlew
+
       - name: Build Signed APK
         run: |
           ./gradlew clean assembleRelease \
@@ -43,7 +45,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload APK
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v3
         with:
           name: signed-apk
