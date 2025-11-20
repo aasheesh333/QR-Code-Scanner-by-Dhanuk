@@ -73,7 +73,7 @@ fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = vi
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             uri?.let {
-                scanImage(context, it, onScan)
+                scanImage(context, it, onScan, historyViewModel)
             }
         }
     )
@@ -230,7 +230,7 @@ private fun playSound(context: Context) {
     }
 }
 
-private fun scanImage(context: Context, uri: Uri, onScan: (String) -> Unit) {
+private fun scanImage(context: Context, uri: Uri, onScan: (String) -> Unit, historyViewModel: HistoryViewModel) {
     val image: InputImage
     try {
         image = InputImage.fromFilePath(context, uri)
@@ -239,6 +239,7 @@ private fun scanImage(context: Context, uri: Uri, onScan: (String) -> Unit) {
             .addOnSuccessListener { barcodes ->
                 if (barcodes.isNotEmpty()) {
                     barcodes.first()?.rawValue?.let {
+                        historyViewModel.insert(ScanResult(content = it))
                         onScan(it)
                     }
                 }

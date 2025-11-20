@@ -75,31 +75,41 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
                 Text(text = decodedData)
             }
             Spacer(modifier = Modifier.height(24.dp))
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(onClick = {
-                    clipboardManager.setText(AnnotatedString(decodedData))
-                }) {
+                Button(
+                    onClick = { clipboardManager.setText(AnnotatedString(decodedData)) },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
                     Text("Copy")
                 }
-                Button(onClick = {
-                    val sendIntent: Intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, decodedData)
-                        type = "text/plain"
-                    }
-                    val shareIntent = Intent.createChooser(sendIntent, null)
-                    context.startActivity(shareIntent)
-                }) {
+                Spacer(modifier = Modifier.width(16.dp))
+                Button(
+                    onClick = {
+                        val sendIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, decodedData)
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
+                    },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
                     Text("Share")
                 }
                 if (isUrl(decodedData)) {
-                    Button(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(decodedData))
-                        context.startActivity(intent)
-                    }) {
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Button(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(decodedData))
+                            context.startActivity(intent)
+                        },
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
                         Text("Open URL")
                     }
                 }
