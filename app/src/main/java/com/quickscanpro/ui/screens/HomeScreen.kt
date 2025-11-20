@@ -37,13 +37,15 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
 import com.quickscanpro.ads.AdMobConfig
+import com.quickscanpro.database.ScanResult
 import com.quickscanpro.ui.composables.BannerAd
+import com.quickscanpro.viewmodel.HistoryViewModel
 import com.quickscanpro.viewmodel.ThemeViewModel
 import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onScan: (String) -> Unit) {
+fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = viewModel()) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val themeViewModel: ThemeViewModel = viewModel()
@@ -127,6 +129,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
                                             scanned = true
                                             vibrate(context)
                                             playSound(context)
+                                            historyViewModel.insert(ScanResult(content = result))
                                             onScan(result)
                                         }
                                     }
@@ -158,12 +161,23 @@ fun HomeScreen(onScan: (String) -> Unit) {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(
+                    val torchButtonColors = if (isTorchOn) {
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    OutlinedButton(
                         onClick = {
                             isTorchOn = !isTorchOn
                             camera?.cameraControl?.enableTorch(isTorchOn)
                         },
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        colors = torchButtonColors
                     ) {
                         Icon(
                             painter = painterResource(id = com.quickscanpro.R.drawable.ic_flash_on),
