@@ -2,7 +2,7 @@
 
 This is a complete Android application for scanning QR codes and barcodes. It's built with a modern Material 3 UI and is designed to be lightweight, fast, and privacy-safe.
 
-## Features
+## Feature's
 
 - QR code and barcode scanning
 - CameraX live preview
