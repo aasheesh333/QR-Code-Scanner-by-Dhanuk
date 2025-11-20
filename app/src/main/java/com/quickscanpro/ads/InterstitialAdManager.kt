@@ -16,7 +16,7 @@ object InterstitialAdManager {
     fun loadAd(context: Context) {
         InterstitialAd.load(
             context,
-            AdMobConfig.interstitialAdUnitId,
+            com.quickscanpro.BuildConfig.INTERSTITIAL_AD_ID,
             AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {

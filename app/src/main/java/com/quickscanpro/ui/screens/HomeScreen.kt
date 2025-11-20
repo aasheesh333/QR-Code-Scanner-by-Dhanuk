@@ -11,7 +11,6 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.Camera
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -26,7 +25,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -36,16 +34,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
-import com.quickscanpro.ads.AdMobConfig
-import com.quickscanpro.database.ScanResult
 import com.quickscanpro.ui.composables.BannerAd
-import com.quickscanpro.viewmodel.HistoryViewModel
+import com.quickscanpro.ui.composables.GradientButton
 import com.quickscanpro.viewmodel.ThemeViewModel
 import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = viewModel()) {
+fun HomeScreen(onScan: (String) -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val themeViewModel: ThemeViewModel = viewModel()
@@ -73,17 +69,16 @@ fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = vi
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             uri?.let {
-                scanImage(context, it, onScan, historyViewModel)
+                scanImage(context, it, onScan)
             }
         }
     )
 
-    var camera: Camera? by remember { mutableStateOf(null) }
-    var isTorchOn by remember { mutableStateOf(false) }
+    var cameraControl: CameraControl? by remember { mutableStateOf(null) }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = { Text(text = "QuickScan Pro") },
                 actions = {
                     Switch(
@@ -97,7 +92,8 @@ fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = vi
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (hasCamPermission) {
@@ -105,9 +101,9 @@ fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = vi
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                        .padding(16.dp),
                     shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(2.dp)
+                    elevation = CardDefaults.cardElevation(8.dp)
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         var scanned by remember { mutableStateOf(false) }
@@ -129,7 +125,6 @@ fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = vi
                                             scanned = true
                                             vibrate(context)
                                             playSound(context)
-                                            historyViewModel.insert(ScanResult(content = result))
                                             onScan(result)
                                         }
                                     }
@@ -139,12 +134,13 @@ fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = vi
                                     val cameraProvider = cameraProviderFuture.get()
                                     try {
                                         cameraProvider.unbindAll()
-                                        camera = cameraProvider.bindToLifecycle(
+                                        val camera = cameraProvider.bindToLifecycle(
                                             lifecycleOwner,
                                             selector,
                                             preview,
                                             imageAnalysis
                                         )
+                                        cameraControl = camera.cameraControl
                                     } catch (e: Exception) {
                                         // Handle exceptions
                                     }
@@ -158,45 +154,23 @@ fun HomeScreen(onScan: (String) -> Unit, historyViewModel: HistoryViewModel = vi
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    val torchButtonColors = if (isTorchOn) {
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    OutlinedButton(
+                    GradientButton(
                         onClick = {
-                            isTorchOn = !isTorchOn
-                            camera?.cameraControl?.enableTorch(isTorchOn)
+                            cameraControl?.enableTorch(cameraControl?.torchState?.value != 1)
                         },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = torchButtonColors
-                    ) {
-                        Icon(
-                            painter = painterResource(id = com.quickscanpro.R.drawable.ic_flash_on),
-                            contentDescription = "Torch"
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Torch")
-                    }
-                    OutlinedButton(
+                        text = "Torch"
+                    )
+                    GradientButton(
                         onClick = {
                             galleryLauncher.launch("image/*")
                         },
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(text = "Scan from Gallery")
-                    }
+                        text = "Scan from Gallery"
+                    )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                BannerAd(adUnitId = AdMobConfig.bannerAdUnitId)
+                BannerAd(adUnitId = com.quickscanpro.BuildConfig.BANNER_AD_ID)
             } else {
                 Text(text = "Please grant camera permission to use this app.")
             }
@@ -230,7 +204,7 @@ private fun playSound(context: Context) {
     }
 }
 
-private fun scanImage(context: Context, uri: Uri, onScan: (String) -> Unit, historyViewModel: HistoryViewModel) {
+private fun scanImage(context: Context, uri: Uri, onScan: (String) -> Unit) {
     val image: InputImage
     try {
         image = InputImage.fromFilePath(context, uri)
@@ -239,7 +213,6 @@ private fun scanImage(context: Context, uri: Uri, onScan: (String) -> Unit, hist
             .addOnSuccessListener { barcodes ->
                 if (barcodes.isNotEmpty()) {
                     barcodes.first()?.rawValue?.let {
-                        historyViewModel.insert(ScanResult(content = it))
                         onScan(it)
                     }
                 }

@@ -6,17 +6,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quickscanpro.R
-import com.quickscanpro.ads.AdMobConfig
 import com.quickscanpro.database.ScanResult
 import com.quickscanpro.ui.composables.BannerAd
 import com.quickscanpro.viewmodel.HistoryViewModel
@@ -31,7 +27,7 @@ fun HistoryScreen() {
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = { Text(text = "Scan History") },
                 actions = {
                     IconButton(onClick = { viewModel.deleteAll() }) {
@@ -49,64 +45,38 @@ fun HistoryScreen() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (history.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No scan history found.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(history) { scanResult ->
-                        HistoryItem(scanResult = scanResult, onDelete = { viewModel.delete(scanResult.id) })
-                    }
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
+                items(history) { scanResult ->
+                    HistoryItem(scanResult = scanResult, onDelete = { viewModel.delete(scanResult.id) })
                 }
             }
-            BannerAd(adUnitId = AdMobConfig.bannerAdUnitId)
+            BannerAd(adUnitId = com.quickscanpro.BuildConfig.BANNER_AD_ID)
         }
     }
 }
 
 @Composable
 fun HistoryItem(scanResult: ScanResult, onDelete: () -> Unit) {
-    OutlinedCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = scanResult.content,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatTimestamp(scanResult.timestamp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
+                Text(text = scanResult.content)
+                Text(text = formatTimestamp(scanResult.timestamp))
             }
             IconButton(onClick = onDelete) {
                 Icon(
