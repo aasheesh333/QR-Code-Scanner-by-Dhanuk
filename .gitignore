@@ -7,4 +7,3 @@ local.properties
 build/
 captures/
 .DS_Store
-app_config.json

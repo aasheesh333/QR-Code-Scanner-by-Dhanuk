@@ -1,12 +1,12 @@
-import groovy.json.JsonSlurper
-
-def appConfig = new JsonSlurper().parse(new File("$rootDir/app_config.json"))
-
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
 }
+
+import groovy.json.JsonSlurper
+
+def appConfig = new JsonSlurper().parse(new File("$rootDir/app_config.json"))
 
 android {
     namespace 'com.quickscanpro'
