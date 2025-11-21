@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
@@ -75,6 +76,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
     )
 
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
+    var torchState by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -110,28 +112,28 @@ fun HomeScreen(onScan: (String) -> Unit) {
                         AndroidView(
                             factory = { context ->
                                 val previewView = PreviewView(context)
-                                val preview = Preview.Builder().build()
-                                val selector = CameraSelector.Builder()
-                                    .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                                    .build()
-                                preview.setSurfaceProvider(previewView.surfaceProvider)
-                                val imageAnalysis = ImageAnalysis.Builder()
-                                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                    .build()
-                                imageAnalysis.setAnalyzer(
-                                    ContextCompat.getMainExecutor(context),
-                                    BarcodeAnalyzer { result ->
-                                        if (!scanned) {
-                                            scanned = true
-                                            vibrate(context)
-                                            playSound(context)
-                                            onScan(result)
-                                        }
-                                    }
-                                )
-                                val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                                val cameraProviderFuture: ListenableFuture<ProcessCameraProvider> = ProcessCameraProvider.getInstance(context)
                                 cameraProviderFuture.addListener({
                                     val cameraProvider = cameraProviderFuture.get()
+                                    val preview = Preview.Builder().build()
+                                    val selector = CameraSelector.Builder()
+                                        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                                        .build()
+                                    preview.setSurfaceProvider(previewView.surfaceProvider)
+                                    val imageAnalysis = ImageAnalysis.Builder()
+                                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                        .build()
+                                    imageAnalysis.setAnalyzer(
+                                        ContextCompat.getMainExecutor(context),
+                                        BarcodeAnalyzer { result ->
+                                            if (!scanned) {
+                                                scanned = true
+                                                vibrate(context)
+                                                playSound(context)
+                                                onScan(result)
+                                            }
+                                        }
+                                    )
                                     try {
                                         cameraProvider.unbindAll()
                                         val camera = cameraProvider.bindToLifecycle(
@@ -158,7 +160,8 @@ fun HomeScreen(onScan: (String) -> Unit) {
                 ) {
                     GradientButton(
                         onClick = {
-                            cameraControl?.enableTorch(cameraControl?.torchState?.value != 1)
+                            torchState = !torchState
+                            cameraControl?.enableTorch(torchState)
                         },
                         text = "Torch"
                     )
