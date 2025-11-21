@@ -13,6 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quickscanpro.R
+import com.quickscanpro.config.AdMobConfig
 import com.quickscanpro.database.ScanResult
 import com.quickscanpro.ui.composables.BannerAd
 import com.quickscanpro.viewmodel.HistoryViewModel
@@ -54,7 +55,7 @@ fun HistoryScreen() {
                     HistoryItem(scanResult = scanResult, onDelete = { viewModel.delete(scanResult.id) })
                 }
             }
-            BannerAd(adUnitId = com.quickscanpro.BuildConfig.BANNER_AD_ID)
+            BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HISTORY)
         }
     }
 }

@@ -4,41 +4,20 @@ plugins {
     id 'kotlin-kapt'
 }
 
-import groovy.json.JsonSlurper
-
-def appConfig = new JsonSlurper().parse(new File("$rootDir/app_config.json"))
-
 android {
     namespace 'com.quickscanpro'
-    compileSdk appConfig.build.compileSdk
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.quickscanpro"
-        minSdk appConfig.build.minSdk
-        targetSdk appConfig.build.targetSdk
-        versionCode appConfig.version.code
-        versionName appConfig.version.name
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
-        }
-
-        buildConfigField "String", "BANNER_AD_ID", "\"${appConfig.admob.bannerId}\""
-        buildConfigField "String", "INTERSTITIAL_AD_ID", "\"${appConfig.admob.interstitialId}\""
-
-        manifestPlaceholders = [
-                ADMOB_APP_ID: appConfig.admob.appId,
-                APP_NAME: appConfig.appName
-        ]
-    }
-
-    signingConfigs {
-        release {
-            storeFile file(appConfig.signing.keystoreFile)
-            storePassword appConfig.signing.storePassword
-            keyAlias appConfig.signing.keyAlias
-            keyPassword appConfig.signing.keyPassword
         }
     }
 
@@ -46,7 +25,6 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -58,7 +36,6 @@ android {
     }
     buildFeatures {
         compose true
-        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.3'
@@ -90,7 +67,7 @@ dependencies {
     implementation "androidx.camera:camera-camera2:$camerax_version"
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
     implementation "androidx.camera:camera-view:$camerax_version"
-    implementation("com.google.guava:guava:32.1.3-android")
+    implementation "com.google.guava:guava:31.1-android"
 
     // ML Kit Barcode Scanning
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'

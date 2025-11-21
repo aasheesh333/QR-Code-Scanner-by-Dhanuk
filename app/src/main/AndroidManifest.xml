@@ -15,7 +15,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="${APP_NAME}"
+        android:label="QuickScan Pro"
         android:supportsRtl="true"
         android:theme="@style/Theme.QuickScanPro"
         tools:targetApi="31">
@@ -23,7 +23,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="${APP_NAME}"
+            android:label="@string/app_name"
             android:theme="@style/Theme.QuickScanPro">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,7 +33,7 @@
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="${ADMOB_APP_ID}"/>
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
 
     </application>
 
