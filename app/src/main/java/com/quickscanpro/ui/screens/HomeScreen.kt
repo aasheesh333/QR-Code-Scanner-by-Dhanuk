@@ -175,7 +175,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
                     }
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
+                BannerAd(adUnitId = AdMobConfig.BANNER_AD_UNIT_ID_HOME)
             } else {
                 Text(text = "Please grant camera permission to use this app.")
             }
