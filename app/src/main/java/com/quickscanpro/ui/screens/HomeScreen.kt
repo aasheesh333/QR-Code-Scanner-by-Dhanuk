@@ -36,6 +36,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
 import com.quickscanpro.config.AdMobConfig
 import com.quickscanpro.ui.composables.BannerAd
+import com.quickscanpro.ui.composables.GradientButton
 import com.quickscanpro.viewmodel.ThemeViewModel
 import java.io.IOException
 
@@ -46,7 +47,6 @@ fun HomeScreen(onScan: (String) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val themeViewModel: ThemeViewModel = viewModel()
     val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
-    var torchState by remember { mutableStateOf(false) }
 
     var hasCamPermission by remember {
         mutableStateOf(
@@ -142,7 +142,6 @@ fun HomeScreen(onScan: (String) -> Unit) {
                                             imageAnalysis
                                         )
                                         cameraControl = camera.cameraControl
-                                        cameraControl?.enableTorch(torchState)
                                     } catch (e: Exception) {
                                         // Handle exceptions
                                     }
@@ -158,24 +157,21 @@ fun HomeScreen(onScan: (String) -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Button(
+                    GradientButton(
                         onClick = {
-                            torchState = !torchState
-                            cameraControl?.enableTorch(torchState)
-                        }
-                    ) {
-                        Text(text = "Torch")
-                    }
-                    Button(
+                            cameraControl?.enableTorch(cameraControl?.torchState?.value != 1)
+                        },
+                        text = "Torch"
+                    )
+                    GradientButton(
                         onClick = {
                             galleryLauncher.launch("image/*")
-                        }
-                    ) {
-                        Text(text = "Scan from Gallery")
-                    }
+                        },
+                        text = "Scan from Gallery"
+                    )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                BannerAd(adUnitId = AdMobConfig.BANNER_AD_UNIT_ID_HOME)
+                BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
             } else {
                 Text(text = "Please grant camera permission to use this app.")
             }

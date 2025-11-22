@@ -55,7 +55,7 @@ fun HistoryScreen() {
                     HistoryItem(scanResult = scanResult, onDelete = { viewModel.delete(scanResult.id) })
                 }
             }
-            BannerAd(adUnitId = AdMobConfig.BANNER_AD_UNIT_ID_HOME)
+            BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HISTORY)
         }
     }
 }

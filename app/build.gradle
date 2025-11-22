@@ -19,13 +19,6 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
-
-        buildConfigField "String", "BANNER_AD_ID", "\"ca-app-pub-3940256099942544/6300978111\""
-        buildConfigField "String", "INTERSTITIAL_AD_ID", "\"ca-app-pub-3940256099942544/1033173712\""
-
-        manifestPlaceholders = [
-                ADMOB_APP_ID: "ca-app-pub-3940256099942544~3347511713"
-        ]
     }
 
     buildTypes {
@@ -43,7 +36,6 @@ android {
     }
     buildFeatures {
         compose true
-        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.3'
@@ -75,7 +67,6 @@ dependencies {
     implementation "androidx.camera:camera-camera2:$camerax_version"
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
     implementation "androidx.camera:camera-view:$camerax_version"
-    implementation "com.google.guava:guava:31.1-android"
 
     // ML Kit Barcode Scanning
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
