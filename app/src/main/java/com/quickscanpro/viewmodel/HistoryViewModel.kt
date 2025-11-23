@@ -30,10 +30,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
 
     fun insert(scanResult: ScanResult) {
         viewModelScope.launch {
-            val lastItem = history.value.firstOrNull()
-            if (lastItem == null || lastItem.content != scanResult.content) {
-                scanResultDao.insert(scanResult)
-            }
+            scanResultDao.insert(scanResult)
         }
     }
 }

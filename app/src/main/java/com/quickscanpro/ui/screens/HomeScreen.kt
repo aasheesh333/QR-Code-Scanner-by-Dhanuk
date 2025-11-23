@@ -165,7 +165,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
                             isTorchOn = newTorchState
                         }
                     ) {
-                        Text(text = if (isTorchOn) "Torch On" else "Torch Off")
+                        Text(text = "Torch")
                     }
                     Button(
                         onClick = {
@@ -176,7 +176,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
                     }
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                BannerAd(adUnitId = AdMobConfig.BANNER_ID)
+                BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
             } else {
                 Text(text = "Please grant camera permission to use this app.")
             }

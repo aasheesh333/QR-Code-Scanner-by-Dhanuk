@@ -3,8 +3,6 @@ package com.quickscanpro.ui.screens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,7 +38,6 @@ fun PermissionsUsageScreen(onNavigateBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState())
         ) {
             Text(text = "Permissions Used – Quick Scan Pro (Dhanuk)\n\nQuick Scan Pro requires the following permissions:\n\n1. Camera Permission\nUsed only for scanning documents using your device camera.\nWe do NOT upload any images automatically.\n\n2. Storage / Gallery Permission\nUsed for:\n• Importing images or documents from your gallery\n• Saving scanned files\nWe DO NOT access your files automatically. Only files selected by the user are processed.\n\n3. Internet Permission\nUsed for:\n• Showing ads (AdMob)\n• App updates and analytics\n\nWe never collect or store personal files, images, or private data.\nAll files remain on the user’s device.")
         }
