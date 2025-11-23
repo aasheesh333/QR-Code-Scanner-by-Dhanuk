@@ -22,21 +22,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
 import com.quickscanpro.config.AdMobConfig
 import com.quickscanpro.ui.composables.BannerAd
-import com.quickscanpro.ui.composables.GradientButton
 import com.quickscanpro.viewmodel.ThemeViewModel
 import java.io.IOException
 
@@ -47,6 +47,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val themeViewModel: ThemeViewModel = viewModel()
     val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
+    var isTorchOn by rememberSaveable { mutableStateOf(false) }
 
     var hasCamPermission by remember {
         mutableStateOf(
@@ -130,7 +131,7 @@ fun HomeScreen(onScan: (String) -> Unit) {
                                         }
                                     }
                                 )
-                                val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                                val cameraProviderFuture: ListenableFuture<ProcessCameraProvider> = ProcessCameraProvider.getInstance(context)
                                 cameraProviderFuture.addListener({
                                     val cameraProvider = cameraProviderFuture.get()
                                     try {
@@ -157,18 +158,22 @@ fun HomeScreen(onScan: (String) -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    GradientButton(
+                    Button(
                         onClick = {
-                            cameraControl?.enableTorch(cameraControl?.torchState?.value != 1)
-                        },
-                        text = "Torch"
-                    )
-                    GradientButton(
+                            val newTorchState = !isTorchOn
+                            cameraControl?.enableTorch(newTorchState)
+                            isTorchOn = newTorchState
+                        }
+                    ) {
+                        Text(text = "Torch")
+                    }
+                    Button(
                         onClick = {
                             galleryLauncher.launch("image/*")
-                        },
-                        text = "Scan from Gallery"
-                    )
+                        }
+                    ) {
+                        Text(text = "Scan from Gallery")
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
