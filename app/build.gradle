@@ -4,9 +4,41 @@ plugins {
     id 'kotlin-kapt'
 }
 
+// Helper function to get config from Env (CI) or local.properties (Local)
+def getAppConfig(String propertyName, String defaultValue = null) {
+    def envVal = System.getenv(propertyName)
+    if (envVal != null) return envVal
+
+    def localProperties = new Properties()
+    def localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        localProperties.load(localFile.newReader())
+        return localProperties.getProperty(propertyName, defaultValue)
+    }
+    return defaultValue
+}
+
 android {
     namespace 'com.quickscanpro'
     compileSdk 34
+
+    signingConfigs {
+        release {
+            def storeFile = getAppConfig("KEYSTORE_FILE")
+            def storePassword = getAppConfig("KEYSTORE_PASSWORD")
+            def keyAlias = getAppConfig("KEY_ALIAS")
+            def keyPassword = getAppConfig("KEY_PASSWORD")
+
+            if (storeFile != null && storePassword != null && keyAlias != null && keyPassword != null) {
+                storeFile = file(storeFile)
+                storePassword = storePassword
+                keyAlias = keyAlias
+                keyPassword = keyPassword
+            } else {
+                println "Release signing config missing. Release build will not be signed."
+            }
+        }
+    }
 
     defaultConfig {
         applicationId "com.quickscanpro"
@@ -20,18 +52,24 @@ android {
             useSupportLibrary true
         }
 
-        buildConfigField "String", "BANNER_AD_ID", "\"ca-app-pub-3940256099942544/6300978111\""
-        buildConfigField "String", "INTERSTITIAL_AD_ID", "\"ca-app-pub-3940256099942544/1033173712\""
+        // AdMob Config: Env -> local.properties -> Test IDs
+        def bannerId = getAppConfig("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
+        def interstitialId = getAppConfig("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
+
+        buildConfigField "String", "BANNER_AD_ID", "\"$bannerId\""
+        buildConfigField "String", "INTERSTITIAL_AD_ID", "\"$interstitialId\""
     }
 
     buildFeatures {
         buildConfig true
+        compose true
     }
 
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -45,9 +83,6 @@ android {
         javacOptions {
             option("-J--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED")
         }
-    }
-    buildFeatures {
-        compose true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.3'
