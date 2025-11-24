@@ -28,9 +28,13 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun insert(scanResult: ScanResult) {
-        viewModelScope.launch {
-            scanResultDao.insert(scanResult)
+    fun addScanResult(scanResult: ScanResult) {
+        // history list is ordered by timestamp DESC (newest first)
+        val latest = history.value.firstOrNull()
+        if (latest == null || latest.content != scanResult.content) {
+            viewModelScope.launch {
+                scanResultDao.insert(scanResult)
+            }
         }
     }
 }

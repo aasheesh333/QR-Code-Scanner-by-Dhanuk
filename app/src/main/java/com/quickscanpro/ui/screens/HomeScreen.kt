@@ -35,7 +35,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.quickscanpro.analyzer.BarcodeAnalyzer
-import com.quickscanpro.config.AdMobConfig
 import com.quickscanpro.ui.composables.BannerAd
 import com.quickscanpro.viewmodel.ThemeViewModel
 import java.io.IOException
@@ -153,28 +152,42 @@ fun HomeScreen(onScan: (String) -> Unit) {
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
+
+                // Updated Buttons
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Button(
                         onClick = {
                             val newTorchState = !isTorchOn
                             cameraControl?.enableTorch(newTorchState)
                             isTorchOn = newTorchState
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
-                        Text(text = "Torch")
+                        Text(text = if (isTorchOn) "Turn Torch Off" else "Turn Torch On")
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Button(
                         onClick = {
                             galleryLauncher.launch("image/*")
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
                         Text(text = "Scan from Gallery")
                     }
                 }
+
                 Spacer(modifier = Modifier.weight(1f))
                 BannerAd(adUnitId = com.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
             } else {

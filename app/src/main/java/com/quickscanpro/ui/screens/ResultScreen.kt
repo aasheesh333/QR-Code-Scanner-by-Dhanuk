@@ -3,9 +3,13 @@ package com.quickscanpro.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -22,7 +26,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quickscanpro.R
 import com.quickscanpro.ads.InterstitialAdManager
 import com.quickscanpro.database.ScanResult
-import com.quickscanpro.ui.composables.GradientButton
 import com.quickscanpro.viewmodel.HistoryViewModel
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -36,7 +39,7 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
     val decodedData = URLDecoder.decode(data, StandardCharsets.UTF_8.toString())
 
     LaunchedEffect(key1 = decodedData) {
-        viewModel.insert(ScanResult(content = decodedData))
+        viewModel.addScanResult(ScanResult(content = decodedData))
         InterstitialAdManager.showAd(context)
     }
 
@@ -65,29 +68,42 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
         ) {
             Text(text = decodedData)
             Spacer(modifier = Modifier.height(16.dp))
-            Row {
-                GradientButton(onClick = {
-                    clipboardManager.setText(AnnotatedString(decodedData))
-                }, text = "Copy")
-                Spacer(modifier = Modifier.width(16.dp))
-                GradientButton(onClick = {
-                    val sendIntent: Intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, decodedData)
-                        type = "text/plain"
-                    }
-                    val shareIntent = Intent.createChooser(sendIntent, null)
-                    context.startActivity(shareIntent)
-                }, text = "Share")
+            PrimaryButton(text = "Copy") {
+                clipboardManager.setText(AnnotatedString(decodedData))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            PrimaryButton(text = "Share") {
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, decodedData)
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, null)
+                context.startActivity(shareIntent)
             }
             if (isUrl(decodedData)) {
                 Spacer(modifier = Modifier.height(16.dp))
-                GradientButton(onClick = {
+                PrimaryButton(text = "Open URL") {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(decodedData))
                     context.startActivity(intent)
-                }, text = "Open URL")
+                }
             }
         }
+    }
+}
+
+@Composable
+fun PrimaryButton(text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        Text(text = text)
     }
 }
 
