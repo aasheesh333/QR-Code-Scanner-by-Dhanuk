@@ -39,13 +39,8 @@ jobs:
         ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
       run: ./gradlew build
 
-    # The following steps are commented out. To enable them, you will need to
-    # create a signing key and add it to your GitHub repository secrets.
-    # - name: Sign APK
-    #   uses: r0adkll/sign-android-release@v1
-    #   with:
-    #     releaseDir: app/build/outputs/apk/release
-    #     signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-    #     alias: ${{ secrets.ALIAS }}
-    #     keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-    #     keyPassword: ${{ secrets.KEY_PASSWORD }}
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: app/build/outputs/apk/release/app-release.apk
