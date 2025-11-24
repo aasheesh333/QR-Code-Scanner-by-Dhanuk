@@ -4,6 +4,40 @@ plugins {
     id 'kotlin-kapt'
 }
 
+def getAppConfig(String propName, String defaultValue) {
+    def envVar = System.getenv(propName)
+    if (envVar != null && !envVar.isEmpty()) {
+        return envVar
+    }
+
+    def localProperties = new Properties()
+    def localPropertiesFile = rootProject.file('local.properties')
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withInputStream { stream ->
+            localProperties.load(stream)
+        }
+        def propValue = localProperties.getProperty(propName)
+        if (propValue != null && !propValue.isEmpty()) {
+            return propValue
+        }
+    }
+
+    // Fallback: Check app/local.properties if not found in root
+    def appLocalPropertiesFile = file('local.properties')
+    if (appLocalPropertiesFile.exists()) {
+         def appProps = new Properties()
+         appLocalPropertiesFile.withInputStream { stream ->
+            appProps.load(stream)
+        }
+        def propValue = appProps.getProperty(propName)
+        if (propValue != null && !propValue.isEmpty()) {
+            return propValue
+        }
+    }
+
+    return defaultValue
+}
+
 android {
     namespace 'com.quickscanpro'
     compileSdk 34
@@ -19,10 +53,34 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+
+        // AdMob Config
+        def bannerAdId = getAppConfig("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
+        def interstitialAdId = getAppConfig("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
+
+        buildConfigField "String", "BANNER_AD_ID", "\"$bannerAdId\""
+        buildConfigField "String", "INTERSTITIAL_AD_ID", "\"$interstitialAdId\""
+    }
+
+    signingConfigs {
+        release {
+            def ksFilePath = getAppConfig("KEYSTORE_FILE", "")
+            def ksPassword = getAppConfig("KEYSTORE_PASSWORD", "")
+            def kAlias = getAppConfig("KEY_ALIAS", "")
+            def kPassword = getAppConfig("KEY_PASSWORD", "")
+
+            if (ksFilePath) {
+                storeFile file(ksFilePath)
+                storePassword ksPassword
+                keyAlias kAlias
+                keyPassword kPassword
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -36,6 +94,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.3'
