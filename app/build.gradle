@@ -55,8 +55,11 @@ android {
         }
 
         // AdMob Config
+        def admobAppId = getAppConfig("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
         def bannerAdId = getAppConfig("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
         def interstitialAdId = getAppConfig("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
+
+        manifestPlaceholders = [admobAppId: admobAppId]
 
         buildConfigField "String", "BANNER_AD_ID", "\"$bannerAdId\""
         buildConfigField "String", "INTERSTITIAL_AD_ID", "\"$interstitialAdId\""

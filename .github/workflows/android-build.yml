@@ -37,6 +37,7 @@ jobs:
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
         ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+        ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
       run: ./gradlew build
 
     - name: Upload Release APK
