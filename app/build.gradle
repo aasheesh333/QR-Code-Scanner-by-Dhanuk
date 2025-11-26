@@ -39,11 +39,11 @@ def getAppConfig(String propName, String defaultValue) {
 }
 
 android {
-    namespace 'com.quickscanpro'
+    namespace 'com.dhanuk.quickscanpro'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.quickscanpro"
+        applicationId "com.dhanuk.quickscanpro"
         minSdk 21
         targetSdk 34
         versionCode 1
