@@ -94,7 +94,7 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
                 },
                 actions = {
                     IconButton(onClick = onBatchScan) {
-                        Icon(Icons.Filled.QueuePlayPause, contentDescription = "Batch")
+                        Icon(Icons.Filled.QrCodeScanner, contentDescription = "Batch")
                     }
                     IconButton(onClick = { galleryLauncher.launch("image/*") }) {
                         Icon(Icons.Filled.PhotoLibrary, contentDescription = "Gallery")
