@@ -38,13 +38,13 @@ fun AboutScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             AboutItem(text = "About Us", onClick = onNavigateToAboutUs)
-            Divider()
+            HorizontalDivider()
             AboutItem(text = "Contact Us", onClick = onNavigateToContactUs)
-            Divider()
+            HorizontalDivider()
             AboutItem(text = "Privacy Policy", onClick = onNavigateToPrivacyPolicy)
-            Divider()
+            HorizontalDivider()
             AboutItem(text = "Permissions Usage", onClick = onNavigateToPermissions)
-            Divider()
+            HorizontalDivider()
             AboutItem(text = "Terms & Conditions", onClick = onNavigateToTerms)
         }
     }

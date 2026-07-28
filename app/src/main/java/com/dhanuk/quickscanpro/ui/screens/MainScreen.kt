@@ -4,16 +4,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
+import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
+import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -21,11 +26,23 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            Navigation(navController = navController)
+    val themeViewModel: ThemeViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = viewModel()
+    val onboardingCompleted by settingsViewModel.onboardingCompleted.collectAsState()
+
+    if (!onboardingCompleted) {
+        OnboardingScreen(
+            onFinished = {
+                settingsViewModel.completeOnboarding()
+            }
+        )
+    } else {
+        Scaffold(
+            bottomBar = { BottomNavigationBar(navController) }
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                Navigation(navController = navController)
+            }
         }
     }
 }
@@ -34,15 +51,58 @@ fun MainScreen() {
 fun Navigation(navController: NavHostController) {
     NavHost(navController, startDestination = BottomNavItem.Home.route) {
         composable(BottomNavItem.Home.route) {
-            HomeScreen(onScan = { result ->
-                val encodedUrl = URLEncoder.encode(result, StandardCharsets.UTF_8.toString())
-                navController.navigate("result/$encodedUrl")
-            })
+            HomeScreen(
+                onScan = { result ->
+                    val encodedUrl = URLEncoder.encode(result, StandardCharsets.UTF_8.toString())
+                    navController.navigate("result/$encodedUrl")
+                },
+                onBatchScan = {
+                    navController.navigate("batch_scan")
+                }
+            )
+        }
+        composable(BottomNavItem.Generate.route) {
+            QRGeneratorScreen()
         }
         composable(BottomNavItem.History.route) {
             HistoryScreen()
         }
-        composable(BottomNavItem.About.route) {
+        composable(BottomNavItem.Analytics.route) {
+            AnalyticsScreen()
+        }
+        composable(BottomNavItem.Settings.route) {
+            SettingsScreen(
+                onNavigateToAbout = { navController.navigate("about") }
+            )
+        }
+        composable(
+            route = "result/{data}",
+            arguments = listOf(navArgument("data") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val data = backStackEntry.arguments?.getString("data") ?: ""
+            ResultScreen(
+                data = data,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToProduct = { barcode ->
+                    val encoded = URLEncoder.encode(barcode, StandardCharsets.UTF_8.toString())
+                    navController.navigate("product/$encoded")
+                }
+            )
+        }
+        composable("batch_scan") {
+            BatchScanScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(
+            route = "product/{barcode}",
+            arguments = listOf(navArgument("barcode") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val barcode = backStackEntry.arguments?.getString("barcode") ?: ""
+            ProductLookupScreen(
+                barcode = barcode,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable("about") {
             AboutScreen(
                 onNavigateToAboutUs = { navController.navigate("about_us") },
                 onNavigateToContactUs = { navController.navigate("contact_us") },
@@ -51,41 +111,22 @@ fun Navigation(navController: NavHostController) {
                 onNavigateToTerms = { navController.navigate("terms") }
             )
         }
-        composable("result/{data}") { backStackEntry ->
-            val data = backStackEntry.arguments?.getString("data") ?: ""
-            ResultScreen(data = data, onNavigateBack = { navController.popBackStack() })
-        }
-        composable("about_us") {
-            AboutUsScreen(onNavigateBack = { navController.popBackStack() })
-        }
-        composable("contact_us") {
-            ContactUsScreen(onNavigateBack = { navController.popBackStack() })
-        }
-        composable("privacy_policy") {
-            PrivacyPolicyScreen(onNavigateBack = { navController.popBackStack() })
-        }
-        composable("permissions") {
-            PermissionsUsageScreen(onNavigateBack = { navController.popBackStack() })
-        }
-        composable("terms") {
-            TermsAndConditionsScreen(onNavigateBack = { navController.popBackStack() })
-        }
+        composable("about_us") { AboutUsScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable("contact_us") { ContactUsScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable("privacy_policy") { PrivacyPolicyScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable("permissions") { PermissionsUsageScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable("terms") { TermsAndConditionsScreen(onNavigateBack = { navController.popBackStack() }) }
     }
 }
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(
-        BottomNavItem.Home,
-        BottomNavItem.History,
-        BottomNavItem.About
-    )
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
-        items.forEach { item ->
+        BottomNavItem.entries.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(painterResource(id = item.icon), contentDescription = item.title) },
+                icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
                 label = { Text(text = item.title) },
                 selected = currentRoute == item.route,
                 onClick = {
