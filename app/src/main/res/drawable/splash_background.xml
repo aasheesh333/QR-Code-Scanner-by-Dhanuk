@@ -2,6 +2,6 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/dhanuk_primary" />
     <item android:gravity="center">
-        <bitmap android:src="@mipmap/ic_launcher" />
+        <bitmap android:src="@drawable/ic_launcher_foreground" />
     </item>
 </layer-list>
