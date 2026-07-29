@@ -103,9 +103,29 @@ jobs:
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
         run: ./gradlew assembleRelease --no-daemon
 
+      - name: Build Release AAB
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release-build-verification' || startsWith(github.ref, 'refs/tags/')
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+        run: ./gradlew bundleRelease --no-daemon
+
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release-build-verification' || startsWith(github.ref, 'refs/tags/'))
         with:
-          name: quickscanpro-release
+          name: quickscanpro-release-apk
           path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release-build-verification' || startsWith(github.ref, 'refs/tags/'))
+        with:
+          name: quickscanpro-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab

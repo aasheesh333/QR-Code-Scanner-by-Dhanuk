@@ -40,7 +40,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
-import com.dhanuk.quickscanpro.ui.composables.BannerAd
+
 import com.dhanuk.quickscanpro.ui.composables.ScanOverlay
 import com.dhanuk.quickscanpro.ui.theme.DhanukAccent
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
@@ -216,7 +216,6 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
-                BannerAd(adUnitId = com.dhanuk.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
             } else {
                 Column(
                     modifier = Modifier.fillMaxSize(),

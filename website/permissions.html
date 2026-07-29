@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permissions Usage - QuickScan Pro</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;line-height:1.6;color:#333}
+h1{color:#0575E6}h2{color:#045AB8;margin-top:30px}
+.perm{background:#F6F9FF;border-left:4px solid #0575E6;padding:15px 20px;margin:15px 0;border-radius:0 8px 8px 0}
+.footer{text-align:center;margin-top:40px;padding:20px;color:#666;font-size:14px}
+</style>
+</head>
+<body>
+<h1>Permissions Used by QuickScan Pro</h1>
+<p>QuickScan Pro requests only the permissions necessary for its core functionality. Below is a detailed explanation of each permission and how it is used.</p>
+
+<div class="perm">
+<h2>1. Camera Permission</h2>
+<p><strong>Permission:</strong> android.permission.CAMERA</p>
+<p><strong>Purpose:</strong> Used to scan QR codes and barcodes using your device camera.</p>
+<p><strong>Data Usage:</strong> Camera frames are processed locally on your device using Google ML Kit. Images are not uploaded or stored on any server.</p>
+</div>
+
+<div class="perm">
+<h2>2. Storage / Media Access</h2>
+<p><strong>Permission:</strong> android.permission.READ_EXTERNAL_STORAGE (API 32 and below)</p>
+<p><strong>Purpose:</strong> Used for importing images from your gallery to scan QR codes from images, and saving generated QR codes.</p>
+<p><strong>Data Usage:</strong> Only files explicitly selected by the user are accessed. We do not read or access files automatically.</p>
+</div>
+
+<div class="perm">
+<h2>3. Internet Permission</h2>
+<p><strong>Permission:</strong> android.permission.INTERNET</p>
+<p><strong>Purpose:</strong> Used for displaying advertisements (Google AdMob), crash reporting (Firebase Crashlytics), and push notifications (OneSignal).</p>
+</div>
+
+<div class="perm">
+<h2>4. Vibrate Permission</h2>
+<p><strong>Permission:</strong> android.permission.VIBRATE</p>
+<p><strong>Purpose:</strong> Provides haptic feedback when a QR code is successfully scanned.</p>
+</div>
+
+<div class="perm">
+<h2>5. Post Notifications</h2>
+<p><strong>Permission:</strong> android.permission.POST_NOTIFICATIONS</p>
+<p><strong>Purpose:</strong> Used to display push notifications from OneSignal about app updates and features.</p>
+<p><strong>Opt-out:</strong> You can disable notifications at any time from your device settings.</p>
+</div>
+
+<div class="perm">
+<h2>6. WiFi State</h2>
+<p><strong>Permission:</strong> android.permission.ACCESS_WIFI_STATE, android.permission.CHANGE_WIFI_STATE</p>
+<p><strong>Purpose:</strong> Used for WiFi QR code actions - joining WiFi networks from scanned WiFi QR codes.</p>
+</div>
+
+<h2>Permissions We Do NOT Use</h2>
+<ul>
+<li>We do not access your contacts</li>
+<li>We do not access your location</li>
+<li>We do not access your microphone</li>
+<li>We do not read your SMS or call logs</li>
+<li>We do not upload your personal data to our servers</li>
+</ul>
+
+<h2>Data Stays On Your Device</h2>
+<p>All scan history, generated QR codes, and app settings are stored locally on your device. Uninstalling the app removes all data.</p>
+
+<div class="footer">
+<p>QuickScan Pro - Developed by Dhanuk Softwares</p>
+<p>&copy; 2026 Dhanuk Softwares. All rights reserved.</p>
+</div>
+</body>
+</html>

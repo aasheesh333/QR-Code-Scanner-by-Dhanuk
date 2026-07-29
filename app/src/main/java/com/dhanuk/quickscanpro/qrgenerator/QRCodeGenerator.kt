@@ -29,11 +29,14 @@ object QRCodeGenerator {
             val bitMatrix: BitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size, hints)
 
             val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val pixels = IntArray(size * size)
             for (x in 0 until size) {
+                val offset = x * size
                 for (y in 0 until size) {
-                    bmp.setPixel(x, y, if (bitMatrix[x, y]) foregroundColor else backgroundColor)
+                    pixels[offset + y] = if (bitMatrix[x, y]) foregroundColor else backgroundColor
                 }
             }
+            bmp.setPixels(pixels, 0, size, 0, 0, size, size)
             bmp
         } catch (e: Exception) {
             null

@@ -18,3 +18,16 @@
 
 # ML Kit keeps
 -keep class com.google.mlkit.** { *; }
+
+# ZXing keeps
+-keep class com.google.zxing.** { *; }
+-dontwarn com.google.zxing.**
+
+# CameraX keeps
+-keep class androidx.camera.** { *; }
+
+# Coroutines keeps
+-keepclassmembernames class kotlinx.** { *; }
+
+# Keep data classes for Room
+-keepattributes Signature, RuntimeVisibleAnnotations, AnnotationDefault

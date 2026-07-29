@@ -1,6 +1,8 @@
 package com.dhanuk.quickscanpro.ui.screens
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,6 +18,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.dhanuk.quickscanpro.config.AppConfig
+import com.dhanuk.quickscanpro.ui.composables.BannerAd
 import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
@@ -38,7 +42,12 @@ fun MainScreen() {
         )
     } else {
         Scaffold(
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = {
+                Column {
+                    BannerAd(adUnitId = AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
+                    BottomNavigationBar(navController)
+                }
+            }
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
                 Navigation(navController = navController)

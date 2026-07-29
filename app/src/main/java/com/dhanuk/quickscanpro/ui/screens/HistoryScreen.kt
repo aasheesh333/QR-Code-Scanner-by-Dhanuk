@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
-import com.dhanuk.quickscanpro.ui.composables.BannerAd
+
 import com.dhanuk.quickscanpro.ui.composables.EmptyState
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.HistoryExporter
@@ -162,7 +162,6 @@ fun HistoryScreen() {
                     }
                 }
             }
-            BannerAd(adUnitId = com.dhanuk.quickscanpro.config.AppConfig.AdMob.BANNER_AD_UNIT_ID_HISTORY)
         }
     }
 }
