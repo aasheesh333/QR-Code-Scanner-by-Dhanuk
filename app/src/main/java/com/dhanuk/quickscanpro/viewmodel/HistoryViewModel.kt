@@ -15,7 +15,12 @@ import kotlinx.coroutines.launch
 
 class HistoryViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val scanResultDao = AppDatabase.getDatabase(application).scanResultDao()
+    private val db = AppDatabase.getDatabase(application)
+    private val scanResultDao = db.scanResultDao()
+    private val collectionDao = db.scanCollectionDao()
+
+    val collections = collectionDao.getAll()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val searchQuery = MutableStateFlow("")
     private val selectedType = MutableStateFlow<String?>(null)
@@ -74,6 +79,28 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             scanResultDao.deleteAll()
         }
+    }
+
+    fun setNote(id: Int, note: String) {
+        viewModelScope.launch { scanResultDao.setNote(id, note) }
+    }
+
+    fun setCollection(id: Int, collectionId: Int?) {
+        viewModelScope.launch { scanResultDao.setCollection(id, collectionId) }
+    }
+
+    fun addCollection(name: String, color: Long, emoji: String = "") {
+        viewModelScope.launch {
+            collectionDao.insert(
+                com.dhanuk.quickscanpro.database.ScanCollection(
+                    name = name, color = color, emoji = emoji
+                )
+            )
+        }
+    }
+
+    fun deleteCollection(id: Int) {
+        viewModelScope.launch { collectionDao.delete(id) }
     }
 
     private var lastSavedContent: String? = null

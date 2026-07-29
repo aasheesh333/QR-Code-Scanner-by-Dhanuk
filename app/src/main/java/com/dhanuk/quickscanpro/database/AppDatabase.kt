@@ -8,14 +8,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [ScanResult::class, GeneratedQR::class],
-    version = 2,
+    entities = [ScanResult::class, GeneratedQR::class, ScanCollection::class],
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun scanResultDao(): ScanResultDao
     abstract fun generatedQRDao(): GeneratedQRDao
+    abstract fun scanCollectionDao(): ScanCollectionDao
 
     companion object {
         @Volatile
@@ -23,11 +24,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Add type and is_favorite columns to scan_results
                 db.execSQL("ALTER TABLE scan_results ADD COLUMN scan_type TEXT NOT NULL DEFAULT 'unknown'")
                 db.execSQL("ALTER TABLE scan_results ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0")
-
-                // Create generated_qrs table
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS generated_qrs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -43,6 +41,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE scan_results ADD COLUMN note TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE scan_results ADD COLUMN collection_id INTEGER")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS scan_collections (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        color INTEGER NOT NULL DEFAULT 4286644119,
+                        emoji TEXT NOT NULL DEFAULT '',
+                        timestamp INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -50,7 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "scan_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

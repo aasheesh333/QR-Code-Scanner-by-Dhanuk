@@ -13,5 +13,9 @@ data class ScanResult(
     val type: String = "unknown",
     @ColumnInfo(name = "is_favorite")
     val isFavorite: Boolean = false,
+    @ColumnInfo(name = "note", defaultValue = "")
+    val note: String = "",
+    @ColumnInfo(name = "collection_id")
+    val collectionId: Int? = null,
     val timestamp: Long = System.currentTimeMillis()
 )

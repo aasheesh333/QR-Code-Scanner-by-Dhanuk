@@ -40,6 +40,15 @@ interface ScanResultDao {
     @Query("UPDATE scan_results SET is_favorite = :favorite WHERE id = :id")
     suspend fun setFavorite(id: Int, favorite: Boolean)
 
+    @Query("UPDATE scan_results SET note = :note WHERE id = :id")
+    suspend fun setNote(id: Int, note: String)
+
+    @Query("UPDATE scan_results SET collection_id = :collectionId WHERE id = :id")
+    suspend fun setCollection(id: Int, collectionId: Int?)
+
+    @Query("SELECT * FROM scan_results WHERE collection_id = :collectionId ORDER BY timestamp DESC")
+    fun getByCollection(collectionId: Int): Flow<List<ScanResult>>
+
     @Query("DELETE FROM scan_results WHERE id = :id")
     suspend fun delete(id: Int)
 

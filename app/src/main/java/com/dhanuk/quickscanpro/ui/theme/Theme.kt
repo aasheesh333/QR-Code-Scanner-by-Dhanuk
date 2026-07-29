@@ -1,53 +1,72 @@
 package com.dhanuk.quickscanpro.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = DhanukPrimary,
-    onPrimary = DhanukOnPrimary,
-    secondary = DhanukSecondary,
-    onSecondary = DhanukOnSecondary,
-    tertiary = DhanukAccent,
-    background = DhanukBackgroundDark,
-    surface = DhanukSurfaceDark,
-    onBackground = DhanukOnBackgroundDark,
-    onSurface = DhanukOnBackgroundDark,
-    error = DhanukError
+private val LuminaDarkScheme = darkColorScheme(
+    primary = LuminaPrimaryGlow,
+    onPrimary = LuminaInk,
+    primaryContainer = LuminaPrimary,
+    onPrimaryContainer = LuminaPrimaryFaint,
+    secondary = Color(0xFFBBC5EB),
+    onSecondary = LuminaNavy,
+    secondaryContainer = Color(0xFF3B4665),
+    onSecondaryContainer = Color(0xFFAAB4D9),
+    tertiary = Color(0xFFC6C4DF),
+    onTertiary = LuminaInk,
+    background = LuminaBackgroundDark,
+    onBackground = LuminaOnBackgroundDark,
+    surface = LuminaBackgroundDark,
+    onSurface = LuminaOnBackgroundDark,
+    surfaceVariant = LuminaSurfaceHighDark,
+    onSurfaceVariant = LuminaOnSurfaceVariantDark,
+    surfaceContainerLowest = Color(0xFF0D0E0F),
+    surfaceContainerLow = LuminaSurfaceDark,
+    surfaceContainer = Color(0xFF1E2020),
+    surfaceContainerHigh = LuminaSurfaceHighDark,
+    surfaceContainerHighest = Color(0xFF333535),
+    outline = LuminaOutlineDark,
+    outlineVariant = Color(0xFF4E4351),
+    error = LuminaError,
+    onError = Color(0xFF690005)
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = DhanukPrimary,
+private val LuminaLightScheme = lightColorScheme(
+    primary = LuminaPrimary,
     onPrimary = Color.White,
-    secondary = Color(0xFF059669),
+    primaryContainer = LuminaPrimaryFaint,
+    onPrimaryContainer = LuminaPrimary,
+    secondary = Color(0xFF3B4665),
     onSecondary = Color.White,
-    tertiary = DhanukAccent,
-    background = Color(0xFFF6F9FF),
-    surface = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF0A1929),
-    onSurface = Color(0xFF0A1929),
-    error = Color(0xFFB00020)
+    secondaryContainer = Color(0xFFDAE1FF),
+    onSecondaryContainer = Color(0xFF252F4D),
+    tertiary = Color(0xFF45455B),
+    onTertiary = Color.White,
+    background = LuminaBackgroundLight,
+    onBackground = LuminaOnBackgroundLight,
+    surface = LuminaSurfaceLight,
+    onSurface = LuminaOnBackgroundLight,
+    surfaceVariant = LuminaSurfaceHighLight,
+    onSurfaceVariant = LuminaOnSurfaceVariantLight,
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFFAF8FD),
+    surfaceContainer = Color(0xFFF1ECF9),
+    surfaceContainerHigh = LuminaSurfaceHighLight,
+    surfaceContainerHighest = Color(0xFFE4DDF0),
+    outline = LuminaOutlineLight,
+    outlineVariant = Color(0xFFCAC4D8),
+    error = LuminaErrorLight,
+    onError = Color.White
 )
 
-private val AmoledColorScheme = darkColorScheme(
-    primary = DhanukPrimary,
-    onPrimary = DhanukOnPrimary,
-    secondary = DhanukSecondary,
-    onSecondary = Color.Black,
-    tertiary = DhanukAccent,
-    background = DhanukAmoledBlack,
-    surface = Color(0xFF0A0A0A),
-    onBackground = DhanukOnBackgroundDark,
-    onSurface = DhanukOnBackgroundDark,
-    error = DhanukError
+private val LuminaAmoledScheme = LuminaDarkScheme.copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceContainerLowest = Color.Black
 )
 
 enum class ThemeMode {
@@ -56,25 +75,15 @@ enum class ThemeMode {
 
 @Composable
 fun QuickScanProTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeMode: ThemeMode = ThemeMode.LIGHT,
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeMode) {
-        ThemeMode.LIGHT -> LightColorScheme
-        ThemeMode.DARK -> if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            dynamicDarkColorScheme(LocalContext.current)
-        } else DarkColorScheme
-        ThemeMode.AMOLED -> AmoledColorScheme
-        ThemeMode.SYSTEM -> when {
-            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                val context = LocalContext.current
-                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            }
-            darkTheme -> DarkColorScheme
-            else -> LightColorScheme
-        }
+        ThemeMode.LIGHT -> LuminaLightScheme
+        ThemeMode.DARK -> LuminaDarkScheme
+        ThemeMode.AMOLED -> LuminaAmoledScheme
+        ThemeMode.SYSTEM -> if (darkTheme) LuminaDarkScheme else LuminaLightScheme
     }
 
     MaterialTheme(

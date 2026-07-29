@@ -1,15 +1,22 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -21,12 +28,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.dhanuk.quickscanpro.config.AppConfig
 import com.dhanuk.quickscanpro.ui.composables.BannerAd
+import com.dhanuk.quickscanpro.ui.composables.LiquidBackground
 import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
+import com.dhanuk.quickscanpro.ui.theme.GlassBorderDark
+import com.dhanuk.quickscanpro.ui.theme.GlassBorderLight
+import com.dhanuk.quickscanpro.ui.theme.GlassFillDark
+import com.dhanuk.quickscanpro.ui.theme.GlassFillLight
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
@@ -45,16 +58,20 @@ fun MainScreen() {
             )
         }
         else -> {
-            Scaffold(
-                bottomBar = {
-                    Column {
-                        BannerAd(adUnitId = AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
-                        BottomNavigationBar(navController)
+            Box(modifier = Modifier.fillMaxSize()) {
+                LiquidBackground()
+                Scaffold(
+                    containerColor = Color.Transparent,
+                    bottomBar = {
+                        Column {
+                            BannerAd(adUnitId = AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
+                            FloatingBottomNav(navController)
+                        }
                     }
-                }
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding)) {
-                    Navigation(navController = navController)
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        Navigation(navController = navController)
+                    }
                 }
             }
         }
@@ -72,6 +89,13 @@ fun Navigation(navController: NavHostController) {
                 },
                 onBatchScan = {
                     navController.navigate("batch_scan")
+                },
+                onViewAllHistory = {
+                    navController.navigate(BottomNavItem.History.route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             )
         }
@@ -127,24 +151,75 @@ fun Navigation(navController: NavHostController) {
     }
 }
 
+/**
+ * Floating frosted-glass pill navigation bar — the signature
+ * Lumina Glass bottom bar. Active tab is a glowing purple circle.
+ */
 @Composable
-fun BottomNavigationBar(navController: NavController) {
-    NavigationBar {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
-        BottomNavItem.entries.forEach { item ->
-            NavigationBarItem(
-                icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
-                label = { Text(text = item.title) },
-                selected = currentRoute == item.route,
-                onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+fun FloatingBottomNav(navController: NavController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val dark = isSystemInDarkTheme()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 18.dp,
+                    shape = RoundedCornerShape(32.dp),
+                    ambientColor = LuminaPrimary.copy(alpha = 0.3f),
+                    spotColor = LuminaPrimary.copy(alpha = 0.3f)
+                )
+                .clip(RoundedCornerShape(32.dp))
+                .background(if (dark) GlassFillDark else GlassFillLight)
+                .border(
+                    1.dp,
+                    if (dark) GlassBorderDark else GlassBorderLight,
+                    RoundedCornerShape(32.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavItem.entries.forEach { item ->
+                val selected = currentRoute == item.route
+                val itemColor = if (selected) Color.White
+                else MaterialTheme.colorScheme.onSurfaceVariant
+
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .then(
+                            if (selected) Modifier.background(
+                                if (dark) LuminaPrimaryGlow else LuminaPrimary
+                            ) else Modifier
+                        )
+                        .clickable {
+                            if (!selected) {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        }
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.title,
+                        tint = itemColor,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
-            )
+            }
         }
     }
 }
