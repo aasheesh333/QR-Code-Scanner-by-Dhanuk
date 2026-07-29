@@ -154,7 +154,7 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
             val event = BarcodeTypeDetector.parseCalendarEvent(decodedData)
             try {
                 val intent = Intent(Intent.ACTION_INSERT).apply {
-                    data = android.provider.CalendarContract.Events.CONTENT_URI
+                    setData(android.provider.CalendarContract.Events.CONTENT_URI)
                     putExtra(android.provider.CalendarContract.Events.TITLE, event.summary)
                     if (event.location.isNotBlank()) {
                         putExtra(android.provider.CalendarContract.Events.EVENT_LOCATION, event.location)
