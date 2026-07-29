@@ -18,6 +18,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -207,7 +208,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                         },
                         modifier = Modifier.fillMaxSize()
                     )
-                    AnimatedVisibility(
+                    this@Box.AnimatedVisibility(
                         visible = isActive,
                         enter = fadeIn(),
                         exit = fadeOut(),
