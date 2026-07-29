@@ -37,38 +37,9 @@ jobs:
         run: |
           if [ -n "$FIREBASE_JSON" ]; then
             echo "$FIREBASE_JSON" | base64 -d > app/google-services.json
+            echo "Using Firebase config from secret"
           else
-            cat > app/google-services.json <<'EOF'
-          {
-            "project_info": {
-              "project_number": "0",
-              "project_id": "quickscanpro-placeholder",
-              "storage_bucket": "quickscanpro-placeholder.appspot.com"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
-                  "android_client_info": {
-                    "package_name": "com.dhanuk.quickscanpro"
-                  }
-                },
-                "oauth_client": [],
-                "api_key": [
-                  {
-                    "current_key": "AIzaSy-placeholder-key-replace-with-real"
-                  }
-                ],
-                "services": {
-                  "appinvite_service": {
-                    "other_platform_oauth_client": []
-                  }
-                }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          EOF
+            echo "FIREBASE_GOOGLE_SERVICES_JSON secret not set — using committed google-services.json"
           fi
 
       - name: Build Debug APK
