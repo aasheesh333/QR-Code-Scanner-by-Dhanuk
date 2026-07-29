@@ -75,11 +75,12 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
     LaunchedEffect(Unit) { if (!hasCamPermission) launcher.launch(Manifest.permission.CAMERA) }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Batch Scan", style = MaterialTheme.typography.titleLarge)
+                        Text("Batch Scan", style = MaterialTheme.typography.headlineSmall)
                         Text(
                             "${results.size} items scanned",
                             style = MaterialTheme.typography.bodySmall,
@@ -92,6 +93,9 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                ),
                 actions = {
                     if (results.isNotEmpty()) {
                         IconButton(onClick = { showExportSheet = true }) {

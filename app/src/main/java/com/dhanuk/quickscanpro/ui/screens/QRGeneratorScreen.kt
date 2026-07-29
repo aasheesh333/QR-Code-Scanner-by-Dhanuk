@@ -30,7 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
 import com.dhanuk.quickscanpro.ui.composables.ColorPickerGrid
+import com.dhanuk.quickscanpro.ui.composables.GlassCard
 import com.dhanuk.quickscanpro.ui.composables.GradientButton
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
+import com.dhanuk.quickscanpro.util.WifiShareHelper
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,11 +55,17 @@ fun QRGeneratorScreen() {
     var showColorPicker by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Create QR Code", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Create QR Code",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color.Transparent
                 )
             )
         }
@@ -77,10 +87,9 @@ fun QRGeneratorScreen() {
 
             Spacer(Modifier.height(16.dp))
 
-            Surface(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                tonalElevation = 2.dp
+                cornerRadius = 20.dp
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     when (selectedType) {
@@ -101,6 +110,25 @@ fun QRGeneratorScreen() {
                             )
                         }
                         QRContentBuilder.QRType.WIFI -> {
+                            // Unique feature: one-tap autofill from the connected network
+                            TextButton(
+                                onClick = {
+                                    WifiShareHelper.getCurrentWifi(context)?.let { input1 = it.ssid }
+                                        ?: android.widget.Toast.makeText(
+                                            context, "Not connected to WiFi",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Icon(Icons.Filled.WifiTethering, contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = LuminaPrimaryGlow)
+                                Spacer(Modifier.width(6.dp))
+                                Text("Use current network", color = LuminaPrimaryGlow,
+                                    style = MaterialTheme.typography.labelLarge)
+                            }
+                            Spacer(Modifier.height(4.dp))
                             InputField(value = input1, onValueChange = { input1 = it },
                                 label = "Network Name (SSID)", leadingIcon = Icons.Filled.Wifi)
                             Spacer(Modifier.height(10.dp))
@@ -191,10 +219,9 @@ fun QRGeneratorScreen() {
             }
 
             AnimatedVisibility(visible = showColorPicker, enter = fadeIn(), exit = fadeOut()) {
-                Surface(
+                GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    tonalElevation = 1.dp
+                    cornerRadius = 16.dp
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         ColorPickerGrid(
@@ -224,10 +251,10 @@ fun QRGeneratorScreen() {
 
             AnimatedVisibility(visible = generatedBitmap != null, enter = fadeIn(), exit = fadeOut()) {
                 generatedBitmap?.let { bmp ->
-                    Card(
+                    GlassCard(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        elevation = CardDefaults.cardElevation(8.dp)
+                        cornerRadius = 24.dp,
+                        glowColor = LuminaPrimaryGlow
                     ) {
                         Column(
                             modifier = Modifier

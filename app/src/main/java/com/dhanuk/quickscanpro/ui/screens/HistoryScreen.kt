@@ -1,6 +1,5 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +19,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
 
 import com.dhanuk.quickscanpro.ui.composables.EmptyState
+import com.dhanuk.quickscanpro.ui.composables.GlassCard
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.HistoryExporter
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
@@ -48,9 +50,15 @@ fun HistoryScreen() {
     LaunchedEffect(showFavoritesOnly) { viewModel.setShowFavoritesOnly(showFavoritesOnly) }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("History") },
+                title = {
+                    Text("History", style = MaterialTheme.typography.headlineSmall)
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                ),
                 actions = {
                     IconButton(
                         onClick = { showDeleteAllDialog = true },
@@ -157,7 +165,8 @@ fun HistoryScreen() {
                         HistoryItem(
                             scanResult = scanResult,
                             onDelete = { pendingDeleteId = scanResult.id },
-                            onToggleFavorite = { viewModel.toggleFavorite(scanResult) }
+                            onToggleFavorite = { viewModel.toggleFavorite(scanResult) },
+                            onSaveNote = { note -> viewModel.setNote(scanResult.id, note) }
                         )
                     }
                 }
@@ -210,19 +219,17 @@ fun HistoryScreen() {
 private fun HistoryItem(
     scanResult: ScanResult,
     onDelete: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onSaveNote: (String) -> Unit
 ) {
-    val cardColor by animateColorAsState(
-        if (scanResult.isFavorite) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        label = "card"
-    )
-    Card(
+    var showNoteDialog by remember { mutableStateOf(false) }
+
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor),
-        shape = RoundedCornerShape(16.dp)
+        cornerRadius = 18.dp,
+        glowColor = if (scanResult.isFavorite) LuminaPrimaryGlow else null
     ) {
         Row(
             modifier = Modifier
@@ -236,6 +243,21 @@ private fun HistoryItem(
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 2
                 )
+                if (scanResult.note.isNotBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.StickyNote2, contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = LuminaPrimaryGlow)
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = scanResult.note,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LuminaPrimaryGlow,
+                            maxLines = 1
+                        )
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "[${scanResult.type.uppercase()}]",
@@ -250,6 +272,14 @@ private fun HistoryItem(
                     )
                 }
             }
+            IconButton(onClick = { showNoteDialog = true }) {
+                Icon(
+                    Icons.Filled.EditNote,
+                    contentDescription = "Note",
+                    tint = if (scanResult.note.isNotBlank()) LuminaPrimaryGlow
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+            }
             IconButton(onClick = onToggleFavorite) {
                 Icon(
                     if (scanResult.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
@@ -263,6 +293,32 @@ private fun HistoryItem(
                     tint = MaterialTheme.colorScheme.error)
             }
         }
+    }
+
+    if (showNoteDialog) {
+        var noteText by remember { mutableStateOf(scanResult.note) }
+        AlertDialog(
+            onDismissRequest = { showNoteDialog = false },
+            title = { Text("Scan Note") },
+            text = {
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    placeholder = { Text("Add a reminder or note...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onSaveNote(noteText.trim())
+                    showNoteDialog = false
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNoteDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 

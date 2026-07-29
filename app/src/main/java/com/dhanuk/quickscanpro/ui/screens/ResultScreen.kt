@@ -21,9 +21,15 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
+import com.dhanuk.quickscanpro.ui.composables.GlassCard
 import com.dhanuk.quickscanpro.ui.composables.SmartActionCard
 import com.dhanuk.quickscanpro.ui.composables.SmartActionFactory
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
+import com.dhanuk.quickscanpro.ui.theme.SafetyCaution
+import com.dhanuk.quickscanpro.ui.theme.SafetyRisky
+import com.dhanuk.quickscanpro.ui.theme.SafetySafe
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
+import com.dhanuk.quickscanpro.util.LinkSafetyChecker
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.net.URLDecoder
@@ -190,16 +196,19 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
     )
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Scan Result") },
+                title = {
+                    Text("Scan Result", style = MaterialTheme.typography.headlineSmall)
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
                 )
             )
         }
@@ -211,12 +220,10 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                )
+                cornerRadius = 20.dp,
+                glowColor = LuminaPrimaryGlow
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Chip(detectedType)
@@ -232,6 +239,13 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
             if (incognitoMode) {
                 Spacer(Modifier.height(8.dp))
                 Chip("Incognito", color = MaterialTheme.colorScheme.error)
+            }
+
+            // Unique feature: offline link safety check
+            val safety = remember(decodedData) { LinkSafetyChecker.analyze(decodedData) }
+            if (safety.level != LinkSafetyChecker.Level.NOT_A_LINK) {
+                Spacer(Modifier.height(14.dp))
+                SafetyReportCard(safety)
             }
 
             Spacer(Modifier.height(20.dp))
@@ -310,6 +324,48 @@ private fun parseEventDate(raw: String): Long? {
         }
     }
     return null
+}
+
+@Composable
+private fun SafetyReportCard(report: LinkSafetyChecker.Report) {
+    val (label, color, icon) = when (report.level) {
+        LinkSafetyChecker.Level.SAFE ->
+            Triple("Looks Safe", SafetySafe, Icons.Filled.VerifiedUser)
+        LinkSafetyChecker.Level.CAUTION ->
+            Triple("Be Cautious", SafetyCaution, Icons.Filled.Warning)
+        LinkSafetyChecker.Level.RISKY ->
+            Triple("High Risk", SafetyRisky, Icons.Filled.GppBad)
+        LinkSafetyChecker.Level.NOT_A_LINK ->
+            Triple("", SafetySafe, Icons.Filled.VerifiedUser)
+    }
+
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        cornerRadius = 18.dp,
+        glowColor = color
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Icon(icon, contentDescription = null, tint = color,
+                    modifier = Modifier.size(26.dp))
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(label, style = MaterialTheme.typography.titleMedium, color = color)
+                    Text("Link safety score: ${report.score}/100",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            report.signals.forEach { signal ->
+                Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                    Text("•", color = color, modifier = Modifier.padding(end = 6.dp))
+                    Text(signal, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
 }
 
 @Composable
