@@ -137,15 +137,39 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
         onConnectWifi = {
             val wifi = BarcodeTypeDetector.parseWifi(decodedData)
             if (wifi != null) {
-                val msg = "SSID: ${wifi.ssid}\nPassword copied to clipboard"
-                clipboardManager.setText(AnnotatedString(wifi.password))
-                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                if (!connectToWifi(context, wifi)) {
+                    // Fallback: copy password for manual entry
+                    clipboardManager.setText(AnnotatedString(wifi.password))
+                    Toast.makeText(
+                        context,
+                        "SSID: ${wifi.ssid}\nPassword copied — paste in WiFi settings",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             } else {
                 Toast.makeText(context, "Could not parse WiFi QR", Toast.LENGTH_SHORT).show()
             }
         },
         onAddCalendar = {
-            Toast.makeText(context, "Calendar event data detected. Add via Calendar app.", Toast.LENGTH_LONG).show()
+            val event = BarcodeTypeDetector.parseCalendarEvent(decodedData)
+            try {
+                val intent = Intent(Intent.ACTION_INSERT).apply {
+                    data = android.provider.CalendarContract.Events.CONTENT_URI
+                    putExtra(android.provider.CalendarContract.Events.TITLE, event.summary)
+                    if (event.location.isNotBlank()) {
+                        putExtra(android.provider.CalendarContract.Events.EVENT_LOCATION, event.location)
+                    }
+                    parseEventDate(event.start)?.let {
+                        putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, it)
+                    }
+                    parseEventDate(event.end)?.let {
+                        putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, it)
+                    }
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Cannot open calendar", Toast.LENGTH_SHORT).show()
+            }
         },
         onOpenMap = {
             try {
@@ -225,6 +249,67 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
             }
         }
     }
+}
+
+/**
+ * Attempt to connect to a WiFi network.
+ * On Android 10+ (API 29+) uses WifiNetworkSuggestion (no location permission needed).
+ * Returns true if a connection attempt was initiated, false to signal clipboard fallback.
+ */
+private fun connectToWifi(
+    context: Context,
+    wifi: BarcodeTypeDetector.WifiInfo
+): Boolean {
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        try {
+            val suggestion = android.net.wifi.WifiNetworkSuggestion.Builder()
+                .setSsid(wifi.ssid)
+                .apply {
+                    when (wifi.encryption.uppercase()) {
+                        "WEP", "WPA", "WPA2", "WPA3" -> setWpa2Passphrase(wifi.password)
+                        "NOPASS", "" -> { /* open network, no passphrase */ }
+                        else -> setWpa2Passphrase(wifi.password)
+                    }
+                }
+                .build()
+            val wifiManager = context.applicationContext
+                .getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+            val status = wifiManager.addNetworkSuggestions(listOf(suggestion))
+            if (status == android.net.wifi.WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
+                Toast.makeText(
+                    context,
+                    "WiFi network \"${wifi.ssid}\" suggested.\nApprove in WiFi settings to connect.",
+                    Toast.LENGTH_LONG
+                ).show()
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    } else {
+        // Pre-Android 10: programmatic connect needs location permission; use clipboard fallback
+        false
+    }
+}
+
+/** Parse iCal date formats (yyyyMMdd'T'HHmmss, yyyyMMdd, with optional Z/zone) to epoch millis. */
+private fun parseEventDate(raw: String): Long? {
+    if (raw.isBlank()) return null
+    val cleaned = raw.trim().removeSuffix("Z").removeSuffix("z")
+    val patterns = listOf(
+        "yyyyMMdd'T'HHmmss", "yyyyMMdd'T'HHmm", "yyyyMMdd"
+    )
+    for (pattern in patterns) {
+        try {
+            val sdf = java.text.SimpleDateFormat(pattern, java.util.Locale.US)
+            sdf.isLenient = false
+            return sdf.parse(cleaned)?.time
+        } catch (_: Exception) {
+        }
+    }
+    return null
 }
 
 @Composable

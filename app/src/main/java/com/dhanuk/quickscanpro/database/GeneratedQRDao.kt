@@ -3,6 +3,7 @@ package com.dhanuk.quickscanpro.database
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -10,8 +11,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface GeneratedQRDao {
 
-    @Insert
-    suspend fun insert(generatedQR: GeneratedQR)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(generatedQR: GeneratedQR): Long
 
     @Query("SELECT * FROM generated_qrs ORDER BY timestamp DESC")
     fun getAll(): Flow<List<GeneratedQR>>

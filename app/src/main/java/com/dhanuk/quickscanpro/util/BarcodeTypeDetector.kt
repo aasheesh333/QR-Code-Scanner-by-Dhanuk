@@ -46,13 +46,30 @@ object BarcodeTypeDetector {
 
     fun parseWifi(rawContent: String): WifiInfo? {
         // WIFI:T:WPA;S:<ssid>;P:<password>;;
-        val regex = Regex("""WIFI:T:(\w+);S:(.*?);P:(.*?);+""", RegexOption.IGNORE_CASE)
+        // Values may contain escaped chars (\; \, \: \\ \") so match greedily
+        // up to an *unescaped* semicolon.
+        val regex = Regex("""WIFI:T:(\w+);S:((?:\\.|[^;\\])*);P:((?:\\.|[^;\\])*);+""", RegexOption.IGNORE_CASE)
         val match = regex.find(rawContent) ?: return null
         return WifiInfo(
-            ssid = match.groupValues[2],
-            password = match.groupValues[3],
+            ssid = unescapeWifi(match.groupValues[2]),
+            password = unescapeWifi(match.groupValues[3]),
             encryption = match.groupValues[1]
         )
+    }
+
+    private fun unescapeWifi(value: String): String {
+        val sb = StringBuilder()
+        var i = 0
+        while (i < value.length) {
+            if (value[i] == '\\' && i + 1 < value.length) {
+                sb.append(value[i + 1])
+                i += 2
+            } else {
+                sb.append(value[i])
+                i++
+            }
+        }
+        return sb.toString()
     }
 
     // ---- vCard parser ----

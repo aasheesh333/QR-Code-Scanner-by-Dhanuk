@@ -1,7 +1,5 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,10 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-
-private const val BASE_URL = "https://dhanuk.page.gd/QuickScan-Pro"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,19 +26,6 @@ fun AboutScreen(
     onNavigateToPermissions: () -> Unit,
     onNavigateToTerms: () -> Unit
 ) {
-    val context = LocalContext.current
-
-    fun openUrl(page: String) {
-        try {
-            context.startActivity(
-                Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("$BASE_URL/$page")
-                )
-            )
-        } catch (_: Exception) {}
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -62,31 +44,31 @@ fun AboutScreen(
             AboutItem(
                 icon = Icons.Filled.Info,
                 text = "About Us",
-                onClick = { openUrl("about-us.html") }
+                onClick = onNavigateToAboutUs
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Email,
                 text = "Contact Us",
-                onClick = { openUrl("contact-us.html") }
+                onClick = onNavigateToContactUs
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.PrivacyTip,
                 text = "Privacy Policy",
-                onClick = { openUrl("privacy-policy.html") }
+                onClick = onNavigateToPrivacyPolicy
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Lock,
                 text = "Permissions Usage",
-                onClick = { openUrl("permissions.html") }
+                onClick = onNavigateToPermissions
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Description,
                 text = "Terms & Conditions",
-                onClick = { openUrl("terms.html") }
+                onClick = onNavigateToTerms
             )
         }
     }

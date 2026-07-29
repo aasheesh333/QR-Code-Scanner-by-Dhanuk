@@ -76,15 +76,23 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    private var lastSavedContent: String? = null
+
     fun addScanResult(scanResult: ScanResult) {
         val detectedType = BarcodeTypeDetector.detectType(scanResult.content)
         val withType = scanResult.copy(type = detectedType)
 
+        // In-memory guard against rapid duplicate inserts (e.g. camera firing
+        // multiple times before the Room flow emits the new row).
+        if (withType.content == lastSavedContent) return
         val latest = history.value.firstOrNull()
-        if (latest == null || latest.content != withType.content) {
-            viewModelScope.launch {
-                scanResultDao.insert(withType)
-            }
+        if (latest != null && latest.content == withType.content) {
+            lastSavedContent = withType.content
+            return
+        }
+        lastSavedContent = withType.content
+        viewModelScope.launch {
+            scanResultDao.insert(withType)
         }
     }
 }

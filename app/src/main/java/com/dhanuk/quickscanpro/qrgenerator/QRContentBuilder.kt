@@ -9,7 +9,17 @@ object QRContentBuilder {
             "NOPASS" -> "nopass"
             else -> "WPA"
         }
-        return "WIFI:T:$enc;S:$ssid;P:$password;;"
+        return "WIFI:T:$enc;S:${escapeWifi(ssid)};P:${escapeWifi(password)};;"
+    }
+
+    /** Escape special chars per the WIFI: QR format spec: \ ; , : " */
+    private fun escapeWifi(value: String): String {
+        val sb = StringBuilder()
+        for (c in value) {
+            if (c == '\\' || c == ';' || c == ',' || c == ':' || c == '"') sb.append('\\')
+            sb.append(c)
+        }
+        return sb.toString()
     }
 
     fun buildVCARD(name: String, phone: String, email: String, org: String): String {

@@ -44,6 +44,11 @@ android {
     namespace 'com.dhanuk.quickscanpro'
     compileSdk 36
 
+    def admobAppId = getAppConfig("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+    def bannerAdId = getAppConfig("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
+    def interstitialAdId = getAppConfig("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
+    def onesignalAppId = getAppConfig("ONESIGNAL_APP_ID", "placeholder-onesignal-app-id")
+
     defaultConfig {
         applicationId "com.dhanuk.quickscanpro"
         minSdk 23
@@ -55,11 +60,6 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
-
-        def admobAppId = getAppConfig("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
-        def bannerAdId = getAppConfig("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
-        def interstitialAdId = getAppConfig("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
-        def onesignalAppId = getAppConfig("ONESIGNAL_APP_ID", "placeholder-onesignal-app-id")
 
         manifestPlaceholders = [admobAppId: admobAppId]
 
@@ -89,6 +89,19 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            // Guard: never ship release builds with Google's public test ad IDs
+            def testIds = [
+                "ca-app-pub-3940256099942544~3347511713",
+                "ca-app-pub-3940256099942544/6300978111",
+                "ca-app-pub-3940256099942544/1033173712"
+            ]
+            if (admobAppId in testIds || bannerAdId in testIds || interstitialAdId in testIds) {
+                throw new GradleException(
+                    "Release build aborted: AdMob test IDs detected. " +
+                    "Set ADMOB_APP_ID, ADMOB_BANNER_ID and ADMOB_INTERSTITIAL_ID."
+                )
+            }
         }
         debug {
             debuggable true

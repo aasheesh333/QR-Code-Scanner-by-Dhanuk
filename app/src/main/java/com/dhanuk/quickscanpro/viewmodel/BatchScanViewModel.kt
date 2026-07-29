@@ -100,22 +100,18 @@ class BatchScanViewModel : ViewModel() {
         }
     }
 
-    fun exportAsPdf(): String {
-        return buildString {
-            appendLine("QUICKSCAN PRO - BATCH SCAN REPORT")
-            appendLine("Date: ${dateFmt.format(Date())}")
-            appendLine("Total Items: ${_results.value.size}")
-            appendLine()
-            appendLine("=".repeat(60))
-            appendLine()
-            _results.value.forEachIndexed { idx, item ->
-                appendLine("Item ${idx + 1}")
-                appendLine("Type: ${item.type.uppercase()}")
-                appendLine("Content: ${item.content}")
-                appendLine("Time: ${dateFmt.format(Date(item.timestamp))}")
-                appendLine("-".repeat(40))
-                appendLine()
-            }
+    fun getPdfLines(): List<com.dhanuk.quickscanpro.util.PdfExporter.PdfLine> {
+        val lines = mutableListOf<com.dhanuk.quickscanpro.util.PdfExporter.PdfLine>()
+        lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine("QuickScan Pro - Batch Scan Report", bold = true, size = 16f))
+        lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine("Date: ${dateFmt.format(Date())}"))
+        lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine("Total Items: ${_results.value.size}"))
+        lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine(""))
+        _results.value.forEachIndexed { idx, item ->
+            lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine("Item ${idx + 1}  [${item.type.uppercase()}]", bold = true, size = 12f))
+            lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine(item.content))
+            lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine("Time: ${dateFmt.format(Date(item.timestamp))}", size = 9f))
+            lines.add(com.dhanuk.quickscanpro.util.PdfExporter.PdfLine(""))
         }
+        return lines
     }
 }

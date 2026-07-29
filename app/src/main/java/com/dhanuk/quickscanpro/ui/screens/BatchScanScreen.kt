@@ -153,57 +153,69 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color.Black)
                 ) {
-                    AndroidView(
-                        factory = { ctx ->
-                            val previewView = PreviewView(ctx)
-                            val preview = Preview.Builder().build().also {
-                                it.setSurfaceProvider(previewView.surfaceProvider)
-                            }
-                            val selector = CameraSelector.DEFAULT_BACK_CAMERA
-                            val imageAnalysis = ImageAnalysis.Builder()
-                                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                .build()
-
-                            imageAnalysis.setAnalyzer(
-                                ContextCompat.getMainExecutor(ctx),
-                                BarcodeAnalyzer { result ->
-                                    if (isActive && result != lastScanned) {
-                                        lastScanned = result
-                                        if (vm.addResult(result)) {
-                                            Toast.makeText(
-                                                ctx,
-                                                "Added: ${result.take(40)}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        } else {
-                                            Toast.makeText(
-                                                ctx,
-                                                "Already scanned",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
+                    // Recreate the camera view when isActive changes so the camera
+                    // unbinds (stops) when batch scanning is stopped.
+                    key(isActive) {
+                        AndroidView(
+                            factory = { ctx ->
+                                val previewView = PreviewView(ctx)
+                                if (isActive) {
+                                    val preview = Preview.Builder().build().also {
+                                        it.setSurfaceProvider(previewView.surfaceProvider)
                                     }
-                                }
-                            )
+                                    val selector = CameraSelector.DEFAULT_BACK_CAMERA
+                                    val imageAnalysis = ImageAnalysis.Builder()
+                                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                        .build()
 
-                            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                            cameraProviderFuture.addListener({
-                                val cameraProvider = cameraProviderFuture.get()
-                                try {
-                                    cameraProvider.unbindAll()
-                                    cameraProvider.bindToLifecycle(
-                                        lifecycleOwner, selector, preview, imageAnalysis
+                                    imageAnalysis.setAnalyzer(
+                                        ContextCompat.getMainExecutor(ctx),
+                                        BarcodeAnalyzer { result ->
+                                            if (result != lastScanned) {
+                                                lastScanned = result
+                                                if (vm.addResult(result)) {
+                                                    Toast.makeText(
+                                                        ctx,
+                                                        "Added: ${result.take(40)}",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } else {
+                                                    Toast.makeText(
+                                                        ctx,
+                                                        "Already scanned",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        }
                                     )
-                                } catch (e: Exception) {
-                                    Toast.makeText(ctx,
-                                        "Camera binding failed: ${e.message}",
-                                        Toast.LENGTH_LONG).show()
+
+                                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                                    cameraProviderFuture.addListener({
+                                        val cameraProvider = cameraProviderFuture.get()
+                                        try {
+                                            cameraProvider.unbindAll()
+                                            cameraProvider.bindToLifecycle(
+                                                lifecycleOwner, selector, preview, imageAnalysis
+                                            )
+                                        } catch (e: Exception) {
+                                            Toast.makeText(ctx,
+                                                "Camera binding failed: ${e.message}",
+                                                Toast.LENGTH_LONG).show()
+                                        }
+                                    }, ContextCompat.getMainExecutor(ctx))
+                                } else {
+                                    // Unbind camera while idle
+                                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                                    cameraProviderFuture.addListener({
+                                        try { cameraProviderFuture.get().unbindAll() } catch (_: Exception) {}
+                                    }, ContextCompat.getMainExecutor(ctx))
                                 }
-                            }, ContextCompat.getMainExecutor(ctx))
-                            previewView
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
+                                previewView
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                     if (isActive) {
                         ScanOverlay(modifier = Modifier
                             .align(Alignment.Center)
@@ -315,7 +327,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     subtitle = "Printable document format"
                 ) {
                     showExportSheet = false
-                    exportToFile(context, vm.exportAsPdf(), "batch_scan", "pdf")
+                    exportPdf(context, vm)
                 }
                 ExportOptionRow(
                     icon = Icons.Filled.GridView,
@@ -491,6 +503,27 @@ private fun ExportOptionRow(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
         }
+    }
+}
+
+private fun exportPdf(context: Context, vm: BatchScanViewModel) {
+    try {
+        val file = com.dhanuk.quickscanpro.util.PdfExporter.writePdf(
+            context,
+            com.dhanuk.quickscanpro.util.PdfExporter.timestampedName("batch_scan"),
+            vm.getPdfLines()
+        )
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(
+                context, "${context.packageName}.fileprovider", file
+            ))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Export PDF"))
+        Toast.makeText(context, "Exported ${file.name}", Toast.LENGTH_LONG).show()
+    } catch (e: Exception) {
+        Toast.makeText(context, "PDF export failed: ${e.message}", Toast.LENGTH_LONG).show()
     }
 }
 

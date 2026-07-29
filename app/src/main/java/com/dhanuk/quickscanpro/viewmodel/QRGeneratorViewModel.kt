@@ -8,11 +8,13 @@ import com.dhanuk.quickscanpro.database.AppDatabase
 import com.dhanuk.quickscanpro.database.GeneratedQR
 import com.dhanuk.quickscanpro.qrgenerator.QRCodeGenerator
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class QRGeneratorViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -51,12 +53,18 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
             QRContentBuilder.QRType.CALENDAR -> QRContentBuilder.buildCalendar(input1, input2, input3, input4)
         }
         _generatedContent.value = content
-        _generatedBitmap.value = QRCodeGenerator.generate(
-            content = content,
-            size = 512,
-            foregroundColor = _foregroundColor.value,
-            backgroundColor = _backgroundColor.value
-        )
+        val fg = _foregroundColor.value
+        val bg = _backgroundColor.value
+        viewModelScope.launch {
+            _generatedBitmap.value = withContext(Dispatchers.Default) {
+                QRCodeGenerator.generate(
+                    content = content,
+                    size = 512,
+                    foregroundColor = fg,
+                    backgroundColor = bg
+                )
+            }
+        }
     }
 
     fun saveCurrentQR(label: String) {

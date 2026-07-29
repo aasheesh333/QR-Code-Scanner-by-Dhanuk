@@ -40,6 +40,8 @@ fun HistoryScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf<String?>(null) }
     var showFavoritesOnly by remember { mutableStateOf(false) }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var pendingDeleteId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(searchQuery) { viewModel.setSearchQuery(searchQuery) }
     LaunchedEffect(selectedType) { viewModel.setSelectedType(selectedType) }
@@ -51,9 +53,7 @@ fun HistoryScreen() {
                 title = { Text("History") },
                 actions = {
                     IconButton(
-                        onClick = {
-                            viewModel.deleteAll()
-                        },
+                        onClick = { showDeleteAllDialog = true },
                         enabled = fullHistory.isNotEmpty()
                     ) {
                         Icon(Icons.Filled.DeleteSweep, contentDescription = "Clear All")
@@ -156,13 +156,53 @@ fun HistoryScreen() {
                     items(filtered, key = { it.id }) { scanResult ->
                         HistoryItem(
                             scanResult = scanResult,
-                            onDelete = { viewModel.delete(scanResult.id) },
+                            onDelete = { pendingDeleteId = scanResult.id },
                             onToggleFavorite = { viewModel.toggleFavorite(scanResult) }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("Clear all history?") },
+            text = { Text("This will permanently delete all ${fullHistory.size} scanned items.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteAll()
+                        showDeleteAllDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Clear All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    pendingDeleteId?.let { id ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteId = null },
+            title = { Text("Delete this item?") },
+            text = { Text("This scan result will be permanently deleted.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.delete(id)
+                        pendingDeleteId = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteId = null }) { Text("Cancel") }
+            }
+        )
     }
 }
 

@@ -11,25 +11,30 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.dhanuk.quickscanpro.config.AppConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object InterstitialAdManager {
 
+    private const val SCANS_BETWEEN_ADS = 4
+
     private var interstitialAd: InterstitialAd? = null
-    private var retryJob: Job? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var retryCount = 0
     private val maxRetries = 3
     private var isLoading = false
+    private var appContext: Context? = null
+
+    private var scansSinceLastAd = 0
 
     fun loadAd(context: Context) {
-        if (isLoading) return
+        appContext = context.applicationContext
+        if (isLoading || interstitialAd != null) return
         isLoading = true
-        retryJob?.cancel()
 
         InterstitialAd.load(
-            context,
+            appContext!!,
             AppConfig.AdMob.INTERSTITIAL_AD_UNIT_ID,
             AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
@@ -39,9 +44,9 @@ object InterstitialAdManager {
                     if (retryCount < maxRetries) {
                         retryCount++
                         val delayMs = (5000L * retryCount).coerceAtMost(30000L)
-                        retryJob = CoroutineScope(Dispatchers.Main).launch {
+                        scope.launch {
                             delay(delayMs)
-                            loadAd(context)
+                            appContext?.let { loadAd(it) }
                         }
                     }
                 }
@@ -55,27 +60,39 @@ object InterstitialAdManager {
         )
     }
 
+    /** Call on every successful scan; shows an interstitial every N scans. */
+    fun recordScan(context: Context) {
+        appContext = context.applicationContext
+        scansSinceLastAd++
+        if (scansSinceLastAd >= SCANS_BETWEEN_ADS && interstitialAd != null) {
+            scansSinceLastAd = 0
+            showAd(context)
+        } else if (interstitialAd == null) {
+            loadAd(context)
+        }
+    }
+
     fun showAd(context: Context) {
-        interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+        appContext = context.applicationContext
+        val activity = context as? Activity ?: return
+        val ad = interstitialAd ?: return
+        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 interstitialAd = null
-                loadAd(context)
+                appContext?.let { loadAd(it) }
             }
 
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                 interstitialAd = null
-                loadAd(context)
+                appContext?.let { loadAd(it) }
             }
         }
-        (context as? Activity)?.let {
-            interstitialAd?.show(it)
-        }
+        ad.show(activity)
     }
 
     fun isAdReady(): Boolean = interstitialAd != null
 
     fun destroy() {
-        retryJob?.cancel()
         interstitialAd = null
         isLoading = false
         retryCount = 0

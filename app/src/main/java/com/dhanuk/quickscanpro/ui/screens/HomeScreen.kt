@@ -39,12 +39,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 
 import com.dhanuk.quickscanpro.ui.composables.ScanOverlay
 import com.dhanuk.quickscanpro.ui.theme.DhanukAccent
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
-import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +63,8 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
     var isTorchOn by rememberSaveable { mutableStateOf(false) }
     var scanned by remember { mutableStateOf(false) }
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
+    var cameraError by remember { mutableStateOf<String?>(null) }
+    var cameraRetryKey by remember { mutableStateOf(0) }
 
     var hasCamPermission by remember {
         mutableStateOf(
@@ -71,11 +76,28 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted -> hasCamPermission = granted }
     )
-    LaunchedEffect(key1 = Unit) { launcher.launch(Manifest.permission.CAMERA) }
+    LaunchedEffect(key1 = Unit) {
+        if (!hasCamPermission) launcher.launch(Manifest.permission.CAMERA)
+    }
 
+    val scope = rememberCoroutineScope()
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
-        onResult = { uri: android.net.Uri? -> uri?.let { scanImage(context, it, onScan) } }
+        onResult = { uri: android.net.Uri? ->
+            uri?.let {
+                scope.launch {
+                    val found = scanImage(context, it)
+                    if (found != null) {
+                        InterstitialAdManager.recordScan(context)
+                        onScan(found)
+                    } else {
+                        android.widget.Toast.makeText(
+                            context, "No QR code found in image", android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
     )
 
     Scaffold(
@@ -114,6 +136,37 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (hasCamPermission) {
+                if (cameraError != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Filled.VideocamOff, contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = "Camera failed to start",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = cameraError ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Button(onClick = {
+                            cameraError = null
+                            cameraRetryKey++
+                        }, shape = RoundedCornerShape(12.dp)) {
+                            Text("Retry")
+                        }
+                    }
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -126,46 +179,60 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
                         elevation = CardDefaults.cardElevation(8.dp)
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
-                            AndroidView(
-                                factory = { ctx ->
-                                    val previewView = PreviewView(ctx)
-                                    val preview = Preview.Builder().build()
-                                    val selector = CameraSelector.Builder()
-                                        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                                        .build()
-                                    preview.setSurfaceProvider(previewView.surfaceProvider)
+                            key(cameraRetryKey) {
+                                AndroidView(
+                                    factory = { ctx ->
+                                        val previewView = PreviewView(ctx)
+                                        val preview = Preview.Builder().build()
+                                        val selector = CameraSelector.Builder()
+                                            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                                            .build()
+                                        preview.setSurfaceProvider(previewView.surfaceProvider)
 
-                                    val imageAnalysis = ImageAnalysis.Builder()
-                                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                        .build()
-                                    imageAnalysis.setAnalyzer(
-                                        ContextCompat.getMainExecutor(ctx),
-                                        BarcodeAnalyzer { result ->
+                                        val imageAnalysis = ImageAnalysis.Builder()
+                                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                            .build()
+                                        val analyzer = BarcodeAnalyzer { result ->
                                             if (!scanned) {
                                                 scanned = true
                                                 if (vibrateEnabled) vibrate(ctx)
                                                 if (soundEnabled) playSound(ctx)
+                                                InterstitialAdManager.recordScan(ctx)
                                                 onScan(result)
                                             }
                                         }
-                                    )
+                                        imageAnalysis.setAnalyzer(
+                                            ContextCompat.getMainExecutor(ctx),
+                                            analyzer
+                                        )
 
-                                    val future: ListenableFuture<ProcessCameraProvider> =
-                                        ProcessCameraProvider.getInstance(ctx)
-                                    future.addListener({
-                                        val provider = future.get()
-                                        try {
-                                            provider.unbindAll()
-                                            val cam = provider.bindToLifecycle(
-                                                lifecycleOwner, selector, preview, imageAnalysis
-                                            )
-                                            cameraControl = cam.cameraControl
-                                        } catch (e: Exception) {}
-                                    }, ContextCompat.getMainExecutor(ctx))
-                                    previewView
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            )
+                                        val future: ListenableFuture<ProcessCameraProvider> =
+                                            ProcessCameraProvider.getInstance(ctx)
+                                        future.addListener({
+                                            try {
+                                                val provider = future.get()
+                                                provider.unbindAll()
+                                                val cam = provider.bindToLifecycle(
+                                                    lifecycleOwner, selector, preview, imageAnalysis
+                                                )
+                                                cameraControl = cam.cameraControl
+                                            } catch (e: Exception) {
+                                                cameraError = e.message ?: e.javaClass.simpleName
+                                            }
+                                        }, ContextCompat.getMainExecutor(ctx))
+                                        previewView
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                    onRelease = { /* analyzer closed via DisposableEffect */ }
+                                )
+                            }
+                            DisposableEffect(cameraRetryKey) {
+                                onDispose {
+                                    try {
+                                        ProcessCameraProvider.getInstance(context).get().unbindAll()
+                                    } catch (_: Exception) {}
+                                }
+                            }
                             ScanOverlay(
                                 modifier = Modifier.fillMaxSize(0.8f).align(Alignment.Center),
                                 color = DhanukAccent
@@ -260,24 +327,28 @@ private fun vibrate(context: Context) {
 private fun playSound(context: Context) {
     try {
         val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        RingtoneManager.getRingtone(context, notification)?.play()
+        val ringtone = RingtoneManager.getRingtone(context, notification) ?: return
+        ringtone.play()
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            try { ringtone.stop() } catch (_: Exception) {}
+        }, 1500)
     } catch (e: Exception) {
         e.printStackTrace()
     }
 }
 
-private fun scanImage(context: Context, uri: Uri, onScan: (String) -> Unit) {
+private suspend fun scanImage(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
     try {
         val image = InputImage.fromFilePath(context, uri)
         val scanner = BarcodeScanning.getClient()
-        scanner.process(image)
-            .addOnSuccessListener { barcodes ->
-                if (barcodes.isNotEmpty()) {
-                    barcodes.first()?.rawValue?.let { onScan(it) }
-                }
-            }
-            .addOnFailureListener {}
-    } catch (e: IOException) {
+        try {
+            com.google.android.gms.tasks.Tasks.await(scanner.process(image))
+                .firstOrNull()?.rawValue
+        } finally {
+            scanner.close()
+        }
+    } catch (e: Exception) {
         e.printStackTrace()
+        null
     }
 }

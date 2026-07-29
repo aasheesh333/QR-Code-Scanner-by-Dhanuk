@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.database
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -9,8 +10,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ScanResultDao {
 
-    @Insert
-    suspend fun insert(scanResult: ScanResult)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(scanResult: ScanResult): Long
 
     @Query("SELECT * FROM scan_results ORDER BY timestamp DESC")
     fun getAll(): Flow<List<ScanResult>>
