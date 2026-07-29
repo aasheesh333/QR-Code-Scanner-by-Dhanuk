@@ -117,13 +117,7 @@ fun Navigation(navController: NavHostController) {
             )
         }
         composable("about") {
-            AboutScreen(
-                onNavigateToAboutUs = { navController.navigate("about_us") },
-                onNavigateToContactUs = { navController.navigate("contact_us") },
-                onNavigateToPrivacyPolicy = { navController.navigate("privacy_policy") },
-                onNavigateToPermissions = { navController.navigate("permissions") },
-                onNavigateToTerms = { navController.navigate("terms") }
-            )
+            AboutScreen(onNavigateBack = { navController.popBackStack() })
         }
         composable("about_us") { AboutUsScreen(onNavigateBack = { navController.popBackStack() }) }
         composable("contact_us") { ContactUsScreen(onNavigateBack = { navController.popBackStack() }) }

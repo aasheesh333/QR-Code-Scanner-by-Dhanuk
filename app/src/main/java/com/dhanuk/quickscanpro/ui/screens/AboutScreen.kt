@@ -1,5 +1,7 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -15,21 +18,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+
+private const val BASE_URL = "https://dhanuk.page.gd/QuickScan-Pro"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(
-    onNavigateToAboutUs: () -> Unit,
-    onNavigateToContactUs: () -> Unit,
-    onNavigateToPrivacyPolicy: () -> Unit,
-    onNavigateToPermissions: () -> Unit,
-    onNavigateToTerms: () -> Unit
-) {
+fun AboutScreen(onNavigateBack: () -> Unit) {
+    val context = LocalContext.current
+
+    fun openUrl(page: String) {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("$BASE_URL/$page")))
+        } catch (_: Exception) {}
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "About") }
+                title = { Text(text = "About") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -44,31 +57,31 @@ fun AboutScreen(
             AboutItem(
                 icon = Icons.Filled.Info,
                 text = "About Us",
-                onClick = onNavigateToAboutUs
+                onClick = { openUrl("about-us.html") }
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Email,
                 text = "Contact Us",
-                onClick = onNavigateToContactUs
+                onClick = { openUrl("contact-us.html") }
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.PrivacyTip,
                 text = "Privacy Policy",
-                onClick = onNavigateToPrivacyPolicy
+                onClick = { openUrl("privacy-policy.html") }
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Lock,
                 text = "Permissions Usage",
-                onClick = onNavigateToPermissions
+                onClick = { openUrl("permissions.html") }
             )
             HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Description,
                 text = "Terms & Conditions",
-                onClick = onNavigateToTerms
+                onClick = { openUrl("terms.html") }
             )
         }
     }

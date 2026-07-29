@@ -23,12 +23,12 @@ class ThemeViewModel(application: Application) : AndroidViewModel(application) {
         .map { preferences ->
             val stored = preferences[themeModeKey]
             try {
-                if (stored != null) ThemeMode.valueOf(stored) else ThemeMode.SYSTEM
+                if (stored != null) ThemeMode.valueOf(stored) else ThemeMode.LIGHT
             } catch (e: Exception) {
-                ThemeMode.SYSTEM
+                ThemeMode.LIGHT
             }
         }
-        .stateIn(viewModelScope, SharingStarted.Lazily, ThemeMode.SYSTEM)
+        .stateIn(viewModelScope, SharingStarted.Lazily, ThemeMode.LIGHT)
 
     val isDarkTheme = dataStore.data
         .map { preferences ->

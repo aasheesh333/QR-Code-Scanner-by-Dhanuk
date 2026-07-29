@@ -31,7 +31,10 @@ object BannerAdManager {
     fun getAdView(context: Context, adUnitId: String): AdView {
         init(context)
         adView?.let { existing ->
-            if (existing.adUnitId == adUnitId && existing.parent != null) {
+            if (existing.adUnitId == adUnitId) {
+                // Reuse the ad; detach from any previous parent so the caller
+                // can attach it without "child already has a parent" crashes.
+                (existing.parent as? ViewGroup)?.removeView(existing)
                 return existing
             }
             (existing.parent as? ViewGroup)?.removeView(existing)

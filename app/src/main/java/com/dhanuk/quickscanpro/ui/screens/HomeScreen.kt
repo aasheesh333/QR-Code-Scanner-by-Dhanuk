@@ -115,9 +115,6 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = onBatchScan) {
-                        Icon(Icons.Filled.QrCodeScanner, contentDescription = "Batch")
-                    }
                     IconButton(onClick = { galleryLauncher.launch("image/*") }) {
                         Icon(Icons.Filled.PhotoLibrary, contentDescription = "Gallery")
                     }
@@ -270,16 +267,34 @@ fun HomeScreen(onScan: (String) -> Unit, onBatchScan: () -> Unit) {
                     else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
 
-                TextButton(
-                    onClick = { scanned = false },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = null,
-                        modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Scan Next")
+                    OutlinedButton(
+                        onClick = { scanned = false },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(Icons.Filled.Refresh, contentDescription = null,
+                            modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Scan Next")
+                    }
+                    Button(
+                        onClick = onBatchScan,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(Icons.Filled.Inventory2, contentDescription = null,
+                            modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Batch Scan")
+                    }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
