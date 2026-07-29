@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -22,7 +23,6 @@ import com.dhanuk.quickscanpro.config.AppConfig
 import com.dhanuk.quickscanpro.ui.composables.BannerAd
 import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
-import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -30,27 +30,32 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    val themeViewModel: ThemeViewModel = viewModel()
     val settingsViewModel: SettingsViewModel = viewModel()
     val onboardingCompleted by settingsViewModel.onboardingCompleted.collectAsState()
 
-    if (!onboardingCompleted) {
-        OnboardingScreen(
-            onFinished = {
-                settingsViewModel.completeOnboarding()
-            }
-        )
-    } else {
-        Scaffold(
-            bottomBar = {
-                Column {
-                    BannerAd(adUnitId = AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
-                    BottomNavigationBar(navController)
+    when {
+        onboardingCompleted == null -> {
+            Box(modifier = Modifier.fillMaxSize())
+        }
+        onboardingCompleted == false -> {
+            OnboardingScreen(
+                onFinished = {
+                    settingsViewModel.completeOnboarding()
                 }
-            }
-        ) { innerPadding ->
-            Box(modifier = Modifier.padding(innerPadding)) {
-                Navigation(navController = navController)
+            )
+        }
+        else -> {
+            Scaffold(
+                bottomBar = {
+                    Column {
+                        BannerAd(adUnitId = AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
+                        BottomNavigationBar(navController)
+                    }
+                }
+            ) { innerPadding ->
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    Navigation(navController = navController)
+                }
             }
         }
     }

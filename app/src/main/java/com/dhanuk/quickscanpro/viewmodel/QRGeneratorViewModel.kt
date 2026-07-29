@@ -10,6 +10,7 @@ import com.dhanuk.quickscanpro.qrgenerator.QRCodeGenerator
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -19,11 +20,20 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
 
     val savedQRs = dao.getAll().stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    var selectedType = MutableStateFlow(QRContentBuilder.QRType.TEXT)
-    var generatedBitmap = MutableStateFlow<Bitmap?>(null)
-    var generatedContent = MutableStateFlow("")
-    var foregroundColor = MutableStateFlow(0xFF000000.toInt())
-    var backgroundColor = MutableStateFlow(0xFFFFFFFF.toInt())
+    private val _selectedType = MutableStateFlow(QRContentBuilder.QRType.TEXT)
+    val selectedType = _selectedType.asStateFlow()
+
+    private val _generatedBitmap = MutableStateFlow<Bitmap?>(null)
+    val generatedBitmap = _generatedBitmap.asStateFlow()
+
+    private val _generatedContent = MutableStateFlow("")
+    val generatedContent = _generatedContent.asStateFlow()
+
+    private val _foregroundColor = MutableStateFlow(0xFF000000.toInt())
+    val foregroundColor = _foregroundColor.asStateFlow()
+
+    private val _backgroundColor = MutableStateFlow(0xFFFFFFFF.toInt())
+    val backgroundColor = _backgroundColor.asStateFlow()
 
     fun generate(
         input1: String,
@@ -31,7 +41,7 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
         input3: String = "",
         input4: String = ""
     ) {
-        val content = when (selectedType.value) {
+        val content = when (_selectedType.value) {
             QRContentBuilder.QRType.TEXT, QRContentBuilder.QRType.URL -> input1
             QRContentBuilder.QRType.WIFI -> QRContentBuilder.buildWifi(input1, input2, input3.ifBlank { "WPA" })
             QRContentBuilder.QRType.VCARD -> QRContentBuilder.buildVCARD(input1, input2, input3, input4)
@@ -40,37 +50,43 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
             QRContentBuilder.QRType.PHONE -> QRContentBuilder.buildPhone(input1)
             QRContentBuilder.QRType.CALENDAR -> QRContentBuilder.buildCalendar(input1, input2, input3, input4)
         }
-        generatedContent.value = content
-        generatedBitmap.value = QRCodeGenerator.generate(
+        _generatedContent.value = content
+        _generatedBitmap.value = QRCodeGenerator.generate(
             content = content,
             size = 512,
-            foregroundColor = foregroundColor.value,
-            backgroundColor = backgroundColor.value
+            foregroundColor = _foregroundColor.value,
+            backgroundColor = _backgroundColor.value
         )
     }
 
     fun saveCurrentQR(label: String) {
-        val content = generatedContent.value
+        val content = _generatedContent.value
         if (content.isBlank()) return
         viewModelScope.launch {
             dao.insert(
                 GeneratedQR(
                     content = content,
-                    type = selectedType.value.name,
+                    type = _selectedType.value.name,
                     displayLabel = label.ifBlank { content.take(30) },
-                    foregroundColor = foregroundColor.value.toLong(),
-                    backgroundColor = backgroundColor.value.toLong()
+                    foregroundColor = _foregroundColor.value.toLong(),
+                    backgroundColor = _backgroundColor.value.toLong()
                 )
             )
         }
     }
 
     fun setForeground(color: Int) {
-        foregroundColor.value = color
+        _foregroundColor.value = color
     }
 
     fun setBackground(color: Int) {
-        backgroundColor.value = color
+        _backgroundColor.value = color
+    }
+
+    fun setType(type: QRContentBuilder.QRType) {
+        _selectedType.value = type
+        _generatedBitmap.value = null
+        _generatedContent.value = ""
     }
 
     fun deleteById(id: Int) {

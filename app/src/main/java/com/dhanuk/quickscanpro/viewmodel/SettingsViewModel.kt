@@ -37,8 +37,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val onboardingCompleted = dataStore.data
-        .map { it[onboardingCompletedKey] ?: false }
-        .stateIn(viewModelScope, SharingStarted.Lazily, false)
+        .map { it[onboardingCompletedKey] }
+        .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     fun setVibrate(enabled: Boolean) {
         viewModelScope.launch { dataStore.edit { it[vibrateKey] = enabled } }
