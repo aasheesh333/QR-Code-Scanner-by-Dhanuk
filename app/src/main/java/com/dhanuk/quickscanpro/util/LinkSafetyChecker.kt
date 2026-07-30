@@ -99,7 +99,30 @@ object LinkSafetyChecker {
             signals.add("Unusually long link")
         }
 
-        if (signals.isEmpty()) signals.add("No warning signs detected")
+        // 9. APK / exe download — classic fake-QR / malicious payload
+        if (lower.endsWith(".apk") || lower.contains("/download/") && lower.contains(".apk") ||
+            lower.endsWith(".exe") || lower.endsWith(".dll")) {
+            score -= 35
+            signals.add("WARNING: Links to an app/installer download (.apk/.exe) — high malware risk")
+        }
+
+        // 10. Clipboard-injection payload — some QR Codes carry `javascript:` or shell commands
+        if (lower.startsWith("javascript:") || lower.contains("data:text/html") ||
+            lower.contains("intent://") || lower.contains("\\x1b[")) {
+            score -= 30
+            signals.add("Suspicious embedded script/intent payload — could inject actions")
+        }
+
+        // 11. Multiple redirect parameters — `?url=`, `?redirect=`, `?to=`
+        if (lower.contains("redirect=") || lower.contains("?url=") || lower.contains("?to=") ||
+            lower.contains("&next=") || lower.contains("returnurl=")) {
+            score -= 15
+            signals.add("Contains a redirect parameter — common phishing pattern")
+        }
+
+        if (signals.size == 1 && signals.first().startsWith("Encrypted")) {
+            signals.add("No warning signs detected")
+        }
 
         score = score.coerceIn(0, 100)
         val level = when {

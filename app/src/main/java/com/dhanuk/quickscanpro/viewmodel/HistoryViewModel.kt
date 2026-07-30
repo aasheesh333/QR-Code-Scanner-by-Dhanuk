@@ -1,11 +1,15 @@
 package com.dhanuk.quickscanpro.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dhanuk.quickscanpro.database.AppDatabase
+import com.dhanuk.quickscanpro.database.CategoryCount
 import com.dhanuk.quickscanpro.database.ScanResult
+import com.dhanuk.quickscanpro.util.AutoOrganizer
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
+import com.dhanuk.quickscanpro.util.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,8 +30,15 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     private val selectedType = MutableStateFlow<String?>(null)
     private val showFavoritesOnly = MutableStateFlow(false)
     private val selectedCollectionId = MutableStateFlow<Int?>(null)
+    private val selectedAutoCategory = MutableStateFlow<String?>(null)
 
     val history = scanResultDao.getAll()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val vaultScans = scanResultDao.getVaultScans()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val autoCategoryCounts = scanResultDao.getCountByAutoCategory()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val filteredHistory = combine(
@@ -35,10 +46,14 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         searchQuery.asStateFlow(),
         selectedType.asStateFlow(),
         showFavoritesOnly.asStateFlow(),
-        selectedCollectionId.asStateFlow()
-    ) { all, query, type, favsOnly, collectionId ->
+        selectedCollectionId.asStateFlow(),
+        selectedAutoCategory.asStateFlow()
+    ) { all, query, type, favsOnly, collectionId, autoCat ->
         var filtered = all
 
+        if (autoCat != null) {
+            filtered = filtered.filter { it.autoCategory == autoCat }
+        }
         if (collectionId != null) {
             filtered = filtered.filter { it.collectionId == collectionId }
         }
@@ -73,6 +88,10 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         selectedCollectionId.value = id
     }
 
+    fun setSelectedAutoCategory(category: String?) {
+        selectedAutoCategory.value = category
+    }
+
     fun toggleFavorite(scanResult: ScanResult) {
         viewModelScope.launch {
             scanResultDao.setFavorite(scanResult.id, !scanResult.isFavorite)
@@ -91,12 +110,40 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun deleteAllVault() {
+        viewModelScope.launch { scanResultDao.deleteAllVault() }
+    }
+
     fun setNote(id: Int, note: String) {
         viewModelScope.launch { scanResultDao.setNote(id, note) }
     }
 
     fun setCollection(id: Int, collectionId: Int?) {
         viewModelScope.launch { scanResultDao.setCollection(id, collectionId) }
+    }
+
+    fun setVault(scanResult: ScanResult, vault: Boolean, context: Context) {
+        viewModelScope.launch {
+            scanResultDao.setVault(scanResult.id, vault)
+            if (!vault) ReminderScheduler.cancel(context, scanResult.id)
+        }
+    }
+
+    fun setReminder(scanResult: ScanResult, time: Long?, context: Context) {
+        viewModelScope.launch {
+            scanResultDao.setReminder(scanResult.id, time)
+            if (time != null && time > System.currentTimeMillis()) {
+                ReminderScheduler.schedule(
+                    context, scanResult.id, scanResult.content, time
+                )
+            } else {
+                ReminderScheduler.cancel(context, scanResult.id)
+            }
+        }
+    }
+
+    fun setTranslatedText(id: Int, text: String) {
+        viewModelScope.launch { scanResultDao.setTranslatedText(id, text) }
     }
 
     fun addCollection(name: String, color: Long, emoji: String = "") {
@@ -117,19 +164,20 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
 
     fun addScanResult(scanResult: ScanResult) {
         val detectedType = BarcodeTypeDetector.detectType(scanResult.content)
-        val withType = scanResult.copy(type = detectedType)
+        val autoCat = AutoOrganizer.categorize(detectedType, scanResult.content)
+        val enriched = scanResult.copy(type = detectedType, autoCategory = autoCat)
 
         // In-memory guard against rapid duplicate inserts (e.g. camera firing
         // multiple times before the Room flow emits the new row).
-        if (withType.content == lastSavedContent) return
+        if (enriched.content == lastSavedContent) return
         val latest = history.value.firstOrNull()
-        if (latest != null && latest.content == withType.content) {
-            lastSavedContent = withType.content
+        if (latest != null && latest.content == enriched.content) {
+            lastSavedContent = enriched.content
             return
         }
-        lastSavedContent = withType.content
+        lastSavedContent = enriched.content
         viewModelScope.launch {
-            scanResultDao.insert(withType)
+            scanResultDao.insert(enriched)
         }
     }
 }
