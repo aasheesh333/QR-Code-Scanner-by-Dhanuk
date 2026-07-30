@@ -10,13 +10,14 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,14 +28,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ViewAgenda
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +57,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -58,9 +67,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
-import com.dhanuk.quickscanpro.ui.composables.CameraIconButton
-import com.dhanuk.quickscanpro.ui.composables.EmptyState
-import com.dhanuk.quickscanpro.ui.composables.ScanButton
 import com.dhanuk.quickscanpro.ui.composables.ScanFrame
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
@@ -104,79 +110,63 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        TopHeaderRow(
-            onSettings = onViewAllHistory,
-            settingsIcon = Icons.Filled.History
-        )
+        QuickScanHeader()
 
-        CameraCard(
-            hasCameraPermission = hasCameraPermission,
-            onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
-            onScan = onScan,
-            onBatch = onOpenBatch
-        )
+        Box(modifier = Modifier.fillMaxWidth().weight(0.70f)) {
+            CameraViewfinder(
+                hasCameraPermission = hasCameraPermission,
+                onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
+                onScan = onScan,
+                onBatch = onOpenBatch
+            )
+        }
 
-        QuickToolsRow(
+        StitchBottomSheet(
+            recent = recent1,
             onGenerate = onViewAllHistory,
             onHistory = onViewAllHistory,
             onTemplates = onOpenTemplates,
-            onLeak = onOpenLeakCheck
+            onLeak = onOpenLeakCheck,
+            onRecentClick = onViewAllHistory
         )
-
-        RecentScanRow(recent1, onViewAll = onViewAllHistory)
     }
 }
 
 @Composable
-private fun TopHeaderRow(
-    onSettings: () -> Unit,
-    settingsIcon: androidx.compose.ui.graphics.vector.ImageVector
-) {
+private fun QuickScanHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 20.dp, end = 14.dp, top = 18.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Filled.QrCode2,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = "QuickScan Pro",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Spacer(Modifier.height(2.dp))
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Filled.QrCodeScanner,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(Modifier.width(8.dp))
             Text(
-                text = "Point at any QR or barcode",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = "QuickScan Pro",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.size(40.dp).clickable(onClick = onSettings)
-        ) {
+        IconButton(onClick = {}) {
             Icon(
-                settingsIcon,
+                Icons.Filled.Settings,
                 contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(10.dp)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
 
 @Composable
-private fun CameraCard(
+private fun CameraViewfinder(
     hasCameraPermission: Boolean,
     onRequestPermission: () -> Unit,
     onScan: (String) -> Unit,
@@ -184,10 +174,7 @@ private fun CameraCard(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .aspectRatio(0.85f)
-            .clip(RoundedCornerShape(24.dp))
+            .fillMaxSize()
             .background(Color.Black)
     ) {
         if (hasCameraPermission) {
@@ -248,42 +235,136 @@ private fun CameraCard(
             }
         }
 
-        ScanFrame(modifier = Modifier.fillMaxSize().padding(28.dp))
-
-        // Floating icons above camera — evenly spaced via SpaceBetween
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            CameraIconButton(
-                icon = Icons.Filled.FlashOn,
-                onClick = {},
-                contentDescription = "Flash"
-            )
-            CameraIconButton(
-                icon = Icons.Filled.AutoAwesomeMotion,
-                onClick = onBatch,
-                contentDescription = "Batch scan"
-            )
+            GlassCircleButton(onClick = {}, icon = Icons.Filled.FlashOn, contentDescription = "Flash")
+            GlassCircleButton(onClick = onBatch, icon = Icons.Filled.AutoAwesomeMotion, contentDescription = "Batch scan")
         }
 
-        // Big white Scan Now button at bottom of camera card
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = 48.dp, vertical = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            ScanFrame(modifier = Modifier.fillMaxWidth())
+        }
+
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
+                .padding(bottom = 32.dp)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            ScanButton(onClick = {}, label = "Scan Now")
+            Button(
+                onClick = {},
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 32.dp, vertical = 16.dp
+                )
+            ) {
+                Icon(
+                    Icons.Filled.QrCode2,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Scan Now",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun QuickToolsRow(
+private fun GlassCircleButton(
+    onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String?
+) {
+    Surface(
+        shape = CircleShape,
+        color = Color.White.copy(alpha = 0.2f),
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .border(width = 1.dp, color = Color.White.copy(alpha = 0.2f), shape = CircleShape)
+            .clickable(onClick = onClick)
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Icon(
+                icon,
+                contentDescription = contentDescription,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.StitchBottomSheet(
+    recent: ScanResult?,
+    onGenerate: () -> Unit,
+    onHistory: () -> Unit,
+    onTemplates: () -> Unit,
+    onLeak: () -> Unit,
+    onRecentClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .weight(0.30f),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            DragHandle()
+
+            QuickTilesRow(
+                onGenerate = onGenerate,
+                onHistory = onHistory,
+                onTemplates = onTemplates,
+                onLeak = onLeak
+            )
+
+            RecentScanSnippet(recent, onRecentClick)
+        }
+    }
+}
+
+@Composable
+private fun DragHandle() {
+    Box(
+        modifier = Modifier
+            .width(48.dp)
+            .height(6.dp)
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {}
+}
+
+@Composable
+private fun QuickTilesRow(
     onGenerate: () -> Unit,
     onHistory: () -> Unit,
     onTemplates: () -> Unit,
@@ -292,51 +373,81 @@ private fun QuickToolsRow(
     val tiles = listOf(
         Triple("Generate QR", Icons.Filled.QrCode, onGenerate),
         Triple("History", Icons.Filled.History, onHistory),
-        Triple("Templates", Icons.Filled.ViewAgenda, onTemplates),
+        Triple("Templates", Icons.Filled.Dashboard, onTemplates),
         Triple("Leak Check", Icons.Filled.Security, onLeak)
     )
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.Top
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         tiles.forEach { (title, icon, onClick) ->
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(14.dp))
-                    .clickable(onClick = onClick)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(vertical = 16.dp, horizontal = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = title,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(22.dp)
-                )
-                Text(
-                    title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            QuickTile(title, icon, onClick, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun RecentScanRow(scan: ScanResult?, onViewAll: () -> Unit) {
+private fun QuickTile(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Text(
+            title,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun RecentScanSnippet(scan: ScanResult?, onClick: () -> Unit) {
     if (scan == null) {
-        Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            EmptyState(
-                icon = Icons.Filled.History,
-                title = "No scans yet",
-                subtitle = "Point your camera at a QR code to begin"
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No scans yet - point your camera at a QR code",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
         }
         return
@@ -344,46 +455,53 @@ private fun RecentScanRow(scan: ScanResult?, onViewAll: () -> Unit) {
     val ts = remember(scan.id) {
         SimpleDateFormat("MMM d, HH:mm", Locale.getDefault()).format(Date(scan.timestamp))
     }
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .clickable(onClick = onViewAll)
-            .clip(RoundedCornerShape(14.dp)),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center
         ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = "Last scan",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = scan.content.take(50),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${scan.type.uppercase()} · $ts",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "View all →",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
+            Icon(
+                Icons.Filled.Contacts,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(18.dp)
             )
         }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = scan.content.take(50),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "Scanned $ts",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Icon(
+            Icons.Filled.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline
+        )
     }
 }

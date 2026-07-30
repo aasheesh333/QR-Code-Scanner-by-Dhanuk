@@ -160,7 +160,7 @@ private fun AppNavigation(navController: NavHostController) {
 
         composable("batch_scan") { BatchScanScreen { navController.popBackStack() } }
         composable("compare_scan") { CompareScanScreen { navController.popBackStack() } }
-        composable("vault") { VaultScreen { navController.popBackStack() } }
+        composable("vault") { VaultScreen(onNavigateBack = { navController.popBackStack() }) }
         composable("theme_studio") { ThemeStudioScreen { navController.popBackStack() } }
         composable("timeline") { TimelineScreen { navController.popBackStack() } }
         composable("templates") { TemplatesScreen { navController.popBackStack() } }

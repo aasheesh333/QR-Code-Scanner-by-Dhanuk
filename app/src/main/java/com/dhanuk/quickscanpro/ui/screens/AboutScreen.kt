@@ -1,6 +1,8 @@
 package com.dhanuk.quickscanpro.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,15 +18,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.FiberNew
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,11 +39,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
-import com.dhanuk.quickscanpro.ui.composables.SectionTitle
-import com.dhanuk.quickscanpro.ui.composables.SettingRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,24 +70,27 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 20.dp)
         ) {
             Spacer(Modifier.height(8.dp))
-            // App identity card
             Surface(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
-                color = MaterialTheme.colorScheme.surface
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant
+                )
             ) {
-                Row(
-                    modifier = Modifier.padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center
                     ) {
@@ -92,52 +98,132 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                             Icons.Filled.QrCodeScanner,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(40.dp)
                         )
                     }
-                    Column {
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "QuickScan Pro",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
                         Text(
-                            "QuickScan Pro",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "Version 2.0.0 (Build 2)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            "Version 2.0.0",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Offline QR & Barcode Scanner with Privacy-First Tools",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
-
-            SectionTitle("SUPPORT")
-            Surface(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Column(Modifier.padding(vertical = 4.dp)) {
-                    AboutLink(Icons.Filled.Info, "About Us")
-                    AboutLink(Icons.Filled.Email, "Contact Us")
-                    AboutLink(Icons.Filled.Star, "Rate on Play Store")
-                }
-            }
-
-            SectionTitle("LEGAL")
-            Surface(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Column(Modifier.padding(vertical = 4.dp)) {
-                    AboutLink(Icons.Filled.Lock, "Privacy Policy")
-                    AboutLink(Icons.Filled.Description, "Terms & Conditions")
-                }
-            }
-
+            Spacer(Modifier.height(24.dp))
             Text(
-                "Made with care in India. 100% offline — your scans never leave the device.",
+                "WHAT'S NEW",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant
+                )
+            ) {
+                Column {
+                    WhatsNewRow(Icons.Filled.FiberNew, "New: Scan History Timeline view")
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    WhatsNewRow(Icons.Filled.FiberNew, "New: QR Code Templates Gallery")
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    WhatsNewRow(Icons.Filled.FiberNew, "New: Offline Password Leak Checker")
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Text(
+                "KEY FEATURES",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant
+                )
+            ) {
+                Column {
+                    FeatureRow(Icons.Filled.WifiOff, "Offline Scanning", "Scan QR & barcodes without internet")
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    FeatureRow(Icons.Filled.Shield, "Privacy-First", "All tools run on your device")
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    FeatureRow(Icons.Filled.Share, "Generate & Share", "Create QR codes and share instantly")
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    FeatureRow(Icons.Filled.Block, "Zero Tracking", "No analytics, no account, no login")
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Text(
+                "RESOURCES",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant
+                )
+            ) {
+                Column(Modifier.padding(vertical = 4.dp)) {
+                    AboutLink("Privacy Policy")
+                    AboutLink("Open Source Licenses")
+                    AboutLink("Terms of Use")
+                    AboutLink("Help & Support")
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Text(
+                "Made with care — offline and free forever",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 12.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
             )
             Spacer(Modifier.height(8.dp))
         }
@@ -145,18 +231,86 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun AboutLink(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String) {
-    SettingRow(
-        icon = icon,
-        title = title,
-        subtitle = null,
-        onClick = {},
-        trailing = {
+private fun WhatsNewRow(icon: ImageVector, text: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun FeatureRow(icon: ImageVector, title: String, description: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
             )
         }
-    )
+        Column {
+            Text(
+                title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun AboutLink(title: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            Icons.Filled.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }

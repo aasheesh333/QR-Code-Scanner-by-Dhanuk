@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Stitch Lumina Utility palette -->
-    <color name="dhanuk_primary">#FF2563EB</color>
-    <color name="dhanuk_primary_variant">#FF1D4ED8</color>
-    <color name="dhanuk_secondary">#FF10B981</color>
-    <color name="dhanuk_secondary_variant">#FF0EA15A</color>
-    <color name="dhanuk_background">#FFFFFFFF</color>
+    <!-- Stitch Lumina Utility M3 tonal palette -->
+    <color name="dhanuk_primary">#FF004AC6</color>
+    <color name="dhanuk_primary_variant">#FF003EA8</color>
+    <color name="dhanuk_secondary">#FF006C49</color>
+    <color name="dhanuk_secondary_variant">#FF00714D</color>
+    <color name="dhanuk_background">#FFF9F9FF</color>
     <color name="dhanuk_accent">#FF2563EB</color>
     <color name="dhanuk_tertiary">#FFBC4800</color>
 
