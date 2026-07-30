@@ -42,21 +42,19 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     val autoCategoryCounts = scanResultDao.getCountByAutoCategory()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val filteredHistory: Flow<List<ScanResult>> = combine(
-        scanResultDao.getAll(),
-        searchQuery.asStateFlow(),
-        selectedType.asStateFlow(),
-        showFavoritesOnly.asStateFlow(),
-        selectedCollectionId.asStateFlow(),
-        selectedAutoCategory.asStateFlow()
-    ) { args: Array<Any?> ->
-        @Suppress("UNCHECKED_CAST")
-        val all = args[0] as List<ScanResult>
-        val query = args[1] as String
-        val type = args[2] as String?
-        val favsOnly = args[3] as Boolean
-        val collectionId = args[4] as Int?
-        val autoCat = args[5] as String?
+    private val autoFavsQuery: Flow<Triple<String, Boolean, String>> = combine(
+        searchQuery, showFavoritesOnly, selectedAutoCategory
+    ) { q, fav, auto -> Triple(q, fav, auto) }
+
+    private val typeCollection: Flow<Pair<String?, Int?>> = combine(
+        selectedType, selectedCollectionId
+    ) { t, c -> Pair(t, c) }
+
+    val filteredHistory: Flow<List<ScanResult>> = scanResultDao.getAll().combine(
+        autoFavsQuery.combine(typeCollection) { a, b -> Pair(a, b) }
+    ) { all, (autoFavs, typeColl) ->
+        val (q, favsOnly, autoCat) = autoFavs
+        val (type, collectionId) = typeColl
         var filtered = all
 
         if (autoCat != null) {
@@ -71,10 +69,10 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         if (type != null) {
             filtered = filtered.filter { it.type == type }
         }
-        if (query.isNotBlank()) {
+        if (q.isNotBlank()) {
             filtered = filtered.filter {
-                it.content.contains(query, ignoreCase = true) ||
-                        it.note.contains(query, ignoreCase = true)
+                it.content.contains(q, ignoreCase = true) ||
+                        it.note.contains(q, ignoreCase = true)
             }
         }
         filtered
