@@ -1,5 +1,6 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,17 +38,21 @@ fun HistoryScreen() {
     val context = LocalContext.current
     val fullHistory by viewModel.history.collectAsState()
     val filtered by viewModel.filteredHistory.collectAsState()
+    val collections by viewModel.collections.collectAsState()
     val scope = rememberCoroutineScope()
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf<String?>(null) }
     var showFavoritesOnly by remember { mutableStateOf(false) }
+    var selectedCollectionId by remember { mutableStateOf<Int?>(null) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var pendingDeleteId by remember { mutableStateOf<Int?>(null) }
+    var showNewCollectionDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(searchQuery) { viewModel.setSearchQuery(searchQuery) }
     LaunchedEffect(selectedType) { viewModel.setSelectedType(selectedType) }
     LaunchedEffect(showFavoritesOnly) { viewModel.setShowFavoritesOnly(showFavoritesOnly) }
+    LaunchedEffect(selectedCollectionId) { viewModel.setSelectedCollection(selectedCollectionId) }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -106,6 +111,40 @@ fun HistoryScreen() {
                 }
             )
 
+            // Collections row
+            if (collections.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilterChip(
+                        selected = selectedCollectionId == null,
+                        onClick = { selectedCollectionId = null },
+                        label = { Text("All Scans") }
+                    )
+                    collections.forEach { collection ->
+                        FilterChip(
+                            selected = selectedCollectionId == collection.id,
+                            onClick = {
+                                selectedCollectionId =
+                                    if (selectedCollectionId == collection.id) null
+                                    else collection.id
+                            },
+                            label = { Text("${collection.emoji} ${collection.name}") }
+                        )
+                    }
+                    AssistChip(
+                        onClick = { showNewCollectionDialog = true },
+                        label = { Text("+ New") },
+                        leadingIcon = { Icon(Icons.Filled.CreateNewFolder, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                }
+            }
+
             // Type filter chips
             val typeChips = listOf(
                 BarcodeTypeDetector.TYPE_URL,
@@ -124,8 +163,8 @@ fun HistoryScreen() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
-                    selected = selectedType == null && !showFavoritesOnly,
-                    onClick = { selectedType = null; showFavoritesOnly = false },
+                    selected = selectedType == null && !showFavoritesOnly && selectedCollectionId == null,
+                    onClick = { selectedType = null; showFavoritesOnly = false; selectedCollectionId = null },
                     label = { Text("All") }
                 )
                 typeChips.forEach { type ->
@@ -164,9 +203,14 @@ fun HistoryScreen() {
                     items(filtered, key = { it.id }) { scanResult ->
                         HistoryItem(
                             scanResult = scanResult,
+                            collections = collections,
                             onDelete = { pendingDeleteId = scanResult.id },
                             onToggleFavorite = { viewModel.toggleFavorite(scanResult) },
-                            onSaveNote = { note -> viewModel.setNote(scanResult.id, note) }
+                            onSaveNote = { note -> viewModel.setNote(scanResult.id, note) },
+                            onAssignCollection = { collectionId ->
+                                viewModel.setCollection(scanResult.id, collectionId)
+                            },
+                            onDeleteCollection = { viewModel.deleteCollection(it) }
                         )
                     }
                 }
@@ -213,16 +257,80 @@ fun HistoryScreen() {
             }
         )
     }
+
+    if (showNewCollectionDialog) {
+        NewCollectionDialog(
+            onDismiss = { showNewCollectionDialog = false },
+            onCreate = { name, emoji ->
+                viewModel.addCollection(name, 0x700B97L, emoji)
+                showNewCollectionDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun NewCollectionDialog(
+    onDismiss: () -> Unit,
+    onCreate: (String, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var emoji by remember { mutableStateOf("📁") }
+    val emojis = listOf("📁", "🔗", "🔐", "👤", "🏠", "📞", "🏪", "🎯", "⭐", "💡")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New collection") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text("Collection name...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                Spacer(Modifier.height(12.dp))
+                Text("Icon", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.horizontalScroll(rememberScrollState())
+                ) {
+                    emojis.forEach { e ->
+                        FilterChip(
+                            selected = emoji == e,
+                            onClick = { emoji = e },
+                            label = { Text(e) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (name.isNotBlank()) onCreate(name.trim(), emoji) },
+                enabled = name.isNotBlank()
+            ) { Text("Create") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }
 
 @Composable
 private fun HistoryItem(
     scanResult: ScanResult,
+    collections: List<com.dhanuk.quickscanpro.database.ScanCollection>,
     onDelete: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onSaveNote: (String) -> Unit
+    onSaveNote: (String) -> Unit,
+    onAssignCollection: (Int?) -> Unit,
+    onDeleteCollection: (Int) -> Unit
 ) {
     var showNoteDialog by remember { mutableStateOf(false) }
+    var showCollectionPicker by remember { mutableStateOf(false) }
 
     GlassCard(
         modifier = Modifier
@@ -288,6 +396,14 @@ private fun HistoryItem(
                         Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
+            IconButton(onClick = { showCollectionPicker = true }) {
+                Icon(
+                    if (scanResult.collectionId != null) Icons.Filled.Folder else Icons.Filled.FolderOpen,
+                    contentDescription = "Collection",
+                    tint = if (scanResult.collectionId != null)
+                        LuminaPrimaryGlow else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+            }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Filled.Delete, contentDescription = "Delete",
                     tint = MaterialTheme.colorScheme.error)
@@ -320,9 +436,74 @@ private fun HistoryItem(
             }
         )
     }
-}
 
-private fun formatTimestamp(timestamp: Long): String {
+    if (showCollectionPicker) {
+        AlertDialog(
+            onDismissRequest = { showCollectionPicker = false },
+            title = { Text("Move to collection") },
+            text = {
+                Column {
+                    ListItem(
+                        headlineContent = { Text("None (remove)") },
+                        leadingContent = {
+                            Icon(
+                                if (scanResult.collectionId == null) Icons.Filled.RadioButtonChecked
+                                else Icons.Filled.RadioButtonUnchecked,
+                                contentDescription = null,
+                                tint = LuminaPrimaryGlow
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            onAssignCollection(null)
+                            showCollectionPicker = false
+                        }
+                    )
+                    HorizontalDivider()
+                    collections.forEach { collection ->
+                        ListItem(
+                            headlineContent = { Text("${collection.emoji} ${collection.name}") },
+                            leadingContent = {
+                                Icon(
+                                    if (scanResult.collectionId == collection.id) Icons.Filled.RadioButtonChecked
+                                    else Icons.Filled.RadioButtonUnchecked,
+                                    contentDescription = null,
+                                    tint = LuminaPrimaryGlow
+                                )
+                            },
+                            trailingContent = {
+                                if (collections.size > 1 || scanResult.collectionId == collection.id) {
+                                    TextButton(
+                                        onClick = { onDeleteCollection(collection.id) },
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.error
+                                        )
+                                    ) {
+                                        Icon(Icons.Filled.Delete, contentDescription = "Delete collection", modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            },
+                            modifier = Modifier.clickable {
+                                onAssignCollection(collection.id)
+                                showCollectionPicker = false
+                            }
+                        )
+                    }
+                    if (collections.isEmpty()) {
+                        Text(
+                            "No collections yet. Create one with the \"+ New\" button above.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCollectionPicker = false }) { Text("Done") }
+            }
+        )
+    }
+}
     val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp))
 }

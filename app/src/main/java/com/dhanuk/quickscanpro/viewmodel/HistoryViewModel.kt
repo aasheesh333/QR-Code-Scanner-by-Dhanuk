@@ -25,6 +25,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     private val searchQuery = MutableStateFlow("")
     private val selectedType = MutableStateFlow<String?>(null)
     private val showFavoritesOnly = MutableStateFlow(false)
+    private val selectedCollectionId = MutableStateFlow<Int?>(null)
 
     val history = scanResultDao.getAll()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -33,10 +34,14 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         scanResultDao.getAll(),
         searchQuery.asStateFlow(),
         selectedType.asStateFlow(),
-        showFavoritesOnly.asStateFlow()
-    ) { all, query, type, favsOnly ->
+        showFavoritesOnly.asStateFlow(),
+        selectedCollectionId.asStateFlow()
+    ) { all, query, type, favsOnly, collectionId ->
         var filtered = all
 
+        if (collectionId != null) {
+            filtered = filtered.filter { it.collectionId == collectionId }
+        }
         if (favsOnly) {
             filtered = filtered.filter { it.isFavorite }
         }
@@ -45,7 +50,8 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
         if (query.isNotBlank()) {
             filtered = filtered.filter {
-                it.content.contains(query, ignoreCase = true)
+                it.content.contains(query, ignoreCase = true) ||
+                        it.note.contains(query, ignoreCase = true)
             }
         }
         filtered
@@ -61,6 +67,10 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
 
     fun setShowFavoritesOnly(show: Boolean) {
         showFavoritesOnly.value = show
+    }
+
+    fun setSelectedCollection(id: Int?) {
+        selectedCollectionId.value = id
     }
 
     fun toggleFavorite(scanResult: ScanResult) {
