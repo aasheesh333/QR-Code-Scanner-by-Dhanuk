@@ -87,17 +87,25 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
             Spacer(Modifier.height(10.dp))
             Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ThemeModeButton("Light", Color(0xFFF3F4F6), themeMode == ThemeMode.LIGHT) {
-                    vm.setThemeMode(ThemeMode.LIGHT)
+                Box(modifier = Modifier.weight(1f)) {
+                    ThemeModeButton("Light", Color(0xFFF3F4F6), themeMode == ThemeMode.LIGHT) {
+                        vm.setThemeMode(ThemeMode.LIGHT)
+                    }
                 }
-                ThemeModeButton("Dark", Color(0xFF1F2937), themeMode == ThemeMode.DARK) {
-                    vm.setThemeMode(ThemeMode.DARK)
+                Box(modifier = Modifier.weight(1f)) {
+                    ThemeModeButton("Dark", Color(0xFF1F2937), themeMode == ThemeMode.DARK) {
+                        vm.setThemeMode(ThemeMode.DARK)
+                    }
                 }
-                ThemeModeButton("System", Color(0xFF64748B), themeMode == ThemeMode.SYSTEM) {
-                    vm.setThemeMode(ThemeMode.SYSTEM)
+                Box(modifier = Modifier.weight(1f)) {
+                    ThemeModeButton("System", Color(0xFF64748B), themeMode == ThemeMode.SYSTEM) {
+                        vm.setThemeMode(ThemeMode.SYSTEM)
+                    }
                 }
-                ThemeModeButton("AMOLED", Color.Black, themeMode == ThemeMode.AMOLED) {
-                    vm.setThemeMode(ThemeMode.AMOLED)
+                Box(modifier = Modifier.weight(1f)) {
+                    ThemeModeButton("AMOLED", Color.Black, themeMode == ThemeMode.AMOLED) {
+                        vm.setThemeMode(ThemeMode.AMOLED)
+                    }
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -199,7 +207,6 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
 private fun ThemeModeButton(label: String, color: Color, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .weight(1f)
             .aspectRatio(1f)
             .clip(RoundedCornerShape(14.dp))
             .background(color)
