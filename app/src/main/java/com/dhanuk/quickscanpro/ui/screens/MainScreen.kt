@@ -158,12 +158,15 @@ private fun AppNavigation(navController: NavHostController) {
         composable(BottomNavItem.History.route) {
             HistoryScreen(
                 onOpenVault = { navController.navigate("vault") },
-                onOpenCompare = { navController.navigate("compare_scan") }
+                onOpenCompare = { navController.navigate("compare_scan") },
+                onNavigateToScanner = { navController.navigate(BottomNavItem.Home.route) },
+                onNavigateToSettings = { navController.navigate(BottomNavItem.Settings.route) }
             )
         }
         composable(BottomNavItem.Analytics.route) { AnalyticsScreen() }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
+                onNavigateBack = { navController.navigate(BottomNavItem.Home.route) },
                 onNavigateToAbout = { navController.navigate("about") },
                 onNavigateToThemeStudio = { navController.navigate("theme_studio") }
             )

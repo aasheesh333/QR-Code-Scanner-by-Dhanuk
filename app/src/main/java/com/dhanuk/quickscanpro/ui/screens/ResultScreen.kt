@@ -165,7 +165,7 @@ fun ResultScreen(
                 BarcodeTypeDetector.TYPE_VCARD -> VCardVariant(data, onNavigateBack)
                 else -> UrlVariant(data, type, safetyReport, onNavigateBack)
             }
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(80.dp))
         }
     }
 }
@@ -180,7 +180,7 @@ private fun WifiVariant(data: String, onNavigateBack: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFFF9FAFB),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
     ) {

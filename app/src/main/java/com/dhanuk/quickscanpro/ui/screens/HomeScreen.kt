@@ -26,8 +26,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material.icons.filled.ChevronRight
@@ -45,6 +47,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -116,41 +119,48 @@ fun HomeScreen(
 
     AppBackground()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        QuickScanHeader(onOpenSettings = onOpenSettings)
+    Scaffold(
+        topBar = { QuickScanHeader(onOpenSettings = onOpenSettings) },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().weight(0.62f)) {
+                CameraViewfinder(
+                    hasCameraPermission = hasCameraPermission,
+                    onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
+                    onScan = onScan,
+                    onBatch = onOpenBatch
+                )
+            }
 
-        Box(modifier = Modifier.fillMaxWidth().weight(0.70f)) {
-            CameraViewfinder(
-                hasCameraPermission = hasCameraPermission,
-                onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
-                onScan = onScan,
-                onBatch = onOpenBatch
+            StitchBottomSheet(
+                recent = recent1,
+                onGenerate = onOpenGenerate,
+                onHistory = onViewAllHistory,
+                onTemplates = onOpenTemplates,
+                onLeak = onOpenLeakCheck,
+                onRecentClick = onViewAllHistory
             )
         }
-
-        StitchBottomSheet(
-            recent = recent1,
-            onGenerate = onOpenGenerate,
-            onHistory = onViewAllHistory,
-            onTemplates = onOpenTemplates,
-            onLeak = onOpenLeakCheck,
-            onRecentClick = onViewAllHistory
-        )
     }
 }
 
 @Composable
 private fun QuickScanHeader(onOpenSettings: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 20.dp, end = 14.dp, top = 18.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 14.dp, top = 18.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Filled.QrCodeScanner,
@@ -173,6 +183,7 @@ private fun QuickScanHeader(onOpenSettings: () -> Unit) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        }
     }
 }
 
@@ -190,6 +201,7 @@ private fun CameraViewfinder(
     var flashEnabled by remember { mutableStateOf(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
     val haptic = LocalHapticFeedback.current
+    val previewView = remember { PreviewView(context) }
 
     DisposableEffect(lifecycleOwner, hasCameraPermission) {
         if (!hasCameraPermission) {
@@ -201,7 +213,6 @@ private fun CameraViewfinder(
                 Log.e(TAG, "Failed to get camera provider", e)
                 return@Runnable
             }
-            val previewView = PreviewView(context)
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
@@ -242,10 +253,7 @@ private fun CameraViewfinder(
     ) {
         if (hasCameraPermission) {
             AndroidView(
-                factory = { ctx ->
-                    val previewView = PreviewView(ctx)
-                    previewView
-                },
+                factory = { previewView },
                 modifier = Modifier.fillMaxSize()
             )
         } else {
@@ -375,7 +383,7 @@ private fun ColumnScope.StitchBottomSheet(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .weight(0.30f),
+            .weight(0.38f),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp
@@ -383,7 +391,8 @@ private fun ColumnScope.StitchBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             DragHandle()

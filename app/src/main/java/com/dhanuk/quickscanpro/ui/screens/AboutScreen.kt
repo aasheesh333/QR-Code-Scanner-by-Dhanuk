@@ -234,6 +234,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                     .padding(vertical = 12.dp)
             )
             Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(80.dp))
         }
     }
 }

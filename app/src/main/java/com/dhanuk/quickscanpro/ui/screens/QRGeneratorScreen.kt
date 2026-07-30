@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddBox
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -35,27 +36,41 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.TextSnippet
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dhanuk.quickscanpro.qrgenerator.QRCodeGenerator
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QRGeneratorScreen() {
     val vm: QRGeneratorViewModel = viewModel()
@@ -65,60 +80,170 @@ fun QRGeneratorScreen() {
     val f2 by vm.f2.collectAsState()
     val f3 by vm.f3.collectAsState()
     val f4 by vm.f4.collectAsState()
+    val fgColor by vm.foregroundColor.collectAsState()
+    val bgColor by vm.backgroundColor.collectAsState()
+
+    var placeholderQr by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(Unit) {
+        if (placeholderQr == null) {
+            placeholderQr = QRCodeGenerator.generate(
+                content = "https://quickscan.pro",
+                size = 256,
+                foregroundColor = 0xFF999999.toInt(),
+                backgroundColor = 0xFFEEEEEE.toInt()
+            )
+        }
+    }
 
     AppBackground()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp)
-    ) {
-        GenerateHeader()
-        Spacer(Modifier.height(16.dp))
-        TypeChipRow(selectedType) { vm.setType(it) }
-        Spacer(Modifier.height(20.dp))
-        DynamicInputForm(selectedType, f1, f2, f3, f4, vm::setF1, vm::setF2, vm::setF3, vm::setF4)
-        Spacer(Modifier.height(20.dp))
-        QRPreviewBox(bitmap)
-        Spacer(Modifier.height(16.dp))
-        PrimaryButton(
-            text = "Generate QR Code",
-            onClick = { vm.generateFromInputs() },
-            modifier = Modifier.fillMaxWidth()
+    Scaffold(
+        topBar = { GenerateHeader(vm, fgColor, bgColor) },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            Icon(Icons.Filled.AddBox, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Generate QR Code")
+            TypeChipRow(selectedType) { vm.setType(it) }
+            Spacer(Modifier.height(20.dp))
+            DynamicInputForm(selectedType, f1, f2, f3, f4, vm::setF1, vm::setF2, vm::setF3, vm::setF4)
+            Spacer(Modifier.height(20.dp))
+            QRPreviewBox(bitmap, placeholderQr)
+            Spacer(Modifier.height(16.dp))
+            PrimaryButton(
+                text = "Generate QR Code",
+                onClick = { vm.generateFromInputs() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.AddBox, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Generate QR Code")
+            }
+            Spacer(Modifier.height(80.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GenerateHeader(
+    vm: QRGeneratorViewModel,
+    fgColor: Int,
+    bgColor: Int
+) {
+    var showSettings by remember { mutableStateOf(false) }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.QrCodeScanner,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Generate QR",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Box {
+                IconButton(onClick = { showSettings = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = "QR Settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                DropdownMenu(
+                    expanded = showSettings,
+                    onDismissRequest = { showSettings = false }
+                ) {
+                    Text(
+                        text = "QR Appearance",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                    HorizontalDivider()
+                    ColorMenuItem(
+                        label = "Foreground Color",
+                        color = Color(fgColor),
+                        onClick = {
+                            vm.setForeground(nextColor(fgColor))
+                            showSettings = false
+                        }
+                    )
+                    ColorMenuItem(
+                        label = "Background Color",
+                        color = Color(bgColor),
+                        onClick = {
+                            vm.setBackground(nextColor(bgColor))
+                            showSettings = false
+                        }
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("Reset Colors") },
+                        onClick = {
+                            vm.setForeground(0xFF000000.toInt())
+                            vm.setBackground(0xFFFFFFFF.toInt())
+                            showSettings = false
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                        }
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun GenerateHeader() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Filled.QrCodeScanner,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            text = "Generate QR",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Icon(
-            imageVector = Icons.Filled.Settings,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp)
-        )
-    }
+private fun ColorMenuItem(label: String, color: Color, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(color)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(label)
+            }
+        },
+        onClick = onClick
+    )
+}
+
+private fun nextColor(current: Int): Int {
+    val palette = listOf(
+        0xFF000000.toInt(),
+        0xFF004AC6.toInt(),
+        0xFF006C49.toInt(),
+        0xFF943700.toInt(),
+        0xFF7C3AED.toInt(),
+        0xFFDC2626.toInt()
+    )
+    val idx = palette.indexOf(current)
+    return palette[(idx + 1) % palette.size]
 }
 
 private data class QRChipOption(
@@ -263,7 +388,7 @@ private fun OutlinedQRField(
 }
 
 @Composable
-private fun QRPreviewBox(bitmap: Bitmap?) {
+private fun QRPreviewBox(bitmap: Bitmap?, placeholderQr: Bitmap?) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -294,6 +419,26 @@ private fun QRPreviewBox(bitmap: Bitmap?) {
                         contentDescription = "Generated QR",
                         modifier = Modifier.fillMaxSize().padding(16.dp)
                     )
+                } else if (placeholderQr != null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            bitmap = placeholderQr.asImageBitmap(),
+                            contentDescription = "Placeholder QR",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .blur(6.dp)
+                        )
+                        Text(
+                            text = "Your Generated QR",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 } else {
                     Icon(
                         imageVector = Icons.Filled.QrCode2,
@@ -314,12 +459,10 @@ private fun QRPreviewBox(bitmap: Bitmap?) {
             )
             Spacer(Modifier.width(6.dp))
             Text(
-                text = "Preview updates automatically",
+                text = "Enter content and tap Generate",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
-
-

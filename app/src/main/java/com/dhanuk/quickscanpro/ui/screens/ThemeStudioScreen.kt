@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,68 +79,74 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
     val selectedAccent = swatches[accentIndex]
 
     AppBackground()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-    ) {
-        ThemeStudioHeader(
-            onBack = onNavigateBack,
-            onApply = {
-                settingsVm.setThemePrimaryIndex(primaryIndex)
-                settingsVm.setThemeSecondaryIndex(secondaryIndex)
-                settingsVm.setThemeAccentIndex(accentIndex)
-                onNavigateBack()
-            }
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            Spacer(Modifier.height(4.dp))
-            LivePreviewCard(
-                primary = selectedPrimary
-            )
-            DensitySection()
-            ColorSection(
-                label = "PRIMARY COLOR",
-                swatches = swatches,
-                selectedIndex = primaryIndex,
-                onSelect = { primaryIndex = it }
-            )
-            ColorSection(
-                label = "SECONDARY COLOR",
-                swatches = swatches,
-                selectedIndex = secondaryIndex,
-                onSelect = { secondaryIndex = it }
-            )
-            ColorSection(
-                label = "ACCENT COLOR",
-                swatches = swatches,
-                selectedIndex = accentIndex,
-                onSelect = { accentIndex = it }
-            )
-            Spacer(Modifier.height(8.dp))
-            ResetButton(
-                onClick = {
-                    primaryIndex = 0
-                    secondaryIndex = 0
-                    accentIndex = 0
-                }
-            )
-            ApplyButton(
-                color = selectedPrimary,
-                onClick = {
+    Scaffold(
+        topBar = {
+            ThemeStudioHeader(
+                onBack = onNavigateBack,
+                onApply = {
                     settingsVm.setThemePrimaryIndex(primaryIndex)
                     settingsVm.setThemeSecondaryIndex(secondaryIndex)
                     settingsVm.setThemeAccentIndex(accentIndex)
                     onNavigateBack()
                 }
             )
-            Spacer(Modifier.height(20.dp))
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                Spacer(Modifier.height(4.dp))
+                LivePreviewCard(
+                    primary = selectedPrimary
+                )
+                DensitySection()
+                ColorSection(
+                    label = "PRIMARY COLOR",
+                    swatches = swatches,
+                    selectedIndex = primaryIndex,
+                    onSelect = { primaryIndex = it }
+                )
+                ColorSection(
+                    label = "SECONDARY COLOR",
+                    swatches = swatches,
+                    selectedIndex = secondaryIndex,
+                    onSelect = { secondaryIndex = it }
+                )
+                ColorSection(
+                    label = "ACCENT COLOR",
+                    swatches = swatches,
+                    selectedIndex = accentIndex,
+                    onSelect = { accentIndex = it }
+                )
+                Spacer(Modifier.height(8.dp))
+                ResetButton(
+                    onClick = {
+                        primaryIndex = 0
+                        secondaryIndex = 0
+                        accentIndex = 0
+                    }
+                )
+                ApplyButton(
+                    color = selectedPrimary,
+                    onClick = {
+                        settingsVm.setThemePrimaryIndex(primaryIndex)
+                        settingsVm.setThemeSecondaryIndex(secondaryIndex)
+                        settingsVm.setThemeAccentIndex(accentIndex)
+                        onNavigateBack()
+                    }
+                )
+                Spacer(Modifier.height(80.dp))
+            }
         }
     }
 }

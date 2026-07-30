@@ -246,6 +246,7 @@ private fun CompareCameraSheet(
             if (result.isNotEmpty()) onScan(result)
         }
     }
+    val previewView = remember { PreviewView(context) }
 
     DisposableEffect(lifecycleOwner, hasPermission) {
         if (!hasPermission) {
@@ -257,7 +258,6 @@ private fun CompareCameraSheet(
                 Log.e(TAG, "Failed to get camera provider", e)
                 return@Runnable
             }
-            val previewView = PreviewView(context)
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
@@ -297,7 +297,7 @@ private fun CompareCameraSheet(
         Box(modifier = Modifier.fillMaxSize()) {
             if (hasPermission) {
                 AndroidView(
-                    factory = { PreviewView(it) },
+                    factory = { previewView },
                     modifier = Modifier.fillMaxSize()
                 )
                 Box(

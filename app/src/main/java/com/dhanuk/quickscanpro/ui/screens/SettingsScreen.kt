@@ -70,6 +70,7 @@ import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
+    onNavigateBack: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onNavigateToThemeStudio: () -> Unit
 ) {
@@ -86,14 +87,16 @@ fun SettingsScreen(
     var showClearConfirmDialog by remember { mutableStateOf(false) }
 
     AppBackground()
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+    Scaffold(
+        topBar = { SettingsHeader(onNavigateBack = onNavigateBack) },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsHeader()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -245,6 +248,7 @@ fun SettingsScreen(
                         .padding(vertical = 16.dp),
                     textAlign = TextAlign.Center
                 )
+                Spacer(Modifier.height(80.dp))
             }
         }
     }
@@ -343,10 +347,10 @@ private fun initOneSignalStub(enabled: Boolean) {
 }
 
 @Composable
-private fun SettingsHeader() {
+private fun SettingsHeader(onNavigateBack: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier
@@ -355,7 +359,7 @@ private fun SettingsHeader() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",

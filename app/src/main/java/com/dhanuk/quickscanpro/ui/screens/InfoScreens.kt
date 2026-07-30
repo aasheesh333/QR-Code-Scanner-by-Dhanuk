@@ -178,6 +178,7 @@ private fun InfoScreen(title: String, body: String, url: String, onNavigateBack:
                     }
                 }
             }
+            Spacer(Modifier.height(80.dp))
         }
     }
 }

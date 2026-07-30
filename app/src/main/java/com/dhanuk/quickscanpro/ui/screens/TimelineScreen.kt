@@ -119,7 +119,7 @@ fun TimelineScreen(onNavigateBack: () -> Unit) {
                 }
                 item { Spacer(Modifier.height(24.dp)) }
             }
-            item { Spacer(Modifier.height(40.dp)) }
+            item { Spacer(Modifier.height(80.dp)) }
         }
     }
 }

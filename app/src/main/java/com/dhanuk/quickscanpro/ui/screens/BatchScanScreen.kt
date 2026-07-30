@@ -1,6 +1,16 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,16 +51,25 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
 import com.dhanuk.quickscanpro.ui.composables.SecondaryButton
@@ -69,6 +88,19 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
     val duplicateIds = contentCounts.filterValues { it > 1 }.keys
     val unique = contentCounts.size
     val duplicates = items.size - unique
+
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasCameraPermission = granted
+        if (granted) vm.startBatch()
+    }
 
     AppBackground()
     Scaffold(
@@ -142,6 +174,18 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
         ) {
+            if (active && hasCameraPermission) {
+                item {
+                    BatchCameraPreview(
+                        active = active,
+                        onScan = { content ->
+                            if (vm.addResult(content)) {
+                                Toast.makeText(context, "Scanned: $content", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                }
+            }
             item {
                 SessionSummaryCard(
                     scanned = items.size,
@@ -164,7 +208,13 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                         PillButton(
                             text = "Start New Batch",
                             icon = Icons.Filled.PlayArrow,
-                            onClick = { vm.startBatch() }
+                            onClick = {
+                                if (hasCameraPermission) {
+                                    vm.startBatch()
+                                } else {
+                                    permLauncher.launch(Manifest.permission.CAMERA)
+                                }
+                            }
                         )
                     }
                 }
@@ -223,6 +273,78 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     BatchRow(idx, item.content, item.type, isDuplicate = item.content in duplicateIds)
                 }
             }
+            item { Spacer(Modifier.height(80.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun BatchCameraPreview(
+    active: Boolean,
+    onScan: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val executor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val analyzer = remember(onScan) { BarcodeAnalyzer(onScan) }
+    val previewView = remember { PreviewView(context) }
+
+    DisposableEffect(lifecycleOwner, active) {
+        if (!active) {
+            return@DisposableEffect onDispose {}
+        }
+        val future = ProcessCameraProvider.getInstance(context)
+        val listener = Runnable {
+            try {
+                val provider = future.get()
+                provider.unbindAll()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+                val selector = CameraSelector.DEFAULT_BACK_CAMERA
+                val analysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also { it.setAnalyzer(executor, analyzer) }
+                provider.bindToLifecycle(lifecycleOwner, selector, preview, analysis)
+            } catch (e: Exception) {
+                Log.e("BatchCamera", "Camera bind failed", e)
+            }
+        }
+        future.addListener(listener, executor)
+        onDispose {
+            try {
+                future.get().unbindAll()
+            } catch (_: Exception) {}
+            analyzer.close()
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(280.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.Black)
+    ) {
+        AndroidView(
+            factory = { previewView },
+            modifier = Modifier.fillMaxSize()
+        )
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(12.dp),
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.6f)
+        ) {
+            Text(
+                text = "LIVE",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            )
         }
     }
 }

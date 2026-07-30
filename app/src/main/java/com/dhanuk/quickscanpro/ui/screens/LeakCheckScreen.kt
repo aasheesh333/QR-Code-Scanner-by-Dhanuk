@@ -153,6 +153,7 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
             }
             Spacer(Modifier.height(16.dp))
             DisclaimerFooter()
+            Spacer(Modifier.height(80.dp))
         }
     }
 }

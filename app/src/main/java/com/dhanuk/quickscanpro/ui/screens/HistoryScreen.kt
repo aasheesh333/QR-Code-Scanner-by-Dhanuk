@@ -35,6 +35,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -63,7 +65,9 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     onOpenVault: () -> Unit,
-    onOpenCompare: () -> Unit
+    onOpenCompare: () -> Unit,
+    onNavigateToScanner: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val vm: HistoryViewModel = viewModel()
     val items by vm.filteredHistory.collectAsState()
@@ -71,55 +75,65 @@ fun HistoryScreen(
     val context = LocalContext.current
 
     AppBackground()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.dp, end = 12.dp, top = 16.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Filled.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            }
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = "QuickScan Pro",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = {}) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary)
-            }
-        }
+    Scaffold(
+        topBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 12.dp, top = 16.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onNavigateToScanner) {
+                            Icon(Icons.Filled.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            text = "QuickScan Pro",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
 
-        Row(
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "History",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = onOpenVault) {
+                            Icon(Icons.Filled.Lock, contentDescription = "Vault", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = onOpenCompare) {
+                            Icon(Icons.AutoMirrored.Filled.CompareArrows, contentDescription = "Compare", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .padding(padding)
         ) {
-            Text(
-                text = "History",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = onOpenVault) {
-                Icon(Icons.Filled.Lock, contentDescription = "Vault", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            IconButton(onClick = onOpenCompare) {
-                Icon(Icons.AutoMirrored.Filled.CompareArrows, contentDescription = "Compare", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-
-        OutlinedTextField(
             value = query,
             onValueChange = { query = it; vm.setSearchQuery(it) },
             placeholder = { Text("Search history...", color = MaterialTheme.colorScheme.outline) },
@@ -172,7 +186,7 @@ fun HistoryScreen(
                     }
                 )
             }
-            item { Spacer(Modifier.height(24.dp)) }
+            item { Spacer(Modifier.height(80.dp)) }
         }
     }
 }

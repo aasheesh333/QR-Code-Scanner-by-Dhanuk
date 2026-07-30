@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,28 +62,33 @@ fun AnalyticsScreen() {
     val leakChecks = leakCheckList.size
 
     AppBackground()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-    ) {
-        AnalyticsHeader()
-        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-            KpiRow(
-                totalScans = totalScans,
-                generated = generated,
-                leakChecks = leakChecks
-            )
-            Spacer(Modifier.height(24.dp))
-            if (totalScans > 0) {
-                ScanTypesCard(stats.topTypes, totalScans)
+    Scaffold(
+        topBar = { AnalyticsHeader() },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                KpiRow(
+                    totalScans = totalScans,
+                    generated = generated,
+                    leakChecks = leakChecks
+                )
                 Spacer(Modifier.height(24.dp))
+                if (totalScans > 0) {
+                    ScanTypesCard(stats.topTypes, totalScans)
+                    Spacer(Modifier.height(24.dp))
+                }
+                WeeklyActivityCard()
+                Spacer(Modifier.height(24.dp))
+                TopSourcesCard()
+                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(80.dp))
             }
-            WeeklyActivityCard()
-            Spacer(Modifier.height(24.dp))
-            TopSourcesCard()
-            Spacer(Modifier.height(24.dp))
         }
     }
 }
@@ -274,10 +280,11 @@ private data class TypeRow(
     val color: Color
 )
 
+@Composable
 private fun typeMeta(type: String): Triple<androidx.compose.ui.graphics.vector.ImageVector, String, Color> {
-    val primary = Color(0xFF004AC6)
-    val secondary = Color(0xFF006C49)
-    val tertiary = Color(0xFF943700)
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val tertiary = MaterialTheme.colorScheme.tertiary
     return when {
         type.contains("url") || type.contains("link") -> Triple(Icons.Filled.Link, "URL", primary)
         type.contains("wifi") -> Triple(Icons.Filled.Wifi, "Wi-Fi", secondary)
