@@ -17,7 +17,13 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -31,25 +37,31 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
+import com.dhanuk.quickscanpro.ui.composables.ActionOrb
 import com.dhanuk.quickscanpro.ui.composables.GlassCard
 import com.dhanuk.quickscanpro.ui.composables.GlowOrb
-import com.dhanuk.quickscanpro.ui.composables.ScanOverlay
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
+import com.dhanuk.quickscanpro.ui.composables.HexScanFrame
+import com.dhanuk.quickscanpro.ui.composables.ModePill
+import com.dhanuk.quickscanpro.ui.theme.*
+import com.dhanuk.quickscanpro.util.AutoOrganizer
+import com.dhanuk.quickscanpro.util.VoiceSpeaker
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -59,11 +71,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+enum class ScanMode { AUTO, BATCH, COMPARE }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onScan: (String) -> Unit,
     onBatchScan: () -> Unit,
+    onCompareScan: () -> Unit = {},
     onViewAllHistory: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -77,6 +92,8 @@ fun HomeScreen(
     val incognitoMode by svm.incognitoMode.collectAsState()
     val recentHistory by hvm.history.collectAsState()
 
+    var scanMode by rememberSaveable { mutableStateOf(ScanMode.AUTO) }
+    var handsFree by rememberSaveable { mutableStateOf(false) }
     var isTorchOn by rememberSaveable { mutableStateOf(false) }
     var scanned by remember { mutableStateOf(false) }
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
@@ -95,6 +112,7 @@ fun HomeScreen(
     )
     LaunchedEffect(key1 = Unit) {
         if (!hasCamPermission) launcher.launch(Manifest.permission.CAMERA)
+        VoiceSpeaker.init(context)
     }
 
     val scope = rememberCoroutineScope()
@@ -118,12 +136,11 @@ fun HomeScreen(
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Ambient glow behind the viewfinder
         GlowOrb(
             modifier = Modifier
-                .size(420.dp)
+                .size(440.dp)
                 .align(Alignment.TopCenter)
-                .offset(y = (-60).dp),
+                .offset(y = (-80).dp),
             color = if (dark) LuminaPrimaryGlow else LuminaPrimary
         )
 
@@ -133,48 +150,31 @@ fun HomeScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 18.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        "Scanner",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    if (incognitoMode) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Filled.VisibilityOff, contentDescription = null,
-                                tint = LuminaPrimaryGlow, modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                "Incognito — scans won't be saved",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LuminaPrimaryGlow
-                            )
-                        }
-                    }
-                }
-                GlassIconButton(onClick = { galleryLauncher.launch("image/*") }) {
-                    Icon(Icons.Filled.PhotoLibrary, contentDescription = "Gallery")
-                }
-            }
+            Spacer(Modifier.height(14.dp))
 
-            Spacer(Modifier.height(24.dp))
+            // Top: brand pill bar with live indicator
+            BrandPillBar(incognito = incognitoMode, handsFree = handsFree) {
+                handsFree = !handsFree
+            }
+            Spacer(Modifier.height(10.dp))
+
+            // Mode pills row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ModePill("Auto", scanMode == ScanMode.AUTO) { scanMode = ScanMode.AUTO }
+                ModePill("Batch", scanMode == ScanMode.BATCH) { scanMode = ScanMode.BATCH }
+                ModePill("Compare", scanMode == ScanMode.COMPARE) { scanMode = ScanMode.COMPARE }
+            }
+            Spacer(Modifier.height(16.dp))
 
             if (hasCamPermission) {
-                // ---- Glass viewfinder ----
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .padding(horizontal = 8.dp),
+                        .aspectRatio(0.86f)
+                        .padding(horizontal = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     GlassCard(
@@ -198,12 +198,20 @@ fun HomeScreen(
                                                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                                 .build()
                                             val analyzer = BarcodeAnalyzer { result ->
-                                                if (!scanned) {
+                                                if (!scanned || handsFree) {
                                                     scanned = true
                                                     if (vibrateEnabled) vibrate(ctx)
                                                     if (soundEnabled) playSound(ctx)
+                                                    VoiceSpeaker.init(ctx)
                                                     InterstitialAdManager.recordScan(ctx)
+                                                    if (handsFree) VoiceSpeaker.speak(result)
                                                     onScan(result)
+                                                    if (handsFree) {
+                                                        scope.launch {
+                                                            kotlinx.coroutines.delay(1200)
+                                                            scanned = false
+                                                        }
+                                                    }
                                                 }
                                             }
                                             imageAnalysis.setAnalyzer(
@@ -231,9 +239,9 @@ fun HomeScreen(
                                             .clip(RoundedCornerShape(32.dp))
                                     )
                                 }
-                                ScanOverlay(
+                                HexScanFrame(
                                     modifier = Modifier
-                                        .fillMaxSize(0.82f)
+                                        .fillMaxSize(0.84f)
                                         .align(Alignment.Center)
                                 )
                             } else {
@@ -263,81 +271,74 @@ fun HomeScreen(
                         }
                     }
 
-                    // Floating torch button (left)
-                    FloatingToolButton(
+                    ActionOrb(
                         modifier = Modifier
                             .align(Alignment.CenterStart)
-                            .offset(x = (-14).dp),
+                            .offset(x = (-8).dp),
                         onClick = {
                             val newTorch = !isTorchOn
                             cameraControl?.enableTorch(newTorch)
                             isTorchOn = newTorch
-                        }
+                        },
+                        active = isTorchOn,
+                        size = 48.dp
                     ) {
                         Icon(
                             if (isTorchOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
                             contentDescription = "Torch",
                             tint = if (isTorchOn) LuminaPrimaryGlow
-                            else MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    ActionOrb(
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .offset(x = 8.dp),
+                        onClick = { galleryLauncher.launch("image/*") },
+                        size = 48.dp
+                    ) {
+                        Icon(
+                            Icons.Filled.PhotoLibrary, contentDescription = "Gallery",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
 
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    "Align QR code within the frame",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(18.dp))
 
-                // ---- Action cards ----
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    ActionCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.QrCodeScanner,
-                        title = "Scan Next",
-                        subtitle = "IMMEDIATE",
-                        highlighted = true,
-                        onClick = { scanned = false }
-                    )
-                    ActionCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Layers,
-                        title = "Batch Scan",
-                        subtitle = "MULTI-ENTRY",
-                        highlighted = false,
-                        onClick = onBatchScan
-                    )
+                if (scanMode == ScanMode.COMPARE) {
+                    PulseLabel("Scan first of two codes to compare")
+                } else {
+                    PulseLabel("Align QR code within the frame")
                 }
+                Spacer(Modifier.height(18.dp))
 
-                Spacer(Modifier.height(22.dp))
-
-                // ---- Recent history preview ----
-                if (recentHistory.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "RECENT HISTORY",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f)
-                        )
-                        TextButton(onClick = onViewAllHistory) {
-                            Text("View all", style = MaterialTheme.typography.labelLarge,
-                                color = if (dark) LuminaPrimaryGlow else LuminaPrimary)
+                // Big round SCAN pulsing button
+                ScanButton(
+                    pulseAlways = !scanned || handsFree,
+                    onClick = {
+                        when (scanMode) {
+                            ScanMode.BATCH -> onBatchScan()
+                            ScanMode.COMPARE -> onCompareScan()
+                            else -> scanned = false
                         }
                     }
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                // Recent scan peek card
+                if (recentHistory.isNotEmpty()) {
                     val latest = recentHistory.first()
                     GlassCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onScan(latest.content) },
+                            .clickable {
+                                if (scanMode == ScanMode.COMPARE) onCompareScan()
+                                else onScan(latest.content)
+                            },
                         cornerRadius = 20.dp
                     ) {
                         Row(
@@ -346,14 +347,15 @@ fun HomeScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(12.dp))
                                     .background(LuminaPrimary.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Filled.Link, contentDescription = null,
-                                    tint = if (dark) LuminaPrimaryGlow else LuminaPrimary,
-                                    modifier = Modifier.size(20.dp))
+                                Text(
+                                    AutoOrganizer.emojiFor(latest.autoCategory),
+                                    fontSize = 18.sp
+                                )
                             }
                             Spacer(Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
@@ -370,14 +372,19 @@ fun HomeScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Icon(Icons.Filled.ChevronRight, contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null,
+                                tint = if (dark) LuminaPrimaryGlow else LuminaPrimary)
                         }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = onViewAllHistory) {
+                        Text("View All History",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (dark) LuminaPrimaryGlow else LuminaPrimary)
                     }
                 }
                 Spacer(Modifier.height(90.dp))
             } else {
-                // Permission prompt
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -407,84 +414,109 @@ fun HomeScreen(
 }
 
 @Composable
-private fun GlassIconButton(
-    onClick: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    GlassCard(cornerRadius = 999.dp, modifier = Modifier.size(44.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            CompositionLocalProvider(
-                LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
-            ) { content() }
-        }
-    }
-}
-
-@Composable
-private fun FloatingToolButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    GlassCard(cornerRadius = 999.dp, modifier = modifier.size(52.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) { content() }
-    }
-}
-
-@Composable
-private fun ActionCard(
-    modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    highlighted: Boolean,
-    onClick: () -> Unit
-) {
+private fun BrandPillBar(incognito: Boolean, handsFree: Boolean, onHandsFree: () -> Unit) {
     val dark = isSystemInDarkTheme()
-    val accent = if (dark) LuminaPrimaryGlow else LuminaPrimary
+    val transition = rememberInfiniteTransition(label = "live")
+    val dotAlpha by transition.animateFloat(
+        initialValue = 0.35f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900), repeatMode = RepeatMode.Reverse
+        ), label = "dot"
+    )
     GlassCard(
-        modifier = modifier.clickable(onClick = onClick),
-        cornerRadius = 24.dp,
-        glowColor = if (highlighted) accent else null
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50)),
+        cornerRadius = 50.dp
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(10.dp)
                     .clip(CircleShape)
-                    .background(accent.copy(alpha = if (highlighted) 0.25f else 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    icon, contentDescription = null,
-                    tint = if (highlighted) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Spacer(Modifier.height(14.dp))
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                color = if (highlighted) accent else MaterialTheme.colorScheme.onSurface
+                    .background(
+                        if (handsFree) LuminaSuccess else LuminaPrimaryGlow.copy(alpha = dotAlpha)
+                    )
             )
+            Spacer(Modifier.width(10.dp))
             Text(
-                subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = (if (highlighted) accent else MaterialTheme.colorScheme.onSurfaceVariant)
-                    .copy(alpha = 0.6f)
+                "QuickScan Pro",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (dark) LuminaPrimaryGlow else LuminaPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            if (incognito) {
+                Icon(
+                    Icons.Filled.VisibilityOff, contentDescription = null,
+                    tint = LuminaPrimaryGlow, modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+            }
+            Icon(
+                if (handsFree) Icons.Filled.RecordVoiceOver else Icons.Filled.Mic,
+                contentDescription = "Hands-free",
+                tint = if (handsFree) LuminaSuccess
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onHandsFree)
+                    .padding(2.dp)
             )
         }
     }
+}
+
+@Composable
+private fun ScanButton(pulseAlways: Boolean, onClick: () -> Unit) {
+    val transition = rememberInfiniteTransition(label = "scan_btn")
+    val scale by transition.animateFloat(
+        initialValue = 1f, targetValue = if (pulseAlways) 1.08f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1100), repeatMode = RepeatMode.Reverse
+        ), label = "scale"
+    )
+    Box(
+        modifier = Modifier
+            .size((82 * scale).dp)
+            .shadow(
+                elevation = 20.dp,
+                shape = CircleShape,
+                ambientColor = LuminaPrimary.copy(alpha = 0.5f),
+                spotColor = LuminaPrimary.copy(alpha = 0.5f)
+            )
+            .clip(CircleShape)
+            .background(LuminaPrimary)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Filled.QrCodeScanner, contentDescription = "Scan",
+                tint = Color.White, modifier = Modifier.size(30.dp))
+            Spacer(Modifier.height(2.dp))
+            Text("SCAN",
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 2.sp)
+        }
+    }
+}
+
+@Composable
+private fun PulseLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center
+    )
 }
 
 private fun vibrate(context: Context) {

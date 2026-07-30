@@ -90,6 +90,9 @@ fun Navigation(navController: NavHostController) {
                 onBatchScan = {
                     navController.navigate("batch_scan")
                 },
+                onCompareScan = {
+                    navController.navigate("compare_scan")
+                },
                 onViewAllHistory = {
                     navController.navigate(BottomNavItem.History.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -103,14 +106,18 @@ fun Navigation(navController: NavHostController) {
             QRGeneratorScreen()
         }
         composable(BottomNavItem.History.route) {
-            HistoryScreen()
+            HistoryScreen(
+                onOpenVault = { navController.navigate("vault") },
+                onOpenCompare = { navController.navigate("compare_scan") }
+            )
         }
         composable(BottomNavItem.Analytics.route) {
             AnalyticsScreen()
         }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
-                onNavigateToAbout = { navController.navigate("about") }
+                onNavigateToAbout = { navController.navigate("about") },
+                onNavigateToThemeStudio = { navController.navigate("theme_studio") }
             )
         }
         composable(
@@ -129,6 +136,15 @@ fun Navigation(navController: NavHostController) {
         }
         composable("batch_scan") {
             BatchScanScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable("compare_scan") {
+            CompareScanScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable("vault") {
+            VaultScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable("theme_studio") {
+            ThemeStudioScreen(onNavigateBack = { navController.popBackStack() })
         }
         composable(
             route = "product/{barcode}",

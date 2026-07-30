@@ -33,12 +33,13 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen() {
+fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) {
     val viewModel: HistoryViewModel = viewModel()
     val context = LocalContext.current
     val fullHistory by viewModel.history.collectAsState()
     val filtered by viewModel.filteredHistory.collectAsState()
     val collections by viewModel.collections.collectAsState()
+    val autoCategories by viewModel.autoCategoryCounts.collectAsState()
     val scope = rememberCoroutineScope()
 
     var searchQuery by remember { mutableStateOf("") }
@@ -65,6 +66,12 @@ fun HistoryScreen() {
                     containerColor = Color.Transparent
                 ),
                 actions = {
+                    IconButton(onClick = onOpenCompare) {
+                        Icon(Icons.Filled.CompareArrows, contentDescription = "Compare")
+                    }
+                    IconButton(onClick = onOpenVault) {
+                        Icon(Icons.Filled.Lock, contentDescription = "Vault")
+                    }
                     IconButton(
                         onClick = { showDeleteAllDialog = true },
                         enabled = fullHistory.isNotEmpty()

@@ -28,7 +28,7 @@ import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onNavigateToAbout: () -> Unit) {
+fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () -> Unit = {}) {
     val svm: SettingsViewModel = viewModel()
     val tvm: ThemeViewModel = viewModel()
     val context = LocalContext.current
@@ -161,6 +161,13 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    InfoRowItem(
+                        icon = Icons.Filled.Palette,
+                        title = "Theme Studio",
+                        subtitle = "Custom accent, glass intensity, AMOLED & fonts",
+                        onClick = onNavigateToThemeStudio
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     InfoRowItem(
                         icon = Icons.Filled.Info,
                         title = "About",
