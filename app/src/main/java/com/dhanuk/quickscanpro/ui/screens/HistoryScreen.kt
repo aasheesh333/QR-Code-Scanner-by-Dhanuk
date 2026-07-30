@@ -134,7 +134,8 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            value = query,
+            OutlinedTextField(
+                value = query,
             onValueChange = { query = it; vm.setSearchQuery(it) },
             placeholder = { Text("Search history...", color = MaterialTheme.colorScheme.outline) },
             leadingIcon = {
@@ -188,6 +189,7 @@ fun HistoryScreen(
             }
             item { Spacer(Modifier.height(80.dp)) }
         }
+    }
     }
 }
 
