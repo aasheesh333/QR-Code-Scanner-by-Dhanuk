@@ -1,10 +1,10 @@
 package com.dhanuk.quickscanpro.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.AddBox
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -13,9 +13,9 @@ enum class BottomNavItem(
     val icon: ImageVector,
     val title: String
 ) {
-    Home("home", Icons.Filled.Home, "Scan"),
-    Generate("generate", Icons.Filled.QrCode2, "Create"),
+    Home("home", Icons.Filled.Home, "Home"),
+    Generate("generate", Icons.Filled.AddBox, "Generate"),
     History("history", Icons.Filled.History, "History"),
-    Analytics("analytics", Icons.Filled.Analytics, "Stats"),
+    Analytics("analytics", Icons.Filled.Insights, "Analytics"),
     Settings("settings", Icons.Filled.Settings, "Settings")
 }

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,14 +24,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -51,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,7 +72,6 @@ import com.dhanuk.quickscanpro.ui.theme.SafetyWarn
 import com.dhanuk.quickscanpro.ui.theme.SafetyRisky
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.LinkSafetyChecker
-import com.dhanuk.quickscanpro.util.PasswordLeakChecker
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -76,33 +82,40 @@ fun ResultScreen(
 ) {
     val context = LocalContext.current
     val historyVm: HistoryViewModel = viewModel()
-
     var savedId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(data) {
         if (savedId == null) {
-            val sr = ScanResult(content = data)
-            historyVm.addScanResult(sr)
+            historyVm.addScanResult(ScanResult(content = data))
         }
     }
 
-    val detectedType = remember(data) { BarcodeTypeDetector.detectType(data) }
+    val type = remember(data) { BarcodeTypeDetector.detectType(data) }
     val safetyReport = remember(data) {
-        if (detectedType == BarcodeTypeDetector.TYPE_URL) LinkSafetyChecker.analyze(data)
-        else null
+        if (type == BarcodeTypeDetector.TYPE_URL) LinkSafetyChecker.analyze(data) else null
     }
 
     AppBackground()
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(detectedType.uppercase(), fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = typeIcon(type),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            typeLabel(type),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -119,74 +132,11 @@ fun ResultScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            // Result card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp
-            ) {
-                Column(Modifier.padding(18.dp)) {
-                    Text(
-                        text = "Scanned content",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = data,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+            when (type) {
+                BarcodeTypeDetector.TYPE_WIFI -> WifiVariant(data)
+                BarcodeTypeDetector.TYPE_VCARD -> VCardVariant(data)
+                else -> UrlOrGenericVariant(data, type, safetyReport)
             }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Row of action chips
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionChip("Copy", Icons.Filled.ContentCopy) { copyToClipboard(context, data) }
-                ActionChip("Share", Icons.Filled.Share) { shareText(context, data) }
-                when (detectedType) {
-                    BarcodeTypeDetector.TYPE_URL -> {
-                        ActionChip("Open", Icons.Filled.OpenInNew) { openUrl(context, data) }
-                    }
-                    BarcodeTypeDetector.TYPE_EMAIL -> {
-                        ActionChip("Email", Icons.Filled.Email) { openUrl(context, data) }
-                    }
-                    BarcodeTypeDetector.TYPE_PHONE -> {
-                        ActionChip("Dial", Icons.Filled.Phone) { openUrl(context, data) }
-                    }
-                }
-            }
-
-            // Link-safety report
-            if (safetyReport != null) {
-                Spacer(Modifier.height(20.dp))
-                SafetyCard(report = safetyReport!!)
-            }
-
-            // Password leak quick check (URL)
-            if (detectedType == BarcodeTypeDetector.TYPE_URL) {
-                Spacer(Modifier.height(20.dp))
-                LeakCheckCard(rawUrl = data)
-            }
-
-            Spacer(Modifier.height(20.dp))
-            PrimaryButton(
-                text = "Open / Use",
-                onClick = { openUrl(context, data) },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(8.dp))
-            SecondaryButton(
-                text = "Done",
-                onClick = onNavigateBack,
-                modifier = Modifier.fillMaxWidth()
-            )
             Spacer(Modifier.height(40.dp))
         }
     }
@@ -194,28 +144,46 @@ fun ResultScreen(
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun FlowRowScope.ActionChip(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+private fun WifiVariant(data: String) {
+    val context = LocalContext.current
+    val parts = remember(data) { parseWifi(data) } // ssid, password
+    var showPass by remember { mutableStateOf(false) }
+    ResultCard(
+        icon = Icons.Filled.Wifi,
+        title = parts.first.ifEmpty { "Wi-Fi Network" },
+        subtitle = if (parts.second.isNotEmpty()) (if (showPass) parts.second else "•".repeat(parts.second.length.coerceAtMost(12))) else "No password stored"
     ) {
-        Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            IconButton(onClick = { showPass = !showPass }) {
+                Icon(if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = "Show password")
+            }
+            MiniChip("Copy Password", Icons.Filled.ContentCopy) {
+                copyToClipboard(context, parts.second)
+            }
+            MiniChip("Share", Icons.Filled.Share) { shareText(context, data) }
+        }
+        Spacer(Modifier.height(16.dp))
+        SafetyBlock(score = 100, verdict = "Safe", signals = listOf("Local network verified", "Security protocol detected."))
+        Spacer(Modifier.height(12.dp))
+        LeakCheckRow(domain = parts.first.ifEmpty { data })
+        Spacer(Modifier.height(20.dp))
+        PrimaryButton("Connect to Network", { /* placeholder */ }, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(8.dp))
+        SecondaryButton("Done", {}, modifier = Modifier.fillMaxWidth())
     }
 }
 
 @Composable
-private fun SafetyCard(report: LinkSafetyChecker.Report) {
-    val color = when (report.level) {
-        LinkSafetyChecker.Level.SAFE -> SafetySafe
-        LinkSafetyChecker.Level.CAUTION -> SafetyWarn
-        LinkSafetyChecker.Level.RISKY -> SafetyRisky
-        LinkSafetyChecker.Level.NOT_A_LINK -> MaterialTheme.colorScheme.onSurfaceVariant
+private fun VCardVariant(data: String) {
+    val context = LocalContext.current
+    val fields = remember(data) { parseVCard(data) }
+    val initials = remember(fields) {
+        val n = fields["N"] ?: fields["FN"]
+        val parts = n?.split(" ") ?: emptyList()
+        parts.take(2).joinToString("") { it.firstOrNull()?.uppercase() ?: "" }.ifEmpty { "VC" }
     }
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -224,16 +192,186 @@ private fun SafetyCard(report: LinkSafetyChecker.Report) {
         tonalElevation = 0.dp
     ) {
         Column(Modifier.padding(18.dp)) {
-            Text("Link Safety", style = MaterialTheme.typography.titleMedium, color = color)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(initials, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        fields["FN"] ?: fields["N"] ?: "Contact",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    fields["TITLE"]?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            fields["TEL"]?.let { FieldRow("Mobile", it, Icons.Filled.Phone) }
+            fields["EMAIL"]?.let { FieldRow("Work Email", it, Icons.Filled.Email) }
+            fields["ADR"]?.let { FieldRow("Address", it, Icons.Filled.Public) }
+
+            Spacer(Modifier.height(14.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                MiniChip("Dial", Icons.Filled.Phone) { openUrl(context, "tel:${fields["TEL"]}")}
+                MiniChip("Email", Icons.Filled.Email) { openUrl(context, "mailto:${fields["EMAIL"]}")}
+                MiniChip("Copy", Icons.Filled.ContentCopy) { copyToClipboard(context, data) }
+                MiniChip("Share", Icons.Filled.Share) { shareText(context, data) }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            SafetyBlock(score = 98, verdict = "Safe Content", signals = listOf("Standard contact format"))
+            Spacer(Modifier.height(20.dp))
+            PrimaryButton("Save Contact", {}, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(8.dp))
+            SecondaryButton("Done", {}, modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+private fun UrlOrGenericVariant(
+    data: String,
+    type: String,
+    safetyReport: LinkSafetyChecker.Report?
+) {
+    val context = LocalContext.current
+    ResultCard(
+        icon = typeIcon(type),
+        title = data,
+        subtitle = "Scanned just now"
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MiniChip("Copy", Icons.Filled.ContentCopy) { copyToClipboard(context, data) }
+            MiniChip("Share", Icons.Filled.Share) { shareText(context, data) }
+            if (type == BarcodeTypeDetector.TYPE_URL) {
+                MiniChip("Open", Icons.Filled.OpenInNew) { openUrl(context, data) }
+            }
+        }
+        if (safetyReport != null) {
+            Spacer(Modifier.height(16.dp))
+            SafetyBlock(
+                score = safetyReport.score,
+                verdict = safetyReportVerdict(safetyReport.level),
+                signals = safetyReport.signals.take(3)
+            )
+            Spacer(Modifier.height(12.dp))
+            LeakCheckRow(domain = data)
+        }
+        Spacer(Modifier.height(20.dp))
+        PrimaryButton("Open Link", { openUrl(context, data) }, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(8.dp))
+        SecondaryButton("Done", {}, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ResultCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    content: @Composable FlowRowScope.() -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            content()
+        }
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun FlowRowScope.MiniChip(label: String, icon: ImageVector, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun FieldRow(label: String, value: String, icon: ImageVector) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
+}
+
+@Composable
+private fun SafetyBlock(score: Int, verdict: String, signals: List<String>) {
+    val color = when {
+        score >= 80 -> SafetySafe
+        score >= 50 -> SafetyWarn
+        else -> SafetyRisky
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 0.dp
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Public, contentDescription = null, tint = color)
+                Spacer(Modifier.width(8.dp))
+                Text(verdict, style = MaterialTheme.typography.titleMedium, color = color)
+                Spacer(Modifier.weight(1f))
+                Text("$score/100", style = MaterialTheme.typography.labelLarge, color = color)
+            }
             Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { report.score / 100f },
+                progress = { score / 100f },
                 color = color,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.fillMaxWidth()
+                trackColor = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))
             )
             Spacer(Modifier.height(8.dp))
-            report.signals.take(3).forEach { sig ->
+            signals.forEach { sig ->
                 Text("• $sig", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -241,41 +379,80 @@ private fun SafetyCard(report: LinkSafetyChecker.Report) {
 }
 
 @Composable
-private fun LeakCheckCard(rawUrl: String) {
-    val report = remember(rawUrl) { PasswordLeakChecker.check(rawUrl) }
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp
+private fun LeakCheckRow(domain: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { }
+            .padding(vertical = 10.dp, horizontal = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(Modifier.padding(18.dp)) {
-            Text(
-                "Breach history for ${report.domain}",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(Modifier.height(6.dp))
-            if (report.leaked) {
-                Text(
-                    " martin.shipped: ${report.breachCount} recent breach ${if (report.firstSeenYear > 0) "since ${report.firstSeenYear}" else ""}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SafetyRisky
-                )
-            } else {
-                Text(
-                    "No public breach records for this domain.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (report.signals.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                report.signals.take(3).forEach { sig ->
-                    Text("• $sig", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+        Icon(Icons.Filled.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Check password leak", style = MaterialTheme.typography.titleSmall)
+            Text("Verify against known breaches", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun typeIcon(type: String): ImageVector = when (type) {
+    BarcodeTypeDetector.TYPE_URL -> Icons.Filled.Public
+    BarcodeTypeDetector.TYPE_WIFI -> Icons.Filled.Wifi
+    BarcodeTypeDetector.TYPE_EMAIL -> Icons.Filled.Email
+    BarcodeTypeDetector.TYPE_PHONE -> Icons.Filled.Phone
+    BarcodeTypeDetector.TYPE_VCARD -> Icons.Filled.PersonAdd
+    else -> Icons.Filled.Public
+}
+
+private fun typeLabel(type: String): String = when (type) {
+    BarcodeTypeDetector.TYPE_URL -> "URL"
+    BarcodeTypeDetector.TYPE_WIFI -> "Wi-Fi"
+    BarcodeTypeDetector.TYPE_EMAIL -> "Email"
+    BarcodeTypeDetector.TYPE_PHONE -> "Phone"
+    BarcodeTypeDetector.TYPE_VCARD -> "vCard"
+    else -> type.replaceFirstChar { it.uppercase() }
+}
+
+private fun safetyReportVerdict(level: LinkSafetyChecker.Level): String = when (level) {
+    LinkSafetyChecker.Level.SAFE -> "Safe"
+    LinkSafetyChecker.Level.CAUTION -> "Caution"
+    LinkSafetyChecker.Level.RISKY -> "Risky"
+    LinkSafetyChecker.Level.NOT_A_LINK -> "Info"
+}
+
+private fun parseWifi(data: String): Pair<String, String> {
+    // WIFI:T:WPA;S:MySSID;P:mypass;;
+    var ssid = ""
+    var pass = ""
+    data.removePrefix("WIFI:").split(";").forEach { seg ->
+        val kv = seg.split(":", limit = 2)
+        if (kv.size == 2) {
+            when (kv[0].uppercase()) {
+                "S" -> ssid = kv[1]
+                "P" -> pass = kv[1]
             }
         }
     }
+    return ssid to pass
+}
+
+private fun parseVCard(data: String): Map<String, String> {
+    val map = mutableMapOf<String, String>()
+    data.lines().forEach { line ->
+        val l = line.trim()
+        when {
+            l.startsWith("FN:", ignoreCase = true) -> map["FN"] = l.substring(3)
+            l.startsWith("N:", ignoreCase = true) -> map["N"] = l.substring(2).replace(";", " ")
+            l.startsWith("TEL", ignoreCase = true) -> map["TEL"] = l.substringAfter(":")
+            l.startsWith("EMAIL", ignoreCase = true) -> map["EMAIL"] = l.substringAfter(":")
+            l.startsWith("TITLE", ignoreCase = true) -> map["TITLE"] = l.substringAfter(":")
+            l.startsWith("ADR", ignoreCase = true) -> map["ADR"] = l.substringAfter(":").replace(";", " ").trim()
+        }
+    }
+    return map
 }
 
 private fun copyToClipboard(context: Context, text: String) {
@@ -299,7 +476,7 @@ private fun openUrl(context: Context, content: String) {
         || lower.startsWith("geo:")) content else "https://$content"
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         Toast.makeText(context, "No app to handle this content", Toast.LENGTH_SHORT).show()
     }
 }

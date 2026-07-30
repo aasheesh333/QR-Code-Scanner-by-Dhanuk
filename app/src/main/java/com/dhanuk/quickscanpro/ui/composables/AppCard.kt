@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AppCard(
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = 14.dp,
+    cornerRadius: Dp = 8.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(

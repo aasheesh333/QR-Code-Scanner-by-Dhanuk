@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dhanuk brand palette -->
-    <color name="dhanuk_primary">#FF0575E6</color>
-    <color name="dhanuk_primary_variant">#FF045AB8</color>
-    <color name="dhanuk_secondary">#FF00F260</color>
-    <color name="dhanuk_secondary_variant">#FF00C9A7</color>
-    <color name="dhanuk_background">#FFF6F9FF</color>
-    <color name="dhanuk_accent">#FF00C9A7</color>
+    <!-- Stitch Lumina Utility palette -->
+    <color name="dhanuk_primary">#FF2563EB</color>
+    <color name="dhanuk_primary_variant">#FF1D4ED8</color>
+    <color name="dhanuk_secondary">#FF10B981</color>
+    <color name="dhanuk_secondary_variant">#FF0EA15A</color>
+    <color name="dhanuk_background">#FFFFFFFF</color>
+    <color name="dhanuk_accent">#FF2563EB</color>
+    <color name="dhanuk_tertiary">#FFBC4800</color>
 
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>

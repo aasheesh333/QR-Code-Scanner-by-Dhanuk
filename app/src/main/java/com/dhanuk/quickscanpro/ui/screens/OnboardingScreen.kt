@@ -39,9 +39,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit) {
     val pages = listOf(
-        Triple(Icons.Filled.QrCodeScanner, "Scan Anything", "Point your camera at any QR or barcode. We decode it instantly."),
-        Triple(Icons.Filled.Security, "Stay Safe", "Every scanned link gets a link-safety + breach-hygiene report before you open it."),
-        Triple(Icons.Filled.Verified, "Real QR Tools", "Create QR codes, batch scan, protect sensitive scans and never lose history.")
+        Triple(Icons.Filled.QrCodeScanner, "Scan Anything", "Point your camera at any QR code or barcode and we'll read it instantly, even offline."),
+        Triple(Icons.Filled.Security, "Stay Safe", "Every link and code is checked against known scams and phishing before you open it."),
+        Triple(Icons.Filled.Verified, "Do More", "Generate QR codes, import calendar events, check password leaks, and keep a timeline of all your scans.")
     )
     val pagerState = rememberPagerState(initialPage = 0) { pages.size }
     val scope = rememberCoroutineScope()
