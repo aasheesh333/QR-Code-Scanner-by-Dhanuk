@@ -1,5 +1,12 @@
 package com.dhanuk.quickscanpro.util
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Wifi
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
 
 /**
@@ -29,7 +36,7 @@ object QRTemplateRegistry {
             key = "business_card",
             title = "Business Card",
             subtitle = "vCard with name, phone, email",
-            icon = androidx.compose.material.icons.Icons.Filled.Badge,
+            icon = Icons.Filled.Badge,
             type = QRContentBuilder.QRType.VCARD,
             prefill = TemplatePrefill(f1 = "", f2 = "", f3 = "")
         ),
@@ -37,7 +44,7 @@ object QRTemplateRegistry {
             key = "home_wifi",
             title = "Home Wi-Fi",
             subtitle = "Share your Wi-Fi with guests",
-            icon = androidx.compose.material.icons.Icons.Filled.Wifi,
+            icon = Icons.Filled.Wifi,
             type = QRContentBuilder.QRType.WIFI,
             prefill = TemplatePrefill(f1 = "", f2 = "", f3 = "WPA")
         ),
@@ -45,7 +52,7 @@ object QRTemplateRegistry {
             key = "event_invite",
             title = "Event Invite",
             subtitle = "ICS calendar event",
-            icon = androidx.compose.material.icons.Icons.Filled.Event,
+            icon = Icons.Filled.Event,
             type = QRContentBuilder.QRType.CALENDAR,
             prefill = TemplatePrefill(f1 = "", f2 = "", f3 = "", f4 = "")
         ),
@@ -53,7 +60,7 @@ object QRTemplateRegistry {
             key = "contact_phone",
             title = "Tap-to-Call",
             subtitle = "tel: link",
-            icon = androidx.compose.material.icons.Icons.Filled.Phone,
+            icon = Icons.Filled.Phone,
             type = QRContentBuilder.QRType.PHONE,
             prefill = TemplatePrefill(f1 = "")
         ),
@@ -61,7 +68,7 @@ object QRTemplateRegistry {
             key = "simple_link",
             title = "Website Link",
             subtitle = "Email or chat-app URL",
-            icon = androidx.compose.material.icons.Icons.Filled.Link,
+            icon = Icons.Filled.Link,
             type = QRContentBuilder.QRType.URL,
             prefill = TemplatePrefill(f1 = "https://")
         ),
@@ -69,7 +76,7 @@ object QRTemplateRegistry {
             key = "support_email",
             title = "Support Email",
             subtitle = "Pre-filled mail message",
-            icon = androidx.compose.material.icons.Icons.Filled.Email,
+            icon = Icons.Filled.Email,
             type = QRContentBuilder.QRType.EMAIL,
             prefill = TemplatePrefill(f1 = "", f2 = "", f3 = "")
         )

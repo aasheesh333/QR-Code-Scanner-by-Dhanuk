@@ -13,7 +13,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PermDeviceIdentity
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -62,7 +61,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                     SettingRow(Icons.Filled.Info, "About Us", null, {})
                     SettingRow(Icons.Filled.Email, "Contact Us", null, {})
                     SettingRow(Icons.Filled.Lock, "Privacy Policy", null, {})
-                    SettingRow(Icons.Filled.PermDeviceIdentity, "Permissions", null, {})
+                    SettingRow(Icons.Filled.Lock, "Permissions", null, {})
                     SettingRow(Icons.Filled.Description, "Terms & Conditions", null, {})
                     SettingRow(Icons.Filled.Star, "Rate on Play Store", null, {})
                 }

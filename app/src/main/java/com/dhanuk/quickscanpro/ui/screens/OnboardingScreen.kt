@@ -81,7 +81,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            repeat(pages.indices) { i ->
+            repeat(pages.size) { i ->
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 4.dp)

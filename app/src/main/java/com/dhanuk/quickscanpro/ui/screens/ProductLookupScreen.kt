@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.EmptyState
+import com.dhanuk.quickscanpro.util.ProductInfo
 import com.dhanuk.quickscanpro.util.ProductLookup
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,17 +72,20 @@ fun ProductLookupScreen(barcode: String, onNavigateBack: () -> Unit) {
                 loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-                info != null -> Surface(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
-                    color = MaterialTheme.colorScheme.surface
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(info!!.name, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(4.dp))
-                        Text(info!!.brand, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.height(8.dp))
-                        if (info!!.categories.isNotEmpty()) Text(info!!.categories.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
-                        if (info!!.quantity.isNotBlank()) Text(info!!.quantity, style = MaterialTheme.typography.bodyMedium)
+                info != null -> {
+                    val p = info!!
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(p.name, style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(4.dp))
+                            Text(p.brand, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(8.dp))
+                            if (p.categories.isNotEmpty()) Text(p.categories.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
+                            if (p.quantity.isNotBlank()) Text(p.quantity, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
                 else -> EmptyState(

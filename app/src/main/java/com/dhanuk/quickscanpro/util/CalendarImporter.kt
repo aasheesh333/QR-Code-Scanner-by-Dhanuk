@@ -50,10 +50,17 @@ object CalendarImporter {
             val location = m.groupValues[2].trim()
             val startStr = m.groupValues[3]
             val endStr = m.groupValues[4]
-            val start = if (startStr.isNotBlank()) runCatching { humanDateTimeFmt.parse(startStr)?.time }.getOrNull()
-                ?: (System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1))
-            val end = if (!endStr.isNullOrBlank()) runCatching { humanDateTimeFmt.parse(endStr)?.time }.getOrNull()
-                else start + TimeUnit.HOURS.toMillis(1)
+            val start: Long = if (startStr.isNotBlank()) {
+                runCatching { humanDateTimeFmt.parse(startStr)?.time }.getOrNull()
+                    ?: (System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1))
+            } else {
+                System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)
+            }
+            val end: Long = if (!endStr.isNullOrBlank()) {
+                runCatching { humanDateTimeFmt.parse(endStr)?.time }.getOrNull() ?: (start + TimeUnit.HOURS.toMillis(1))
+            } else {
+                start + TimeUnit.HOURS.toMillis(1)
+            }
             return ParsedEvent(title, location, start, end)
         }
 

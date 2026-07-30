@@ -26,10 +26,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flashlight
-import androidx.compose.material.icons.filled.GalleryVertical
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -211,12 +211,12 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 CameraIconButton(
-                    icon = Icons.Filled.Flashlight,
+                    icon = Icons.Filled.FlashOn,
                     onClick = {},
                     contentDescription = "Flash"
                 )
                 CameraIconButton(
-                    icon = Icons.Filled.GalleryVertical,
+                    icon = Icons.Filled.ViewAgenda,
                     onClick = onOpenBatch,
                     contentDescription = "Batch scan"
                 )
@@ -269,7 +269,7 @@ private fun QuickToolRow(
     val fmt = remember {
         object {
             val tiles = listOf(
-                Triple("Batch", Icons.Filled.GalleryVertical, onBatch::invoke),
+                Triple("Batch", Icons.Filled.ViewAgenda, onBatch::invoke),
                 Triple("Compare", Icons.Filled.PhotoLibrary, onCompare::invoke),  // upcyc for variety
                 Triple("Vault", Icons.Filled.History, onVault::invoke),
                 Triple("History", Icons.Filled.History, onTimeline::invoke)
