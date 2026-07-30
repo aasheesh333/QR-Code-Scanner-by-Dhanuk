@@ -48,14 +48,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.viewmodel.AnalyticsViewModel
+import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 
 @Composable
 fun AnalyticsScreen() {
     val vm: AnalyticsViewModel = viewModel()
     val stats by vm.stats.collectAsState()
+    val historyVm: HistoryViewModel = viewModel()
+    val leakCheckList by historyVm.leakChecks.collectAsState()
     val totalScans = stats.totalScans.coerceAtLeast(0)
     val generated = stats.totalGeneratedQRs.coerceAtLeast(0)
-    val leakChecks = 15
+    val leakChecks = leakCheckList.size
 
     AppBackground()
     Column(
@@ -67,13 +70,15 @@ fun AnalyticsScreen() {
         AnalyticsHeader()
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             KpiRow(
-                totalScans = if (totalScans > 0) totalScans else 124,
-                generated = if (generated > 0) generated else 42,
+                totalScans = totalScans,
+                generated = generated,
                 leakChecks = leakChecks
             )
             Spacer(Modifier.height(24.dp))
-            ScanTypesCard(stats.topTypes, totalScans)
-            Spacer(Modifier.height(24.dp))
+            if (totalScans > 0) {
+                ScanTypesCard(stats.topTypes, totalScans)
+                Spacer(Modifier.height(24.dp))
+            }
             WeeklyActivityCard()
             Spacer(Modifier.height(24.dp))
             TopSourcesCard()

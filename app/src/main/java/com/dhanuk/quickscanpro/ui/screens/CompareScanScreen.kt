@@ -1,5 +1,15 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -33,25 +43,39 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
+import com.dhanuk.quickscanpro.ui.composables.ScanFrame
+
+private const val TAG = "CompareScanScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompareScanScreen(onNavigateBack: () -> Unit) {
-    var scanA by remember { mutableStateOf<String?>(null) }
-    var scanB by remember { mutableStateOf<String?>(null) }
+    var scanA by rememberSaveable { mutableStateOf<String?>(null) }
+    var scanB by rememberSaveable { mutableStateOf<String?>(null) }
     val isMatch = !scanA.isNullOrEmpty() && !scanB.isNullOrEmpty() && scanA == scanB
+    var isScanning by rememberSaveable { mutableStateOf(false) }
+    var activeSlot by rememberSaveable { mutableStateOf<Int?>(null) }
 
     AppBackground()
     Scaffold(
@@ -91,8 +115,8 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                     PrimaryButton(
                         text = "Scan to Compare",
                         onClick = {
-                            if (scanA == null) scanA = "PLACEHOLDER_A"
-                            else if (scanB == null) scanB = "PLACEHOLDER_B"
+                            activeSlot = if (scanA == null) 0 else 1
+                            isScanning = true
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -101,66 +125,213 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(
-                "Scan two codes back-to-back to check if they're identical.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                ScanSlot(
-                    label = "Scan A",
-                    value = scanA,
-                    modifier = Modifier.weight(1f)
-                ) { scanA = "PLACEHOLDER_A" }
-                ScanSlot(
-                    label = "Scan B",
-                    value = scanB,
-                    modifier = Modifier.weight(1f)
-                ) { scanB = "PLACEHOLDER_B" }
-            }
-            if (scanA != null && scanB != null) {
-                Surface(
+                Text(
+                    "Scan two codes back-to-back to check if they're identical.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    color = if (isMatch)
-                        MaterialTheme.colorScheme.secondaryContainer
-                    else MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ScanSlot(
+                        label = "Scan A",
+                        value = scanA,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            if (isMatch) Icons.Filled.CheckCircle else Icons.Filled.Warning,
-                            contentDescription = null,
-                            tint = if (isMatch)
-                                MaterialTheme.colorScheme.secondary
-                            else MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Text(
-                            text = if (isMatch) "MATCH — codes identical"
-                                   else "DIFFERENT — codes don't match",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isMatch)
-                                MaterialTheme.colorScheme.onSecondary
-                            else MaterialTheme.colorScheme.onError
-                        )
+                        activeSlot = 0
+                        isScanning = true
                     }
+                    ScanSlot(
+                        label = "Scan B",
+                        value = scanB,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        activeSlot = 1
+                        isScanning = true
+                    }
+                }
+                if (scanA != null && scanB != null) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = if (isMatch)
+                            MaterialTheme.colorScheme.secondaryContainer
+                        else MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                if (isMatch) Icons.Filled.CheckCircle else Icons.Filled.Warning,
+                                contentDescription = null,
+                                tint = if (isMatch)
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                else MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Text(
+                                text = if (isMatch) "MATCH — codes identical"
+                                       else "DIFFERENT — codes don't match",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isMatch)
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                else MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (isScanning && activeSlot != null) {
+                CompareCameraSheet(
+                    onScan = { result ->
+                        when (activeSlot) {
+                            0 -> scanA = result
+                            1 -> scanB = result
+                        }
+                        isScanning = false
+                        activeSlot = null
+                    },
+                    onClose = {
+                        isScanning = false
+                        activeSlot = null
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompareCameraSheet(
+    onScan: (String) -> Unit,
+    onClose: () -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> hasPermission = granted }
+
+    LaunchedEffect(Unit) {
+        if (!hasPermission) launcher.launch(Manifest.permission.CAMERA)
+    }
+
+    val executor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val analyzer = remember(onScan) {
+        BarcodeAnalyzer { result ->
+            if (result.isNotEmpty()) onScan(result)
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, hasPermission) {
+        if (!hasPermission) {
+            return@DisposableEffect onDispose {}
+        }
+        val future = ProcessCameraProvider.getInstance(context)
+        val listener = Runnable {
+            val provider = try { future.get() } catch (e: Exception) {
+                Log.e(TAG, "Failed to get camera provider", e)
+                return@Runnable
+            }
+            val previewView = PreviewView(context)
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+            val analysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also { it.setAnalyzer(executor, analyzer) }
+            try {
+                provider.unbindAll()
+                provider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview, analysis
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to bind camera lifecycle", e)
+            }
+        }
+        future.addListener(listener, executor)
+
+        onDispose {
+            try {
+                analyzer.close()
+                val provider = try { future.get() } catch (_: Exception) { null }
+                provider?.unbindAll()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to unbind camera", e)
+            }
+        }
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color.Black,
+        tonalElevation = 0.dp
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (hasPermission) {
+                AndroidView(
+                    factory = { PreviewView(it) },
+                    modifier = Modifier.fillMaxSize()
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 48.dp, vertical = 24.dp)
+                ) {
+                    ScanFrame(modifier = Modifier.fillMaxWidth())
+                }
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Camera permission required",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+            ) {
+                Surface(shape = CircleShape, color = Color.Black.copy(alpha = 0.4f)) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.padding(8.dp)
+                    )
                 }
             }
         }

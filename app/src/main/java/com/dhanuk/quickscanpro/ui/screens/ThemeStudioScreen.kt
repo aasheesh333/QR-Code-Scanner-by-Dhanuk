@@ -35,9 +35,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,10 +48,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
+import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 
 @Composable
 fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
+    val settingsVm: SettingsViewModel = viewModel()
+    val savedPrimary by settingsVm.themePrimaryIndex.collectAsState()
+    val savedSecondary by settingsVm.themeSecondaryIndex.collectAsState()
+    val savedAccent by settingsVm.themeAccentIndex.collectAsState()
     val swatches = remember {
         listOf(
             Color(0xFF2563EB),
@@ -62,10 +70,9 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
             Color(0xFF4F46E5)
         )
     }
-    val scheme = MaterialTheme.colorScheme
-    var primaryIndex by remember { mutableIntStateOf(nearestIndex(swatches, scheme.primary)) }
-    var secondaryIndex by remember { mutableIntStateOf(nearestIndex(swatches, scheme.secondary)) }
-    var accentIndex by remember { mutableIntStateOf(nearestIndex(swatches, scheme.tertiary)) }
+    var primaryIndex by rememberSaveable { mutableIntStateOf(savedPrimary) }
+    var secondaryIndex by rememberSaveable { mutableIntStateOf(savedSecondary) }
+    var accentIndex by rememberSaveable { mutableIntStateOf(savedAccent) }
     val selectedPrimary = swatches[primaryIndex]
     val selectedSecondary = swatches[secondaryIndex]
     val selectedAccent = swatches[accentIndex]
@@ -79,7 +86,12 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
     ) {
         ThemeStudioHeader(
             onBack = onNavigateBack,
-            onApply = { onNavigateBack() }
+            onApply = {
+                settingsVm.setThemePrimaryIndex(primaryIndex)
+                settingsVm.setThemeSecondaryIndex(secondaryIndex)
+                settingsVm.setThemeAccentIndex(accentIndex)
+                onNavigateBack()
+            }
         )
         Column(
             modifier = Modifier
@@ -120,7 +132,12 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
             )
             ApplyButton(
                 color = selectedPrimary,
-                onClick = { onNavigateBack() }
+                onClick = {
+                    settingsVm.setThemePrimaryIndex(primaryIndex)
+                    settingsVm.setThemeSecondaryIndex(secondaryIndex)
+                    settingsVm.setThemeAccentIndex(accentIndex)
+                    onNavigateBack()
+                }
             )
             Spacer(Modifier.height(20.dp))
         }

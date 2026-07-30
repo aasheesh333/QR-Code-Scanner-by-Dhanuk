@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,7 @@ import androidx.navigation.navArgument
 import com.dhanuk.quickscanpro.config.AppConfig
 import com.dhanuk.quickscanpro.ui.composables.BannerAd
 import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
+import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -40,7 +43,12 @@ fun MainScreen() {
 
     when {
         onboardingCompleted == null -> {
-            Box(modifier = Modifier.fillMaxSize()) {}
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
         onboardingCompleted == false -> {
             OnboardingScreen {
@@ -129,7 +137,21 @@ private fun AppNavigation(navController: NavHostController) {
                 onOpenVault = { navController.navigate("vault") },
                 onOpenTimeline = { navController.navigate("timeline") },
                 onOpenTemplates = { navController.navigate("templates") },
-                onOpenLeakCheck = { navController.navigate("leak_check") }
+                onOpenLeakCheck = { navController.navigate("leak_check") },
+                onOpenSettings = {
+                    navController.navigate(BottomNavItem.Settings.route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onOpenGenerate = {
+                    navController.navigate(BottomNavItem.Generate.route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
         composable(BottomNavItem.Generate.route) { QRGeneratorScreen() }
@@ -160,11 +182,39 @@ private fun AppNavigation(navController: NavHostController) {
 
         composable("batch_scan") { BatchScanScreen { navController.popBackStack() } }
         composable("compare_scan") { CompareScanScreen { navController.popBackStack() } }
-        composable("vault") { VaultScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable("vault") {
+            VaultScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable("theme_studio") { ThemeStudioScreen { navController.popBackStack() } }
         composable("timeline") { TimelineScreen { navController.popBackStack() } }
-        composable("templates") { TemplatesScreen { navController.popBackStack() } }
+        composable("templates") {
+            val qrVm: QRGeneratorViewModel = viewModel()
+            TemplatesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onUseTemplate = { template ->
+                    qrVm.prefill(
+                        type = template.type,
+                        p1 = template.prefill.f1,
+                        p2 = template.prefill.f2,
+                        p3 = template.prefill.f3,
+                        p4 = template.prefill.f4
+                    )
+                    navController.navigate(BottomNavItem.Generate.route)
+                }
+            )
+        }
         composable("leak_check") { LeakCheckScreen { navController.popBackStack() } }
+        composable(
+            route = "product_lookup/{barcode}",
+            arguments = listOf(navArgument("barcode") { type = NavType.StringType })
+        ) { backStackEntry ->
+            ProductLookupScreen(
+                barcode = backStackEntry.arguments?.getString("barcode") ?: "",
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable("about") { AboutScreen { navController.popBackStack() } }
         composable("about_us") { AboutUsScreen { navController.popBackStack() } }
         composable("contact_us") { ContactUsScreen { navController.popBackStack() } }

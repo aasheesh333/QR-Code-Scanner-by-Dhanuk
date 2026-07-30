@@ -35,12 +35,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +66,8 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
     var input by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf(LeakMode.DOMAIN) }
     var report by remember { mutableStateOf<PasswordLeakChecker.LeakReport?>(null) }
+    var isChecking by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val vm: HistoryViewModel = viewModel()
     val checks by vm.leakChecks.collectAsState()
 
@@ -102,19 +109,34 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
             PrimaryButton(
                 text = "Check for Leaks",
                 onClick = {
-                    val r = PasswordLeakChecker.check(input)
-                    report = r
-                    vm.saveLeakCheck(
-                        domain = r.domain, leaked = r.leaked,
-                        breachCount = r.breachCount, firstSeen = r.firstSeenYear.toLong()
-                    )
+                    isChecking = true
+                    scope.launch {
+                        val r = withContext(Dispatchers.Default) {
+                            PasswordLeakChecker.check(input)
+                        }
+                        report = r
+                        vm.saveLeakCheck(
+                            domain = r.domain, leaked = r.leaked,
+                            breachCount = r.breachCount, firstSeen = r.firstSeenYear.toLong()
+                        )
+                        isChecking = false
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = input.isNotBlank()
+                enabled = input.isNotBlank() && !isChecking
             ) {
-                Icon(Icons.Filled.Search, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Check for Leaks")
+                if (isChecking) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                } else {
+                    Icon(Icons.Filled.Search, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(if (isChecking) "Checking..." else "Check for Leaks")
             }
             Spacer(Modifier.height(20.dp))
             report?.let { r -> ResultBanner(r); Spacer(Modifier.height(20.dp)) }

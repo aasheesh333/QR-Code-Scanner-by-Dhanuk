@@ -2,8 +2,10 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -46,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,13 +59,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.database.ScanResult
@@ -73,6 +80,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private const val TAG = "HomeScreen"
+
 @Composable
 fun HomeScreen(
     onScan: (String) -> Unit,
@@ -82,7 +91,9 @@ fun HomeScreen(
     onOpenVault: () -> Unit,
     onOpenTimeline: () -> Unit,
     onOpenTemplates: () -> Unit,
-    onOpenLeakCheck: () -> Unit
+    onOpenLeakCheck: () -> Unit,
+    onOpenSettings: () -> Unit = {},
+    onOpenGenerate: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val historyVm: HistoryViewModel = viewModel()
@@ -110,7 +121,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        QuickScanHeader()
+        QuickScanHeader(onOpenSettings = onOpenSettings)
 
         Box(modifier = Modifier.fillMaxWidth().weight(0.70f)) {
             CameraViewfinder(
@@ -123,7 +134,7 @@ fun HomeScreen(
 
         StitchBottomSheet(
             recent = recent1,
-            onGenerate = onViewAllHistory,
+            onGenerate = onOpenGenerate,
             onHistory = onViewAllHistory,
             onTemplates = onOpenTemplates,
             onLeak = onOpenLeakCheck,
@@ -133,7 +144,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun QuickScanHeader() {
+private fun QuickScanHeader(onOpenSettings: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,7 +166,7 @@ private fun QuickScanHeader() {
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
-        IconButton(onClick = {}) {
+        IconButton(onClick = onOpenSettings) {
             Icon(
                 Icons.Filled.Settings,
                 contentDescription = "Settings",
@@ -172,6 +183,58 @@ private fun CameraViewfinder(
     onScan: (String) -> Unit,
     onBatch: () -> Unit
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val executor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val analyzer = remember(onScan) { BarcodeAnalyzer(onScan) }
+    var flashEnabled by remember { mutableStateOf(false) }
+    var camera by remember { mutableStateOf<Camera?>(null) }
+    val haptic = LocalHapticFeedback.current
+
+    DisposableEffect(lifecycleOwner, hasCameraPermission) {
+        if (!hasCameraPermission) {
+            return@DisposableEffect onDispose {}
+        }
+        val future = ProcessCameraProvider.getInstance(context)
+        val listener = Runnable {
+            val provider = try { future.get() } catch (e: Exception) {
+                Log.e(TAG, "Failed to get camera provider", e)
+                return@Runnable
+            }
+            val previewView = PreviewView(context)
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+            val analysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also { it.setAnalyzer(executor, analyzer) }
+            try {
+                provider.unbindAll()
+                camera = provider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview, analysis
+                )
+                camera?.cameraControl?.enableTorch(flashEnabled)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to bind camera lifecycle", e)
+            }
+        }
+        future.addListener(listener, executor)
+
+        onDispose {
+            try {
+                analyzer.close()
+                camera?.cameraControl?.enableTorch(false)
+                val provider = try { future.get() } catch (_: Exception) { null }
+                provider?.unbindAll()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to unbind camera", e)
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -181,29 +244,6 @@ private fun CameraViewfinder(
             AndroidView(
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
-                    val executor = ContextCompat.getMainExecutor(ctx)
-                    ProcessCameraProvider.getInstance(ctx).also { future ->
-                        future.addListener({
-                            val provider = future.get()
-                            val preview = Preview.Builder().build().also {
-                                it.setSurfaceProvider(previewView.surfaceProvider)
-                            }
-                            val analysis = ImageAnalysis.Builder()
-                                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                .build()
-                                .also {
-                                    it.setAnalyzer(executor, BarcodeAnalyzer(onScan))
-                                }
-                            try {
-                                provider.unbindAll()
-                                provider.bindToLifecycle(
-                                    ctx as androidx.lifecycle.LifecycleOwner,
-                                    CameraSelector.DEFAULT_BACK_CAMERA,
-                                    preview, analysis
-                                )
-                            } catch (_: Exception) {}
-                        }, executor)
-                    }
                     previewView
                 },
                 modifier = Modifier.fillMaxSize()
@@ -241,7 +281,14 @@ private fun CameraViewfinder(
                 .padding(top = 16.dp, end = 20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GlassCircleButton(onClick = {}, icon = Icons.Filled.FlashOn, contentDescription = "Flash")
+            GlassCircleButton(
+                onClick = {
+                    flashEnabled = !flashEnabled
+                    camera?.cameraControl?.enableTorch(flashEnabled)
+                },
+                icon = Icons.Filled.FlashOn,
+                contentDescription = "Flash"
+            )
             GlassCircleButton(onClick = onBatch, icon = Icons.Filled.AutoAwesomeMotion, contentDescription = "Batch scan")
         }
 
@@ -262,7 +309,9 @@ private fun CameraViewfinder(
             contentAlignment = Alignment.Center
         ) {
             Button(
-                onClick = {},
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,

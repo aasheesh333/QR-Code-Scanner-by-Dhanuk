@@ -39,6 +39,9 @@ fun BannerAd(adUnitId: String, modifier: Modifier = Modifier) {
                     loadAd(AdRequest.Builder().build())
                 }
             },
+            onRelease = { adView ->
+                adView.destroy()
+            },
             modifier = Modifier.fillMaxWidth()
         )
     }

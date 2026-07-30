@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.ContactsContract
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -60,6 +61,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,11 +92,19 @@ fun ResultScreen(
 ) {
     val context = LocalContext.current
     val historyVm: HistoryViewModel = viewModel()
-    var savedId by remember { mutableStateOf<Int?>(null) }
+    var savedId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(data) {
         if (savedId == null) {
-            historyVm.addScanResult(ScanResult(content = data))
+            val type = BarcodeTypeDetector.detectType(data)
+            val exists = historyVm.history.value.any {
+                it.content == data && it.type == type &&
+                    System.currentTimeMillis() - it.timestamp < 60_000
+            }
+            if (!exists) {
+                savedId = 1
+                historyVm.addScanResult(ScanResult(content = data))
+            }
         }
     }
 
@@ -151,9 +161,9 @@ fun ResultScreen(
                 .padding(horizontal = 20.dp)
         ) {
             when (type) {
-                BarcodeTypeDetector.TYPE_WIFI -> WifiVariant(data)
-                BarcodeTypeDetector.TYPE_VCARD -> VCardVariant(data)
-                else -> UrlVariant(data, type, safetyReport)
+                BarcodeTypeDetector.TYPE_WIFI -> WifiVariant(data, onNavigateBack)
+                BarcodeTypeDetector.TYPE_VCARD -> VCardVariant(data, onNavigateBack)
+                else -> UrlVariant(data, type, safetyReport, onNavigateBack)
             }
             Spacer(Modifier.height(40.dp))
         }
@@ -162,7 +172,7 @@ fun ResultScreen(
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun WifiVariant(data: String) {
+private fun WifiVariant(data: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val parts = remember(data) { parseWifi(data) }
     var showPass by remember { mutableStateOf(false) }
@@ -244,29 +254,44 @@ private fun WifiVariant(data: String) {
 
     Spacer(Modifier.height(24.dp))
 
-    WifiSafetySection(score = 100)
+    val wifiInfo = remember(data) { parseWifiInfo(data) }
+    val security = wifiInfo.first
+    WifiSafetySection(security = security, ssid = parts.first)
 
     Spacer(Modifier.height(24.dp))
 
     PrimaryButton(
         text = "Connect to Network",
-        onClick = {},
+        onClick = { connectToWifi(context, parts.first, parts.second, security) },
         modifier = Modifier.fillMaxWidth()
     )
     Spacer(Modifier.height(8.dp))
     SecondaryButton(
         text = "Done",
-        onClick = {},
+        onClick = onNavigateBack,
         modifier = Modifier.fillMaxWidth()
     )
 }
 
 @Composable
-private fun WifiSafetySection(score: Int) {
+private fun WifiSafetySection(security: String, ssid: String) {
+    val score = when {
+        security.equals("WPA3", ignoreCase = true) -> 95
+        security.equals("WPA2", ignoreCase = true) -> 85
+        security.equals("WPA", ignoreCase = true) -> 70
+        security.equals("WEP", ignoreCase = true) -> 40
+        security.equals("nopass", ignoreCase = true) || security.isEmpty() -> 25
+        else -> 50
+    }
     val (tint, bg) = when {
         score >= 80 -> MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f)
         score < 50 -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.errorContainer
         else -> SafetyWarn to MaterialTheme.colorScheme.surfaceVariant
+    }
+    val label = when {
+        score >= 80 -> "Safe"
+        score < 50 -> "Insecure"
+        else -> "Caution"
     }
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -302,7 +327,7 @@ private fun WifiSafetySection(score: Int) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Safe",
+                            text = label,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -323,7 +348,7 @@ private fun WifiSafetySection(score: Int) {
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "Local network verified. WPA3 security protocol detected.",
+                        text = "Local network${if (ssid.isNotEmpty()) " \"$ssid\"" else ""}. $security security.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -376,7 +401,7 @@ private fun WifiSafetySection(score: Int) {
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun VCardVariant(data: String) {
+private fun VCardVariant(data: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val fields = remember(data) { parseVCard(data) }
     val initials = remember(fields) {
@@ -450,7 +475,7 @@ private fun VCardVariant(data: String) {
     Spacer(Modifier.height(24.dp))
     PrimaryButton(
         text = "Save Contact",
-        onClick = {},
+        onClick = { saveVCardContact(context, fields, data) },
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -460,7 +485,7 @@ private fun VCardVariant(data: String) {
     Spacer(Modifier.height(8.dp))
     SecondaryButton(
         text = "Done",
-        onClick = {},
+        onClick = onNavigateBack,
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -599,7 +624,8 @@ private fun VCardSafetySection(score: Int) {
 private fun UrlVariant(
     data: String,
     type: String,
-    safetyReport: LinkSafetyChecker.Report?
+    safetyReport: LinkSafetyChecker.Report?,
+    onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -661,7 +687,7 @@ private fun UrlVariant(
 
     Spacer(Modifier.height(16.dp))
 
-    UrlSafetySection(score = safetyReport?.score ?: 95)
+    UrlSafetySection(score = safetyReport?.score ?: 95, report = safetyReport)
 
     Spacer(Modifier.height(24.dp))
     PrimaryButton(
@@ -676,13 +702,41 @@ private fun UrlVariant(
     Spacer(Modifier.height(8.dp))
     SecondaryButton(
         text = "Done",
-        onClick = {},
+        onClick = onNavigateBack,
         modifier = Modifier.fillMaxWidth()
     )
 }
 
 @Composable
-private fun UrlSafetySection(score: Int) {
+private fun UrlSafetySection(score: Int, report: LinkSafetyChecker.Report?) {
+    val result = when (report?.level) {
+        LinkSafetyChecker.Level.SAFE ->
+            arrayOf(
+                "Safe", report.signals.firstOrNull() ?: "No threats detected",
+                MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+            )
+        LinkSafetyChecker.Level.CAUTION ->
+            arrayOf(
+                "Caution", report.signals.firstOrNull() ?: "Potential risk",
+                SafetyWarn, SafetyWarn.copy(alpha = 0.1f)
+            )
+        LinkSafetyChecker.Level.RISKY ->
+            arrayOf(
+                "Danger", report.signals.firstOrNull() ?: "Unsafe link",
+                MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+            )
+        else ->
+            arrayOf(
+                "Unknown", "Could not analyze link",
+                MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+            )
+    }
+    val label = result[0] as String
+    val signal = result[1] as String
+    val tint = result[2] as Color
+    val bg = result[3] as Color
+
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -696,26 +750,26 @@ private fun UrlSafetySection(score: Int) {
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)),
+                        .background(bg),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Filled.GppGood,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary,
+                        tint = tint,
                         modifier = Modifier.size(20.dp)
                     )
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Safe",
+                        text = label,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "No threats detected",
+                        text = signal,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -833,6 +887,55 @@ private fun parseWifi(data: String): Pair<String, String> {
         }
     }
     return ssid to pass
+}
+
+private fun parseWifiInfo(data: String): Pair<String, String> {
+    var security = ""
+    var hidden = ""
+    data.removePrefix("WIFI:").split(";").forEach { seg ->
+        val kv = seg.split(":", limit = 2)
+        if (kv.size == 2) {
+            when (kv[0].uppercase()) {
+                "T" -> security = kv[1]
+                "H" -> hidden = kv[1]
+            }
+        }
+    }
+    return security to hidden
+}
+
+private fun connectToWifi(context: Context, ssid: String, password: String, security: String) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        data = Uri.parse("wifi://connect")
+    }
+    try {
+        context.startActivity(intent)
+        Toast.makeText(context, "Open Wi-Fi settings to connect", Toast.LENGTH_SHORT).show()
+    } catch (_: Exception) {
+        val fallback = Intent(android.provider.Settings.ACTION_WIFI_SETTINGS)
+        try {
+            context.startActivity(fallback)
+        } catch (_: Exception) {
+            Toast.makeText(context, "Could not open Wi-Fi settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+private fun saveVCardContact(context: Context, fields: Map<String, String>, raw: String) {
+    val name = fields["FN"] ?: fields["N"] ?: ""
+    val phone = fields["TEL"]
+    val email = fields["EMAIL"]
+    val intent = Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI).apply {
+        type = ContactsContract.Contacts.CONTENT_TYPE
+        putExtra(ContactsContract.Intents.Insert.NAME, name)
+        phone?.let { putExtra(ContactsContract.Intents.Insert.PHONE, it) }
+        email?.let { putExtra(ContactsContract.Intents.Insert.EMAIL, it) }
+    }
+    try {
+        context.startActivity(intent)
+    } catch (_: Exception) {
+        shareText(context, raw)
+    }
 }
 
 private fun parseVCard(data: String): Map<String, String> {

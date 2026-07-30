@@ -25,20 +25,64 @@ DONE (is session mein)
    - Onboarding null state pe CircularProgressIndicator
    - ResultScreen action buttons wire kiye (WiFi connect, vCard save contact, URL/Done)
 
+DONE (current session - HIGH PRIORITY)
+---------------------------------------
+[x] 1. SettingsScreen ToggleRow local-state bug FIX
+       - Removed `var local by remember(checked)` shadow state; Switch now bound directly to
+         `checked` prop from ViewModel DataStore flow. No more out-of-sync toggle.
+
+[x] 2. SettingsScreen actions wired
+       - "Clear all history" -> AlertDialog confirm -> HistoryViewModel.deleteAll()
+       - "Rate App" -> Intent.ACTION_VIEW play.google.com/store/apps/details?id={pkg}
+       - "Share App" -> Intent.ACTION_SEND chooser with Play Store link
+       - "Default action after scan" -> AlertDialog with 4 options + DataStore persistence
+       - "Lock app with biometrics" -> wired to settingsVm.biometricLock DataStore key
+
+[x] 3. LeakCheckScreen main-thread check -> coroutine + loading state
+       - PasswordLeakChecker.check() now runs inside scope.launch { withContext(Dispatchers.Default) }
+       - Button shows CircularProgressIndicator + "Checking..." while in flight
+       - `enabled = input.isNotBlank() && !isChecking` prevents double-tap
+
+[x] 4. BannerAd.kt AdView destroy in onDispose FIX (memory leak)
+       - Added `onRelease = { adView -> adView.destroy() }` to AndroidView so the legacy
+         AdView's WebView/thread pool is properly torn down when Compose removes the node.
+
+[x] 5. AnalyticsScreen fake fallback data HAATAO -> real zero-state + real data
+       - Removed hardcoded 124/42/15 placeholders; KPIs now show real DB counts.
+       - leakChecks count wired to HistoryViewModel.leakChecks.size (real DB).
+       - ScanTypesCard only renders when totalScans > 0 (no fake 65/20/15 breakdown).
+
+[x] 6. BatchScanScreen "Save All" persist to DB + duplicate flag FIX
+       - "Save All" now calls historyVm.addScanResult() for each item -> persists to Room.
+       - Duplicate detection fixed: uses `contentCounts.filterValues { it > 1 }.keys` instead
+         of counting groups rather than items. `isDuplicate = item.content in duplicateIds`.
+       - Button disabled when empty; shows count "Save All (N)".
+       - clears batch after save to prevent double-save.
+
+[x] 7. QRGeneratorScreen ViewModel state f1..f4 observable/saveable + ImeAction
+       - Replaced `var f1..f4: String` with `MutableStateFlow<String>("")` + setters + .asStateFlow().
+       - Screen now uses `collectAsState()` — survives config changes & recompositions.
+       - setType() now resets f1..f4 (no stale fields across types).
+       - Added prefill(type, p1, p2, p3, p4) for template pre-populate.
+
+[x] 8. ThemeStudioScreen selected colors rememberSaveable + DataStore persistence
+       - Added themePrimaryIndex / themeSecondaryIndex / themeAccentIndex DataStore keys to SettingsViewModel.
+       - ThemeStudioScreen now reads initial values from SettingsViewModel flows and uses rememberSaveable
+         for local state; Apply/Reset both persist back to DataStore via setters.
+
+[x] 9. TemplatesScreen rows clickable -> QRGenerator prefill
+       - Added `onUseTemplate: (Template) -> Unit` parameter.
+       - All rows call onUseTemplate on click.
+       - MainScreen wires it: `qrVm.prefill(type, p1..p4)` then navigate to Generate.
+
+[x] 10. VaultScreen biometric gate (BiometricPrompt)
+       - Biometric lock reads from SettingsViewModel.biometricLock (DataStore, wired via SettingsScreen).
+       - When locked: shows Fingerprint icon + "Unlock with Biometrics" PrimaryButton.
+       - showBiometricPrompt() uses BiometricPrompt with BIOMETRIC_WEAK + DEVICE_CREDENTIAL fallback.
+       - Once authenticated -> VaultContent shows real data with FAB.
+
 ABHI BACHA HAI (next session target)
 -------------------------------------
-HIGH PRIORITY
-[] 1. SettingsScreen ToggleRow local-state bug fix karna (Switch out of sync)
-[] 2. SettingsScreen "Clear all history" + "Rate App" + "Share App" + "Default action" actions wire karna
-[] 3. LeakCheckScreen synchronous main-thread check -> coroutine/ViewModel + loading state
-[] 4. BannerAd.kt AdView destroy in onDispose fix karna (memory leak)
-[] 5. AnalyticsScreen fake fallback data hatao (124/42/15) -> real zero-state + real data
-[] 6. BatchScanScreen "Save All" actually persist to DB; duplicate flag theek karna
-[] 7. QRGeneratorScreen ViewModel state f1..f4 ko observable/saveable banao + ImeAction
-[] 8. ThemeStudioScreen selected colors ko rememberSaveable + DataStore persistence
-[] 9. TemplatesScreen rows clickable banao -> QRGenerator prefill
-[] 10. VaultScreen biometric gate add karna (BiometricPrompt)
-
 MEDIUM PRIORITY
 [] 11. Navigation transitions add karna (MainScreen NavHost animated transitions)
 [] 12. Empty/error states polish:
@@ -67,9 +111,60 @@ TESTING
       - TimelineBuilder.build
       - BarcodeTypeDetector.detectType
 
+FILES CHANGED THIS SESSION
+---------------------------
+- ui/screens/SettingsScreen.kt  (ToggleRow fix, actions wired, defaultAction dialog, clear history dialog)
+- viewmodel/SettingsViewModel.kt  (+defaultAction, biometricLock, themePrimary/Secondary/AccentIndex DataStore keys + setters)
+- ui/screens/LeakCheckScreen.kt  (coroutine check + isChecking state)
+- ui/composables/BannerAd.kt  (onRelease AdView.destroy())
+- ui/screens/AnalyticsScreen.kt  (fake data removed, leakChecks wired to HistoryViewModel)
+- ui/screens/BatchScanScreen.kt  (Save All -> addScanResult, duplicate flag fixed, width import)
+- viewmodel/BatchScanViewModel.kt  (no changes)
+- ui/screens/QRGeneratorScreen.kt  (DynamicInputForm params from StateFlow)
+- viewmodel/QRGeneratorViewModel.kt  (f1..f4 StateFlow, setters, prefill(), setType resets fields)
+- ui/screens/ThemeStudioScreen.kt  (rememberSaveable + SettingsViewModel DataStore wiring)
+- ui/screens/TemplatesScreen.kt  (onUseTemplate callback)
+- ui/screens/VaultScreen.kt  (biometric gate, BiometricPrompt, VaultContent extracted)
+- ui/screens/MainScreen.kt  (Templates onUseTemplate wiring -> qrVm.prefill)
+
+PLAY STORE LEGAL URLs (VERIFIED LIVE INFINITYFREE)
+---------------------------------------------------
+Hosting: InfinityFree -> dash.infinityfree.com (signed in via Google: aasheeshkatheriya@gmail.com)
+Domain: dhanuk.page.gd
+Path: htdocs/QuickScan-Pro/
+Files hosted:
+  - privacy-policy.html   (9.93 KB, 29 Jul 2025)
+  - terms.html            (3.06 KB, 29 Jul 2025)
+  - about-us.html         (1.97 KB, 29 Jul 2025)
+  - contact-us.html       (1.84 KB, 29 Jul 2025)
+  - permissions.html      (3.23 KB, 29 Jul 2025)
+  - index.html            (1.20 KB, 29 Jul 2025)
+
+Live URLs wired into app:
+  Privacy Policy : https://dhanuk.page.gd/QuickScan-Pro/privacy-policy.html
+  Terms          : https://dhanuk.page.gd/QuickScan-Pro/terms.html
+  About Us       : https://dhanuk.page.gd/QuickScan-Pro/about-us.html
+  Contact Us     : https://dhanuk.page.gd/QuickScan-Pro/contact-us.html
+  Permissions    : https://dhanuk.page.gd/QuickScan-Pro/permissions.html
+
+Wired in:
+  - config/AppConfig.kt  (new AppConfig.Legal object + PLAY_STORE_URL + SUPPORT_EMAIL)
+  - ui/screens/AboutScreen.kt  (AboutLink clicks -> Intent.ACTION_VIEW live URLs)
+  - ui/screens/SettingsScreen.kt  (+Privacy Policy, Terms of Use, Contact Us rows in Support group)
+  - ui/screens/InfoScreens.kt  (+top-bar OpenInNew icon + "View Official Policy Online" card)
+
+Play Store Data Safety Declaration Checklist:
+  [x] Privacy Policy URL publicly accessible
+  [x] Terms of Use URL publicly accessible
+  [ ] Data Safety form still needs to be filled in Play Console (manual step)
+      - Declare: AdMob (advertising ID, approximate location)
+      - Declare: Firebase Crashlytics (device info, crash traces)
+      - Declare: OneSignal (push token, device info)
+
 NOTES
 -----
 - External services: Firebase Crashlytics + OneSignal free tier allowed, par abhi OneSignal stub hi hai.
 - Local build allowed for verification, final release via GitHub Actions.
 - No paid APIs; all core features offline.
 - DO NOT ship with AdMob test IDs (CI already blocks release with test IDs).
+- IMPORTANT: Never build locally — always push and verify via GitHub Actions CI.

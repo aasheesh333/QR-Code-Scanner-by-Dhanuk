@@ -4,6 +4,8 @@ import com.dhanuk.quickscanpro.BuildConfig
 
 object AppConfig {
     const val APP_NAME = "QuickScan Pro"
+    const val SUPPORT_EMAIL = "support@dhanuksoftwares.com"
+    const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.dhanuk.quickscanpro"
 
     object AdMob {
         const val BANNER_AD_UNIT_ID_HOME = BuildConfig.BANNER_AD_ID
@@ -13,5 +15,14 @@ object AppConfig {
 
     object OneSignal {
         const val APP_ID = BuildConfig.ONESIGNAL_APP_ID
+    }
+
+    object Legal {
+        const val BASE_URL = "https://dhanuk.page.gd/QuickScan-Pro"
+        const val PRIVACY_POLICY = "$BASE_URL/privacy-policy.html"
+        const val TERMS = "$BASE_URL/terms.html"
+        const val ABOUT_US = "$BASE_URL/about-us.html"
+        const val CONTACT_US = "$BASE_URL/contact-us.html"
+        const val PERMISSIONS = "$BASE_URL/permissions.html"
     }
 }

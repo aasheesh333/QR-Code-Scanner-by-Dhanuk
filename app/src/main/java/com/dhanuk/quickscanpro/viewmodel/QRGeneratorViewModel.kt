@@ -37,14 +37,22 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
     private val _backgroundColor = MutableStateFlow(0xFFFFFFFF.toInt())
     val backgroundColor = _backgroundColor.asStateFlow()
 
-    // Simple input holders (screens set these directly)
-    var f1: String = ""
-    var f2: String = ""
-    var f3: String = ""
-    var f4: String = ""
+    private val _f1 = MutableStateFlow("")
+    val f1 = _f1.asStateFlow()
+    private val _f2 = MutableStateFlow("")
+    val f2 = _f2.asStateFlow()
+    private val _f3 = MutableStateFlow("")
+    val f3 = _f3.asStateFlow()
+    private val _f4 = MutableStateFlow("")
+    val f4 = _f4.asStateFlow()
+
+    fun setF1(value: String) { _f1.value = value }
+    fun setF2(value: String) { _f2.value = value }
+    fun setF3(value: String) { _f3.value = value }
+    fun setF4(value: String) { _f4.value = value }
 
     fun generateFromInputs() {
-        generate(f1, f2, f3, f4)
+        generate(_f1.value, _f2.value, _f3.value, _f4.value)
     }
 
     fun generate(
@@ -103,6 +111,20 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
 
     fun setType(type: QRContentBuilder.QRType) {
         _selectedType.value = type
+        _generatedBitmap.value = null
+        _generatedContent.value = ""
+        _f1.value = ""
+        _f2.value = ""
+        _f3.value = ""
+        _f4.value = ""
+    }
+
+    fun prefill(type: QRContentBuilder.QRType, p1: String = "", p2: String = "", p3: String = "", p4: String = "") {
+        _selectedType.value = type
+        _f1.value = p1
+        _f2.value = p2
+        _f3.value = p3
+        _f4.value = p4
         _generatedBitmap.value = null
         _generatedContent.value = ""
     }

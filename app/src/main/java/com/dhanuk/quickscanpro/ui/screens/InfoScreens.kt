@@ -1,5 +1,7 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,8 +26,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dhanuk.quickscanpro.config.AppConfig
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 
 private val ABOUT_BODY = """
@@ -78,31 +83,32 @@ Calendar: optional — only when user imports a scanned calendar event.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutUsScreen(onNavigateBack: () -> Unit) =
-    InfoScreen("About Us", ABOUT_BODY, onNavigateBack)
+    InfoScreen("About Us", ABOUT_BODY, AppConfig.Legal.ABOUT_US, onNavigateBack)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactUsScreen(onNavigateBack: () -> Unit) =
-    InfoScreen("Contact Us", CONTACT_BODY, onNavigateBack)
+    InfoScreen("Contact Us", CONTACT_BODY, AppConfig.Legal.CONTACT_US, onNavigateBack)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivacyPolicyScreen(onNavigateBack: () -> Unit) =
-    InfoScreen("Privacy Policy", PRIVACY_BODY, onNavigateBack)
+    InfoScreen("Privacy Policy", PRIVACY_BODY, AppConfig.Legal.PRIVACY_POLICY, onNavigateBack)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionsUsageScreen(onNavigateBack: () -> Unit) =
-    InfoScreen("Permissions", PERMISSIONS_BODY, onNavigateBack)
+    InfoScreen("Permissions", PERMISSIONS_BODY, AppConfig.Legal.PERMISSIONS, onNavigateBack)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TermsAndConditionsScreen(onNavigateBack: () -> Unit) =
-    InfoScreen("Terms", TERMS_BODY, onNavigateBack)
+    InfoScreen("Terms", TERMS_BODY, AppConfig.Legal.TERMS, onNavigateBack)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InfoScreen(title: String, body: String, onNavigateBack: () -> Unit) {
+private fun InfoScreen(title: String, body: String, url: String, onNavigateBack: () -> Unit) {
+    val context = LocalContext.current
     AppBackground()
     Scaffold(
         topBar = {
@@ -111,6 +117,13 @@ private fun InfoScreen(title: String, body: String, onNavigateBack: () -> Unit) 
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }) {
+                        Icon(Icons.Filled.OpenInNew, contentDescription = "View online")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -131,6 +144,39 @@ private fun InfoScreen(title: String, body: String, onNavigateBack: () -> Unit) 
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(18.dp)
                 )
+            }
+            Spacer(Modifier.height(16.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                onClick = {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+            ) {
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.OpenInNew,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "View Official Policy Online",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = url,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }

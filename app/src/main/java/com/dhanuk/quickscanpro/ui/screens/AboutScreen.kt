@@ -1,5 +1,7 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
@@ -43,11 +46,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dhanuk.quickscanpro.config.AppConfig
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onNavigateBack: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val openUrl = { url: String ->
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
     AppBackground()
     Scaffold(
         topBar = {
@@ -209,10 +217,10 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 )
             ) {
                 Column(Modifier.padding(vertical = 4.dp)) {
-                    AboutLink("Privacy Policy")
-                    AboutLink("Open Source Licenses")
-                    AboutLink("Terms of Use")
-                    AboutLink("Help & Support")
+                    AboutLink("Privacy Policy") { openUrl(AppConfig.Legal.PRIVACY_POLICY) }
+                    AboutLink("Open Source") { openUrl(AppConfig.Legal.ABOUT_US) }
+                    AboutLink("Terms of Use") { openUrl(AppConfig.Legal.TERMS) }
+                    AboutLink("Help & Support") { openUrl(AppConfig.Legal.CONTACT_US) }
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -294,10 +302,11 @@ private fun FeatureRow(icon: ImageVector, title: String, description: String) {
 }
 
 @Composable
-private fun AboutLink(title: String) {
+private fun AboutLink(title: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

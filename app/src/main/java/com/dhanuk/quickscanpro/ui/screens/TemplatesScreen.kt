@@ -42,7 +42,10 @@ import com.dhanuk.quickscanpro.util.QRTemplateRegistry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TemplatesScreen(onNavigateBack: () -> Unit) {
+fun TemplatesScreen(
+    onNavigateBack: () -> Unit,
+    onUseTemplate: (QRTemplateRegistry.Template) -> Unit = {}
+) {
     val all = QRTemplateRegistry.templates
     val recent = all.take(2)
     AppBackground()
@@ -76,7 +79,7 @@ fun TemplatesScreen(onNavigateBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                recent.forEach { RecentRow(it) }
+                recent.forEach { RecentRow(it, onUseTemplate) }
             }
             Spacer(Modifier.height(16.dp))
             SectionTitle(text = "ALL TEMPLATES")
@@ -84,7 +87,7 @@ fun TemplatesScreen(onNavigateBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                all.forEach { AllTemplateRow(it) }
+                all.forEach { AllTemplateRow(it, onUseTemplate) }
             }
             Spacer(Modifier.height(20.dp))
         }
@@ -92,12 +95,15 @@ fun TemplatesScreen(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun RecentRow(template: QRTemplateRegistry.Template) {
+private fun RecentRow(
+    template: QRTemplateRegistry.Template,
+    onUseTemplate: (QRTemplateRegistry.Template) -> Unit = {}
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable { },
+            .clickable { onUseTemplate(template) },
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         tonalElevation = 0.dp
     ) {
@@ -141,12 +147,15 @@ private fun RecentRow(template: QRTemplateRegistry.Template) {
 }
 
 @Composable
-private fun AllTemplateRow(template: QRTemplateRegistry.Template) {
+private fun AllTemplateRow(
+    template: QRTemplateRegistry.Template,
+    onUseTemplate: (QRTemplateRegistry.Template) -> Unit = {}
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable { },
+            .clickable { onUseTemplate(template) },
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         tonalElevation = 0.dp
     ) {

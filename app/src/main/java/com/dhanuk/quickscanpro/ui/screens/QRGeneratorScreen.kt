@@ -61,6 +61,10 @@ fun QRGeneratorScreen() {
     val vm: QRGeneratorViewModel = viewModel()
     val selectedType by vm.selectedType.collectAsState()
     val bitmap by vm.generatedBitmap.collectAsState()
+    val f1 by vm.f1.collectAsState()
+    val f2 by vm.f2.collectAsState()
+    val f3 by vm.f3.collectAsState()
+    val f4 by vm.f4.collectAsState()
 
     AppBackground()
     Column(
@@ -73,7 +77,7 @@ fun QRGeneratorScreen() {
         Spacer(Modifier.height(16.dp))
         TypeChipRow(selectedType) { vm.setType(it) }
         Spacer(Modifier.height(20.dp))
-        DynamicInputForm(selectedType, vm)
+        DynamicInputForm(selectedType, f1, f2, f3, f4, vm::setF1, vm::setF2, vm::setF3, vm::setF4)
         Spacer(Modifier.height(20.dp))
         QRPreviewBox(bitmap)
         Spacer(Modifier.height(16.dp))
@@ -172,54 +176,59 @@ private fun TypeChipRow(selected: QRContentBuilder.QRType, onSelect: (QRContentB
 }
 
 @Composable
-private fun DynamicInputForm(type: QRContentBuilder.QRType, vm: QRGeneratorViewModel) {
+private fun DynamicInputForm(
+    type: QRContentBuilder.QRType,
+    f1: String, f2: String, f3: String, f4: String,
+    setF1: (String) -> Unit, setF2: (String) -> Unit,
+    setF3: (String) -> Unit, setF4: (String) -> Unit
+) {
     Column(Modifier.fillMaxWidth()) {
         when (type) {
             QRContentBuilder.QRType.URL -> OutlinedQRField(
-                vm.f1, onValueChange = { vm.f1 = it },
+                f1, onValueChange = setF1,
                 label = "Website URL",
                 placeholder = "https://example.com",
                 leadingIcon = Icons.Filled.Language,
                 trailingIcon = Icons.Filled.QrCode2
             )
             QRContentBuilder.QRType.TEXT -> OutlinedQRField(
-                vm.f1, onValueChange = { vm.f1 = it },
+                f1, onValueChange = setF1,
                 label = "Plain text",
                 placeholder = "Enter text"
             )
             QRContentBuilder.QRType.PHONE -> OutlinedQRField(
-                vm.f1, onValueChange = { vm.f1 = it },
+                f1, onValueChange = setF1,
                 label = "Phone number",
                 placeholder = "+1 555 000 1234",
                 leadingIcon = Icons.Filled.Call
             )
             QRContentBuilder.QRType.SMS -> {
-                OutlinedQRField(vm.f1, onValueChange = { vm.f1 = it }, label = "Phone number")
+                OutlinedQRField(f1, onValueChange = setF1, label = "Phone number")
                 Spacer(Modifier.height(10.dp))
-                OutlinedQRField(vm.f2, onValueChange = { vm.f2 = it }, label = "Message", singleLine = false)
+                OutlinedQRField(f2, onValueChange = setF2, label = "Message", singleLine = false)
             }
             QRContentBuilder.QRType.EMAIL -> {
-                OutlinedQRField(vm.f1, onValueChange = { vm.f1 = it }, label = "To", leadingIcon = Icons.Filled.Mail)
+                OutlinedQRField(f1, onValueChange = setF1, label = "To", leadingIcon = Icons.Filled.Mail)
                 Spacer(Modifier.height(8.dp))
-                OutlinedQRField(vm.f2, onValueChange = { vm.f2 = it }, label = "Subject")
+                OutlinedQRField(f2, onValueChange = setF2, label = "Subject")
                 Spacer(Modifier.height(8.dp))
-                OutlinedQRField(vm.f3, onValueChange = { vm.f3 = it }, label = "Body", singleLine = false)
+                OutlinedQRField(f3, onValueChange = setF3, label = "Body", singleLine = false)
             }
             QRContentBuilder.QRType.WIFI -> {
-                OutlinedQRField(vm.f1, onValueChange = { vm.f1 = it }, label = "SSID / Network name", leadingIcon = Icons.Filled.Wifi)
+                OutlinedQRField(f1, onValueChange = setF1, label = "SSID / Network name", leadingIcon = Icons.Filled.Wifi)
                 Spacer(Modifier.height(8.dp))
-                OutlinedQRField(vm.f2, onValueChange = { vm.f2 = it }, label = "Password")
+                OutlinedQRField(f2, onValueChange = setF2, label = "Password")
                 Spacer(Modifier.height(8.dp))
-                OutlinedQRField(vm.f3, onValueChange = { vm.f3 = it }, label = "Encryption (WPA/WEP/NOPASS)")
+                OutlinedQRField(f3, onValueChange = setF3, label = "Encryption (WPA/WEP/NOPASS)")
             }
             QRContentBuilder.QRType.VCARD -> {
-                OutlinedQRField(vm.f1, onValueChange = { vm.f1 = it }, label = "Full name", leadingIcon = Icons.Filled.ContactPage)
+                OutlinedQRField(f1, onValueChange = setF1, label = "Full name", leadingIcon = Icons.Filled.ContactPage)
                 Spacer(Modifier.height(8.dp))
-                OutlinedQRField(vm.f2, onValueChange = { vm.f2 = it }, label = "Phone")
+                OutlinedQRField(f2, onValueChange = setF2, label = "Phone")
                 Spacer(Modifier.height(8.dp))
-                OutlinedQRField(vm.f3, onValueChange = { vm.f3 = it }, label = "Email")
+                OutlinedQRField(f3, onValueChange = setF3, label = "Email")
                 Spacer(Modifier.height(8.dp))
-                OutlinedQRField(vm.f4, onValueChange = { vm.f4 = it }, label = "Organisation")
+                OutlinedQRField(f4, onValueChange = setF4, label = "Organisation")
             }
             QRContentBuilder.QRType.CALENDAR -> Text(
                 "Pick another type — calendar QR is available via the Calendar Import screen",

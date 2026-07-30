@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -54,16 +55,20 @@ import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
 import com.dhanuk.quickscanpro.ui.composables.SecondaryButton
 import com.dhanuk.quickscanpro.viewmodel.BatchScanViewModel
+import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BatchScanScreen(onNavigateBack: () -> Unit) {
     val vm: BatchScanViewModel = viewModel()
+    val historyVm: HistoryViewModel = viewModel()
     val items by vm.results.collectAsState()
     val active by vm.isActive.collectAsState()
     val context = LocalContext.current
-    val duplicates = items.groupingBy { it.content }.eachCount().values.count { it > 1 }
-    val unique = items.size - duplicates
+    val contentCounts = items.groupingBy { it.content }.eachCount()
+    val duplicateIds = contentCounts.filterValues { it > 1 }.keys
+    val unique = contentCounts.size
+    val duplicates = items.size - unique
 
     AppBackground()
     Scaffold(
@@ -103,14 +108,27 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                         modifier = Modifier.weight(1f)
                     )
                     PrimaryButton(
-                        text = "Save All",
+                        text = "Save All (${items.size})",
                         onClick = {
-                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("batch", vm.exportAsText()))
-                            Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
+                            items.forEach { item ->
+                                historyVm.addScanResult(
+                                    com.dhanuk.quickscanpro.database.ScanResult(
+                                        content = item.content,
+                                        type = item.type,
+                                        timestamp = item.timestamp
+                                    )
+                                )
+                            }
+                            vm.clearAll()
+                            Toast.makeText(context, "${items.size} saved to history", Toast.LENGTH_SHORT).show()
                         },
-                        modifier = Modifier.weight(1f)
-                    )
+                        modifier = Modifier.weight(1f),
+                        enabled = items.isNotEmpty()
+                    ) {
+                        Icon(Icons.Filled.Save, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Save All (${items.size})")
+                    }
                 }
             }
         },
@@ -202,7 +220,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     }
                 }
                 itemsIndexed(items) { idx, item ->
-                    BatchRow(idx, item.content, item.type, isDuplicate = false)
+                    BatchRow(idx, item.content, item.type, isDuplicate = item.content in duplicateIds)
                 }
             }
         }
