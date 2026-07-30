@@ -8,6 +8,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,6 +35,7 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
     val vm: ThemeViewModel = viewModel()
     val themeMode by vm.themeMode.collectAsState()
     val isDark by vm.isDarkTheme.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val presetAccents = listOf(
         LuminaPrimary to "Purple",
@@ -118,7 +120,7 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
                                             if (MaterialTheme.colorScheme.primary == color) Color.White
                                             else Color.Transparent, CircleShape)
                                         .clickable {
-                                            ToastMessage(name)
+                                            android.widget.Toast.makeText(context, "Preview: $name (saved in Settings)", android.widget.Toast.LENGTH_SHORT).show()
                                         },
                                     contentAlignment = Alignment.Center
                                 ) { }
@@ -185,7 +187,7 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
                                             MaterialTheme.colorScheme.outlineVariant,
                                             RoundedCornerShape(12.dp))
                                         .clickable {
-                                            ToastMessage(name)
+                                            android.widget.Toast.makeText(context, "Preview: $name (saved in Settings)", android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                         .padding(horizontal = 18.dp, vertical = 18.dp)
                                 ) {
@@ -264,13 +266,6 @@ private fun ToggleRow(label: String, description: String, checked: Boolean, onTo
         }
         Switch(checked = checked, onCheckedChange = onToggle)
     }
-}
-
-@Composable
-private fun ToastMessage(text: String) {
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    android.widget.Toast.makeText(ctx, "Preview: $text (saved in Settings)",
-        android.widget.Toast.LENGTH_SHORT).show()
 }
 
 private fun LuminaPrimaryShade(factor: Float): Color =

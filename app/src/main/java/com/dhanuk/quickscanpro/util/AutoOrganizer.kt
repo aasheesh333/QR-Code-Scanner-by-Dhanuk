@@ -1,15 +1,15 @@
 package com.dhanuk.quickscanpro.util
 
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_URL
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_WIFI
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_VCARD
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_PHONE
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_EMAIL
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_SMS
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_CALENDAR
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_TEXT
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_PRODUCT
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_GEO
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_URL
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_WIFI
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_VCARD
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_PHONE
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_EMAIL
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_SMS
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_CALENDAR
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_TEXT
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_PRODUCT
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_GEO
 
 /**
  * Auto-categorizes scans into smart folders based on detected barcode type.

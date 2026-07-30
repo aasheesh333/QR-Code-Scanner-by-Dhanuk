@@ -430,6 +430,7 @@ private fun SafetyGauge(score: Int, color: Color, modifier: Modifier = Modifier)
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReminderBottomSheet(onDismiss: () -> Unit, onSchedule: (Long?) -> Unit) {
     val options = ReminderScheduler.relativeOptions()
@@ -566,7 +567,7 @@ private fun buildActionPills(
     add("Share", Icons.Filled.Share) {
         val send = Intent(Intent.ACTION_SEND).apply {
             putExtra(Intent.EXTRA_TEXT, content)
-            type = "text/plain"
+            setType("text/plain")
         }
         context.startActivity(Intent.createChooser(send, "Share"))
     }

@@ -10,6 +10,7 @@ import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.util.AutoOrganizer
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.ReminderScheduler
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,14 +42,21 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     val autoCategoryCounts = scanResultDao.getCountByAutoCategory()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val filteredHistory = combine(
+    val filteredHistory: Flow<List<ScanResult>> = combine(
         scanResultDao.getAll(),
         searchQuery.asStateFlow(),
         selectedType.asStateFlow(),
         showFavoritesOnly.asStateFlow(),
         selectedCollectionId.asStateFlow(),
         selectedAutoCategory.asStateFlow()
-    ) { all, query, type, favsOnly, collectionId, autoCat ->
+    ) { args: Array<Any?> ->
+        @Suppress("UNCHECKED_CAST")
+        val all = args[0] as List<ScanResult>
+        val query = args[1] as String
+        val type = args[2] as String?
+        val favsOnly = args[3] as Boolean
+        val collectionId = args[4] as Int?
+        val autoCat = args[5] as String?
         var filtered = all
 
         if (autoCat != null) {

@@ -1,7 +1,7 @@
 package com.dhanuk.quickscanpro.util
 
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_TEXT
-import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.Companion.TYPE_URL
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_TEXT
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector.TYPE_URL
 import java.util.Locale
 
 /**

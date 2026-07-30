@@ -281,29 +281,31 @@ fun HomeScreen(
                             isTorchOn = newTorch
                         },
                         active = isTorchOn,
-                        size = 48.dp
-                    ) {
-                        Icon(
-                            if (isTorchOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
-                            contentDescription = "Torch",
-                            tint = if (isTorchOn) LuminaPrimaryGlow
-                            else MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
+                        size = 48.dp,
+                        icon = {
+                            Icon(
+                                if (isTorchOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
+                                contentDescription = "Torch",
+                                tint = if (isTorchOn) LuminaPrimaryGlow
+                                else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    )
                     ActionOrb(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .offset(x = 8.dp),
                         onClick = { galleryLauncher.launch("image/*") },
-                        size = 48.dp
-                    ) {
-                        Icon(
-                            Icons.Filled.PhotoLibrary, contentDescription = "Gallery",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
+                        size = 48.dp,
+                        icon = {
+                            Icon(
+                                Icons.Filled.PhotoLibrary, contentDescription = "Gallery",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    )
                 }
 
                 Spacer(Modifier.height(18.dp))
