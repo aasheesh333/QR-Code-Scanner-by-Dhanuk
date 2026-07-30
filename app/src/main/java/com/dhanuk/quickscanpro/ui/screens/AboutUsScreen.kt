@@ -19,6 +19,7 @@ import com.dhanuk.quickscanpro.R
 @Composable
 fun AboutUsScreen(onNavigateBack: () -> Unit) {
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(text = "About Us") },
@@ -29,7 +30,8 @@ fun AboutUsScreen(onNavigateBack: () -> Unit) {
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
             )
         }
     ) { innerPadding ->

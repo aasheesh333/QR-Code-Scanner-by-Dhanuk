@@ -22,6 +22,7 @@ import com.dhanuk.quickscanpro.R
 @Composable
 fun PermissionsUsageScreen(onNavigateBack: () -> Unit) {
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(text = "Permissions Usage") },
@@ -32,7 +33,8 @@ fun PermissionsUsageScreen(onNavigateBack: () -> Unit) {
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
             )
         }
     ) { innerPadding ->

@@ -32,19 +32,19 @@ private val onboardingPages = listOf(
     OnboardingPage(
         Icons.Filled.QrCodeScanner,
         "Scan Anything",
-        "Quickly scan QR codes, barcodes, Wi-Fi networks, contacts, and products with a single tap.",
+        "Instantly scan QR codes, barcodes, Wi-Fi, contacts and products — with a gorgeous glass viewfinder.",
         GradientStart
     ),
     OnboardingPage(
-        Icons.Filled.QrCode2,
-        "Create QR Codes",
-        "Generate beautiful custom QR codes for URLs, Wi-Fi, contacts, vCards, and more.",
+        Icons.Filled.VerifiedUser,
+        "Link Safety Check",
+        "Unique to QuickScan Pro: every link is scored for phishing signals before you open it — no other scanner does this offline.",
         GradientMid
     ),
     OnboardingPage(
-        Icons.Filled.SmartButton,
-        "Smart Actions",
-        "Instantly add to contacts, connect to Wi-Fi, call, email, or open in maps - all from a single scan.",
+        Icons.Filled.StickyNote2,
+        "Notes & Smart Actions",
+        "Attach notes to scans, connect to Wi-Fi, add contacts, share your own network — all in one tap.",
         GradientEnd
     )
 )
@@ -55,19 +55,11 @@ fun OnboardingScreen(onFinished: () -> Unit) {
     var currentPage by remember { mutableStateOf(0) }
     val page = onboardingPages[currentPage]
 
-    Scaffold { padding ->
+    Scaffold(containerColor = Color.Transparent) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-                        )
-                    )
-                )
         ) {
             Spacer(Modifier.weight(1f))
 

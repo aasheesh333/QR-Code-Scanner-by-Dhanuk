@@ -39,7 +39,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
+import com.dhanuk.quickscanpro.ui.composables.GlassCard
 import com.dhanuk.quickscanpro.ui.composables.ScanOverlay
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
 import com.dhanuk.quickscanpro.viewmodel.BatchScanViewModel
 import java.io.File
 import java.io.FileWriter
@@ -154,9 +156,10 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                         .fillMaxWidth()
                         .height(300.dp)
                         .padding(horizontal = 12.dp, vertical = 8.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color.Black)
                 ) {
+                    GlassCard(modifier = Modifier.fillMaxSize(), cornerRadius = 24.dp,
+                        glowColor = if (isActive) LuminaPrimaryGlow else null) {
+                    Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(24.dp)).background(Color.Black)) {
                     // Recreate the camera view when isActive changes so the camera
                     // unbinds (stops) when batch scanning is stopped.
                     key(isActive) {
@@ -256,6 +259,8 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
+                    }
+                    }
                     }
                 }
             }
@@ -405,14 +410,11 @@ private fun BatchScanItemCard(
     onRemove: () -> Unit
 ) {
     var showFull by remember { mutableStateOf(false) }
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { showFull = !showFull },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-        )
+        cornerRadius = 14.dp
     ) {
         Row(
             modifier = Modifier
