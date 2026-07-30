@@ -8,8 +8,11 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [ScanResult::class, GeneratedQR::class, ScanCollection::class],
-    version = 4,
+    entities = [
+        ScanResult::class, GeneratedQR::class, ScanCollection::class,
+        CalendarEvent::class, QRTemplate::class, LeakCheck::class
+    ],
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -17,6 +20,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun scanResultDao(): ScanResultDao
     abstract fun generatedQRDao(): GeneratedQRDao
     abstract fun scanCollectionDao(): ScanCollectionDao
+    abstract fun calendarEventDao(): CalendarEventDao
+    abstract fun qrTemplateDao(): QRTemplateDao
+    abstract fun leakCheckDao(): LeakCheckDao
 
     companion object {
         @Volatile
@@ -66,6 +72,43 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS calendar_events (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        title TEXT NOT NULL,
+                        location TEXT NOT NULL DEFAULT '',
+                        start_time INTEGER NOT NULL,
+                        end_time INTEGER,
+                        source_content TEXT NOT NULL DEFAULT '',
+                        imported INTEGER NOT NULL DEFAULT 0,
+                        timestamp INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS qr_templates_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        template_key TEXT NOT NULL,
+                        label TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        qr_type TEXT NOT NULL,
+                        timestamp INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS leak_checks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        domain TEXT NOT NULL,
+                        leaked INTEGER NOT NULL DEFAULT 0,
+                        breach_count INTEGER NOT NULL DEFAULT 0,
+                        first_seen INTEGER NOT NULL DEFAULT 0,
+                        checked_at INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -73,7 +116,9 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "scan_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(
+                        MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5
+                    )
                     .build()
                 INSTANCE = instance
                 instance

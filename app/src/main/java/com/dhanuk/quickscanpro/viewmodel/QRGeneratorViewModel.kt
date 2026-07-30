@@ -37,6 +37,16 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
     private val _backgroundColor = MutableStateFlow(0xFFFFFFFF.toInt())
     val backgroundColor = _backgroundColor.asStateFlow()
 
+    // Simple input holders (screens set these directly)
+    var f1: String = ""
+    var f2: String = ""
+    var f3: String = ""
+    var f4: String = ""
+
+    fun generateFromInputs() {
+        generate(f1, f2, f3, f4)
+    }
+
     fun generate(
         input1: String,
         input2: String = "",

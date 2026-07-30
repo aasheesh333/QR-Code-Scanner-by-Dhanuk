@@ -1,302 +1,205 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AutoMode
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.BuildConfig
-import com.dhanuk.quickscanpro.ui.composables.GlassCard
-import com.dhanuk.quickscanpro.ui.theme.ThemeMode
+import com.dhanuk.quickscanpro.ui.composables.AppBackground
+import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
+import com.dhanuk.quickscanpro.ui.composables.SecondaryButton
+import com.dhanuk.quickscanpro.ui.composables.SettingRow
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 
-/**
- * Settings screen — clean professional layout:
- *  - Appearance section with radio-list theme modes
- *  - Scanning toggles section
- *  - Privacy toggle section
- *  - More links: Theme Studio, About, Rate, Share
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () -> Unit = {}) {
-    val svm: SettingsViewModel = viewModel()
-    val tvm: ThemeViewModel = viewModel()
-    val context = LocalContext.current
+fun SettingsScreen(
+    onNavigateToAbout: () -> Unit,
+    onNavigateToThemeStudio: () -> Unit
+) {
+    val settingsVm: SettingsViewModel = viewModel()
+    val themeVm: ThemeViewModel = viewModel()
+    val themeMode by themeVm.themeMode.collectAsState()
+    val vibrate by settingsVm.vibrateEnabled.collectAsState()
+    val sound by settingsVm.soundEnabled.collectAsState()
+    val incognito by settingsVm.incognitoMode.collectAsState()
+    val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
 
-    val vibrateEnabled by svm.vibrateEnabled.collectAsState()
-    val soundEnabled by svm.soundEnabled.collectAsState()
-    val incognitoMode by svm.incognitoMode.collectAsState()
-    val autoCopyOnScan by svm.autoCopyOnScan.collectAsState()
-    val themeMode by tvm.themeMode.collectAsState()
-
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Settings", style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold)
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        }
-    ) { padding ->
+    AppBackground()
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(16.dp)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SectionHeader("Appearance")
-            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    ThemeMode.entries.forEach { mode ->
-                        val isSelected = themeMode == mode
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = when (mode) {
-                                        ThemeMode.LIGHT -> Icons.Filled.LightMode
-                                        ThemeMode.DARK -> Icons.Filled.DarkMode
-                                        ThemeMode.SYSTEM -> Icons.Filled.SettingsBrightness
-                                        ThemeMode.AMOLED -> Icons.Filled.DoNotDisturb
-                                    },
-                                    contentDescription = null,
-                                    tint = if (isSelected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                )
-                                Spacer(Modifier.width(14.dp))
-                                Text(
-                                    text = when (mode) {
-                                        ThemeMode.LIGHT -> "Light"
-                                        ThemeMode.DARK -> "Dark"
-                                        ThemeMode.SYSTEM -> "System default"
-                                        ThemeMode.AMOLED -> "AMOLED black"
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = { tvm.setThemeMode(mode) }
-                            )
-                        }
-                    }
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(16.dp))
+
+            Section("Appearance")
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp)),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
+                Column(Modifier.padding(8.dp)) {
+                    ThemeModeButton("Light", Icons.Filled.LightMode, themeMode == com.dhanuk.quickscanpro.ui.theme.ThemeMode.LIGHT) { themeVm.setThemeMode(com.dhanuk.quickscanpro.ui.theme.ThemeMode.LIGHT) }
+                    ThemeModeButton("Dark", Icons.Filled.DarkMode, themeMode == com.dhanuk.quickscanpro.ui.theme.ThemeMode.DARK) { themeVm.setThemeMode(com.dhanuk.quickscanpro.ui.theme.ThemeMode.DARK) }
+                    ThemeModeButton("AMOLED", Icons.Filled.DarkMode, themeMode == com.dhanuk.quickscanpro.ui.theme.ThemeMode.AMOLED) { themeVm.setThemeMode(com.dhanuk.quickscanpro.ui.theme.ThemeMode.AMOLED) }
+                    ThemeModeButton("Follow system", Icons.Filled.AutoMode, themeMode == com.dhanuk.quickscanpro.ui.theme.ThemeMode.SYSTEM) { themeVm.setThemeMode(com.dhanuk.quickscanpro.ui.theme.ThemeMode.SYSTEM) }
                 }
             }
-
-            SectionHeader("Scanning")
-            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    SettingsSwitchItem(
-                        icon = Icons.Filled.Vibration,
-                        title = "Vibrate on scan",
-                        subtitle = "Haptic feedback when a code is scanned",
-                        checked = vibrateEnabled,
-                        onCheckedChange = { svm.setVibrate(it) }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsSwitchItem(
-                        icon = Icons.Filled.VolumeUp,
-                        title = "Sound on scan",
-                        subtitle = "Play a beep when a code is scanned",
-                        checked = soundEnabled,
-                        onCheckedChange = { svm.setSound(it) }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsSwitchItem(
-                        icon = Icons.Filled.ContentCopy,
-                        title = "Auto-copy",
-                        subtitle = "Automatically copy scanned content to clipboard",
-                        checked = autoCopyOnScan,
-                        onCheckedChange = { svm.setAutoCopy(it) }
-                    )
-                }
-            }
-
-            SectionHeader("Privacy")
-            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
-                SettingsSwitchItem(
-                    icon = Icons.Filled.VisibilityOff,
-                    title = "Incognito mode",
-                    subtitle = "Scans will not be saved to history",
-                    checked = incognitoMode,
-                    onCheckedChange = { svm.setIncognito(it) }
+            Spacer(Modifier.height(8.dp))
+            Row {
+                SecondaryButton(
+                    text = "Theme Studio",
+                    onClick = onNavigateToThemeStudio,
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            SectionHeader("More")
-            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    InfoRowItem(
-                        icon = Icons.Filled.Palette,
-                        title = "Theme Studio",
-                        subtitle = "Accent color, AMOLED, fonts",
-                        onClick = onNavigateToThemeStudio
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    InfoRowItem(
-                        icon = Icons.Filled.Info,
-                        title = "About",
-                        subtitle = "Privacy, terms, contact us",
-                        onClick = onNavigateToAbout
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    InfoRowItem(
-                        icon = Icons.Filled.Star,
-                        title = "Rate us",
-                        subtitle = "Enjoying QuickScan Pro? Leave a review",
-                        onClick = {
-                            try {
-                                context.startActivity(
-                                    Intent(
-                                        Intent.ACTION_VIEW,
-                                        Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
-                                    )
-                                )
-                            } catch (_: Exception) {}
-                        }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    InfoRowItem(
-                        icon = Icons.Filled.Share,
-                        title = "Share app",
-                        subtitle = "Tell your friends about QuickScan Pro",
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_SEND).apply {
-                                setType("text/plain")
-                                putExtra(
-                                    Intent.EXTRA_TEXT,
-                                    "Check out QuickScan Pro on Play Store! https://play.google.com/store/apps/details?id=${context.packageName}"
-                                )
-                            }
-                            context.startActivity(Intent.createChooser(intent, "Share QuickScan Pro"))
-                        }
-                    )
+            Spacer(Modifier.height(20.dp))
+            Section("Scanning")
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp)),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
+                Column(Modifier.padding(8.dp)) {
+                    ToggleRow(Icons.Filled.Vibration, "Vibration", vibrate) { settingsVm.setVibrate(it) }
+                    ToggleRow(Icons.Filled.VolumeUp, "Beep on scan", sound) { settingsVm.setSound(it) }
+                    ToggleRow(Icons.Filled.VerifiedUser, "Incognito (no history)", incognito) { settingsVm.setIncognito(it) }
+                    ToggleRow(Icons.Filled.AutoMode, "Auto-copy content", autoCopy) { settingsVm.setAutoCopy(it) }
                 }
             }
 
+            Spacer(Modifier.height(20.dp))
+            Section("More")
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp)),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
+                Column(Modifier.padding(8.dp)) {
+                    SettingRow(Icons.Filled.Info, "About", null, onNavigateToAbout)
+                    SettingRow(Icons.Filled.Lock, "Privacy", null, {})
+                    SettingRow(Icons.Filled.Notifications, "Notifications", null, {})
+                    SettingRow(Icons.Filled.BugReport, "Report a bug", null, {})
+                    SettingRow(Icons.Filled.Share, "Share app", null, {})
+                    SettingRow(Icons.Filled.Star, "Rate on Play Store", null, {})
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
             Text(
-                "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\nQuickScan Pro by Dhanuk",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                modifier = Modifier.fillMaxWidth()
+                text = "QuickScan Pro v${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                fontWeight = FontWeight.Normal
             )
-            Spacer(Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-private fun SectionHeader(title: String) {
+private fun Section(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontWeight = FontWeight.SemiBold
+        modifier = Modifier.padding(vertical = 6.dp)
     )
 }
 
 @Composable
-private fun SettingsSwitchItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
+private fun ToggleRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 8.dp, horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(Modifier.width(14.dp))
-            Column {
-                Text(text = title, style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-        }
-        Spacer(Modifier.width(8.dp))
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 
 @Composable
-private fun InfoRowItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
+private fun ThemeModeButton(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 8.dp, horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Icon(
-            imageVector = icon,
+            icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Text(label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        if (selected) {
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                "Selected",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
             )
         }
-        Icon(
-            Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.clip(RoundedCornerShape(14.dp)).padding(2.dp)
         )
     }
 }

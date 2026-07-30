@@ -1,128 +1,72 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PermDeviceIdentity
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dhanuk.quickscanpro.ui.composables.AppBackground
+import com.dhanuk.quickscanpro.ui.composables.SettingRow
 
-private const val BASE_URL = "https://dhanuk.page.gd/QuickScan-Pro"
-
-/**
- * About screen — clean professional list of links.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onNavigateBack: () -> Unit) {
-    val context = LocalContext.current
-
-    fun openUrl(page: String) {
-        try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("$BASE_URL/$page")))
-        } catch (_: Exception) {}
-    }
-
+    AppBackground()
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("About", style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold)
-                },
+            CenterAlignedTopAppBar(
+                title = { Text("About", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Spacer(Modifier.height(8.dp))
-            AboutItem(
-                icon = Icons.Filled.Info,
-                text = "About Us",
-                onClick = { openUrl("about-us.html") }
-            )
-            AboutItem(
-                icon = Icons.Filled.Email,
-                text = "Contact Us",
-                onClick = { openUrl("contact-us.html") }
-            )
-            AboutItem(
-                icon = Icons.Filled.PrivacyTip,
-                text = "Privacy Policy",
-                onClick = { openUrl("privacy-policy.html") }
-            )
-            AboutItem(
-                icon = Icons.Filled.Lock,
-                text = "Permissions Usage",
-                onClick = { openUrl("permissions.html") }
-            )
-            AboutItem(
-                icon = Icons.Filled.Description,
-                text = "Terms & Conditions",
-                onClick = { openUrl("terms.html") }
-            )
-            Spacer(Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-fun AboutItem(icon: ImageVector, text: String, onClick: () -> Unit) {
-    com.dhanuk.quickscanpro.ui.composables.GlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        cornerRadius = 14.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(Modifier.width(14.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(Modifier.padding(8.dp)) {
+                    SettingRow(Icons.Filled.Info, "About Us", null, {})
+                    SettingRow(Icons.Filled.Email, "Contact Us", null, {})
+                    SettingRow(Icons.Filled.Lock, "Privacy Policy", null, {})
+                    SettingRow(Icons.Filled.PermDeviceIdentity, "Permissions", null, {})
+                    SettingRow(Icons.Filled.Description, "Terms & Conditions", null, {})
+                    SettingRow(Icons.Filled.Star, "Rate on Play Store", null, {})
+                }
+            }
         }
     }
 }

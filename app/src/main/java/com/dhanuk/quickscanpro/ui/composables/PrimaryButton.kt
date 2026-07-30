@@ -1,33 +1,29 @@
 package com.dhanuk.quickscanpro.ui.composables
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
-/**
- * Clean primary action button. Solid indigo fill, white text, 12dp corners.
- * Kept API compatible with the old GradientButton: onClick, modifier, text.
- */
 @Composable
-fun GradientButton(
+fun PrimaryButton(
+    text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    text: String,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    content: @Composable RowScope.() -> Unit = { Text(text) }
 ) {
     Button(
         onClick = onClick,
-        enabled = enabled,
         modifier = modifier,
+        enabled = enabled,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
@@ -35,27 +31,25 @@ fun GradientButton(
             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
-        contentPadding = PaddingValues(vertical = 14.dp)
-    ) {
-        Text(
-            text = text,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 13.dp),
+        content = content
+    )
 }
 
 @Composable
-fun PrimaryButton(
+fun SecondaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    content: @Composable RowScope.() -> Unit = { Text(text) }
 ) {
-    GradientButton(
+    OutlinedButton(
         onClick = onClick,
         modifier = modifier,
-        text = text,
-        enabled = enabled
+        enabled = enabled,
+        shape = RoundedCornerShape(12.dp),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 13.dp),
+        content = content
     )
 }

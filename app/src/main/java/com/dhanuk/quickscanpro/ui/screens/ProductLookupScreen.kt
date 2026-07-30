@@ -1,166 +1,94 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dhanuk.quickscanpro.ui.composables.GradientButton
-import com.dhanuk.quickscanpro.util.ProductInfo
+import com.dhanuk.quickscanpro.ui.composables.AppBackground
+import com.dhanuk.quickscanpro.ui.composables.EmptyState
 import com.dhanuk.quickscanpro.util.ProductLookup
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductLookupScreen(
-    barcode: String,
-    onNavigateBack: () -> Unit
-) {
-    var product by remember { mutableStateOf<ProductInfo?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
+fun ProductLookupScreen(barcode: String, onNavigateBack: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
-
+    var info by remember { mutableStateOf<ProductInfo?>(null) }
+    var failed by remember { mutableStateOf(false) }
     LaunchedEffect(barcode) {
         loading = true
-        error = null
-        val res = ProductLookup.lookup(barcode)
-        res.onSuccess { product = it }
-        res.onFailure { error = it.message ?: "Unknown error" }
+        val result = ProductLookup.lookup(barcode)
+        info = result.getOrNull()
+        failed = result.isFailure
         loading = false
     }
-
+    AppBackground()
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("Product Info", style = MaterialTheme.typography.headlineSmall) },
+            CenterAlignedTopAppBar(
+                title = { Text("Product", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Barcode: $barcode",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-            Spacer(Modifier.height(24.dp))
-
-            if (loading) {
-                CircularProgressIndicator()
-                Spacer(Modifier.height(16.dp))
-                Text("Looking up product...", style = MaterialTheme.typography.bodyMedium)
-            } else if (error != null) {
-                Icon(
-                    Icons.Filled.Warning,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(64.dp)
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    "Product not found.\n$barcode does not match a product in the Open Food Facts database.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                Spacer(Modifier.height(24.dp))
-                GradientButton(
-                    onClick = { onNavigateBack() },
-                    text = "Go Back"
-                )
-            } else if (product != null) {
-                val p = product!!
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
+        Box(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+            when {
+                loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                info != null -> Surface(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
+                    color = MaterialTheme.colorScheme.surface
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = p.name,
-                            style = MaterialTheme.typography.headlineMedium,
-                            textAlign = TextAlign.Center
-                        )
+                    Column(Modifier.padding(16.dp)) {
+                        Text(info!!.name, style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = p.brand,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-
-                        if (p.quantity.isNotBlank()) {
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = p.quantity,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-                        HorizontalDivider()
-                        Spacer(Modifier.height(16.dp))
-
-                        if (p.categories.isNotEmpty()) {
-                            InfoRow(title = "Categories", value = p.categories.joinToString(" • "))
-                            Spacer(Modifier.height(8.dp))
-                        }
-                        if (p.nutriscoreGrade.isNotBlank()) {
-                            InfoRow(title = "Nutri-Score", value = p.nutriscoreGrade)
-                            Spacer(Modifier.height(8.dp))
-                        }
+                        Text(info!!.brand, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        if (info!!.categories.isNotEmpty()) Text(info!!.categories.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
+                        if (info!!.quantity.isNotBlank()) Text(info!!.quantity, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+                else -> EmptyState(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    title = "Not found",
+                    subtitle = "No product info for barcode $barcode"
+                )
             }
         }
     }
 }
-
-@Composable
-private fun InfoRow(title: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f, false),
-            textAlign = TextAlign.End
-        )
-    }
-}
-
-// ProductInfo is declared in util/ProductLookup.kt

@@ -24,6 +24,37 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     private val db = AppDatabase.getDatabase(application)
     private val scanResultDao = db.scanResultDao()
     private val collectionDao = db.scanCollectionDao()
+    private val leakDao = db.leakCheckDao()
+    private val calendarDao = db.calendarEventDao()
+    private val templateDao = db.qrTemplateDao()
+
+    val leakChecks = leakDao.all()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val calendarEvents = calendarDao.getAll()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val recentTemplates = templateDao.recent()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun saveLeakCheck(domain: String, leaked: Boolean, breachCount: Int, firstSeen: Long) {
+        viewModelScope.launch {
+            leakDao.upsert(
+                com.dhanuk.quickscanpro.database.LeakCheck(
+                    domain = domain, leaked = leaked,
+                    breachCount = breachCount, firstSeen = firstSeen
+                )
+            )
+        }
+    }
+
+    fun saveCalendarEvent(event: com.dhanuk.quickscanpro.database.CalendarEvent) {
+        viewModelScope.launch { calendarDao.insert(event) }
+    }
+
+    fun saveTemplate(template: com.dhanuk.quickscanpro.database.QRTemplate) {
+        viewModelScope.launch { templateDao.insert(template) }
+    }
 
     val collections = collectionDao.getAll()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())

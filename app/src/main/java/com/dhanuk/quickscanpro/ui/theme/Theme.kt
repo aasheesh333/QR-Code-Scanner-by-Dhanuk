@@ -7,72 +7,79 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val CleanDarkScheme = darkColorScheme(
-    primary = LuminaPrimaryBright,
+private val AppLightScheme = lightColorScheme(
+    primary = AccentPrimary,
     onPrimary = Color.White,
-    primaryContainer = LuminaSurfaceDark,
-    onPrimaryContainer = Color.White,
-    secondary = LuminaOnSurfaceVariantDark,
+    primaryContainer = AccentPrimarySoft,
+    onPrimaryContainer = AccentPrimary,
+    secondary = InkSecondary,
     onSecondary = Color.White,
-    secondaryContainer = LuminaSurfaceHighDark,
+    secondaryContainer = SurfaceHigh,
+    onSecondaryContainer = InkPrimary,
+    tertiary = InkTertiary,
+    onTertiary = Color.White,
+    tertiaryContainer = SurfaceMid,
+    onTertiaryContainer = InkSecondary,
+    background = SurfaceLow,
+    onBackground = InkPrimary,
+    surface = SurfaceLowest,
+    onSurface = InkPrimary,
+    surfaceVariant = SurfaceMid,
+    onSurfaceVariant = InkSecondary,
+    surfaceContainerLowest = Color.White,
+    surfaceContainerLow = SurfaceLow,
+    surfaceContainer = SurfaceMid,
+    surfaceContainerHigh = SurfaceHigh,
+    surfaceContainerHighest = SurfaceHighest,
+    outline = OutlineStrong,
+    outlineVariant = OutlineFaint,
+    error = SemanticDanger,
+    onError = Color.White,
+    errorContainer = SemanticDangerSoft,
+    onErrorContainer = SemanticDanger
+)
+
+private val AppDarkScheme = darkColorScheme(
+    primary = DarkAccent,
+    onPrimary = Color(0xFF002A5C),
+    primaryContainer = Color(0xFF1E3A8A),
+    onPrimaryContainer = Color(0xFFDBEAFE),
+    secondary = Color(0xFF9CA3AF),
+    onSecondary = DarkSurfaceHigh,
+    secondaryContainer = DarkSurfaceHigh,
     onSecondaryContainer = Color.White,
-    tertiary = LuminaOnSurfaceVariantDark,
-    onTertiary = Color.White,
-    background = LuminaBackgroundDark,
-    onBackground = LuminaOnBackgroundDark,
-    surface = LuminaSurfaceDark,
-    onSurface = LuminaOnBackgroundDark,
-    surfaceVariant = LuminaSurfaceHighDark,
-    onSurfaceVariant = LuminaOnSurfaceVariantDark,
-    surfaceContainerLowest = Color(0xFF0B0F19),
-    surfaceContainerLow = Color(0xFF1F2937),
-    surfaceContainer = LuminaSurfaceDark,
-    surfaceContainerHigh = LuminaSurfaceHighDark,
-    surfaceContainerHighest = Color(0xFF4B5563),
-    outline = LuminaOutlineDark,
-    outlineVariant = Color(0xFF374151),
-    error = LuminaError,
-    onError = Color.White
+    tertiary = Color(0xFF9CA3AF),
+    onTertiary = DarkSurfaceHigh,
+    tertiaryContainer = DarkSurface,
+    onTertiaryContainer = DarkOnBg,
+    background = DarkBg,
+    onBackground = DarkOnBg,
+    surface = DarkSurface,
+    onSurface = DarkOnBg,
+    surfaceVariant = DarkSurfaceHigh,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    surfaceContainerLowest = Color(0xFF0A0A0A),
+    surfaceContainerLow = DarkSurface,
+    surfaceContainer = DarkSurfaceHigh,
+    surfaceContainerHigh = Color(0xFF333333),
+    surfaceContainerHighest = Color(0xFF404040),
+    outline = DarkOutline,
+    outlineVariant = DarkDivider,
+    error = Color(0xFFFCA5A5),
+    onError = Color(0xFF4C0519),
+    errorContainer = Color(0xFF7F1D1D),
+    onErrorContainer = Color(0xFFFECACA)
 )
 
-private val CleanLightScheme = lightColorScheme(
-    primary = LuminaPrimary,
-    onPrimary = Color.White,
-    primaryContainer = LuminaPrimaryFaint,
-    onPrimaryContainer = LuminaPrimary,
-    secondary = LuminaPrimaryBright,
-    onSecondary = Color.White,
-    secondaryContainer = LuminaPrimarySoft,
-    onSecondaryContainer = LuminaPrimary,
-    tertiary = LuminaOnSurfaceVariantLight,
-    onTertiary = Color.White,
-    background = LuminaBackgroundLight,
-    onBackground = LuminaOnBackgroundLight,
-    surface = LuminaSurfaceLight,
-    onSurface = LuminaOnBackgroundLight,
-    surfaceVariant = LuminaSurfaceHighLight,
-    onSurfaceVariant = LuminaOnSurfaceVariantLight,
-    surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFAFAFA),
-    surfaceContainer = Color(0xFFF9FAFB),
-    surfaceContainerHigh = LuminaSurfaceHighLight,
-    surfaceContainerHighest = Color(0xFFE5E7EB),
-    outline = LuminaOutlineLight,
-    outlineVariant = Color(0xFFE5E7EB),
-    error = LuminaErrorLight,
-    onError = Color.White
-)
-
-private val CleanAmoledScheme = CleanDarkScheme.copy(
-    background = Color.Black,
-    surface = Color.Black,
+private val AppAmoledScheme = AppDarkScheme.copy(
+    background = AmoledBg,
+    surface = AmoledSurface,
     surfaceContainerLowest = Color.Black,
-    surfaceContainerLow = Color.Black
+    surfaceContainerLow = Color(0xFF080808),
+    surfaceContainer = Color(0xFF111111)
 )
 
-enum class ThemeMode {
-    LIGHT, DARK, SYSTEM, AMOLED
-}
+enum class ThemeMode { LIGHT, DARK, SYSTEM, AMOLED }
 
 @Composable
 fun QuickScanProTheme(
@@ -80,16 +87,15 @@ fun QuickScanProTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when (themeMode) {
-        ThemeMode.LIGHT -> CleanLightScheme
-        ThemeMode.DARK -> CleanDarkScheme
-        ThemeMode.AMOLED -> CleanAmoledScheme
-        ThemeMode.SYSTEM -> if (darkTheme) CleanDarkScheme else CleanLightScheme
+    val scheme = when (themeMode) {
+        ThemeMode.LIGHT  -> AppLightScheme
+        ThemeMode.DARK   -> AppDarkScheme
+        ThemeMode.AMOLED -> AppAmoledScheme
+        ThemeMode.SYSTEM -> if (darkTheme) AppDarkScheme else AppLightScheme
     }
-
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+        colorScheme = scheme,
+        typography = AuroraTypography,
         content = content
     )
 }
