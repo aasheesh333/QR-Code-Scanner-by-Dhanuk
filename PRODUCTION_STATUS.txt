@@ -1,0 +1,75 @@
+QUICKSCAN PRO - PRODUCTION READINESS STATUS
+=============================================
+Branch: release-build-verification
+Last CI: RUN 30556965067 -> BUILD SUCCESSFUL (Debug APK + Release APK/AAB)
+
+DONE (is session mein)
+----------------------
+1. Sari 15 Stitch AI screens ka HTML export download kiya (MCP se).
+2. Color.kt + Theme.kt + colors.xml ko Stitch ki exact M3 tonal palette pe set kiya:
+   - primary #004AC6, primaryContainer #2563EB, tertiaryContainer #BC4800
+   - surface #F9F9FF, onSurface #141B2B, tonal surfaceContainer scale
+3. 15 screens ko Stitch HTML se faithful Compose mein port kiya:
+   HomeScreen, OnboardingScreen, ResultScreen, QRGeneratorScreen, HistoryScreen,
+   TimelineScreen, TemplatesScreen, LeakCheckScreen, AnalyticsScreen, SettingsScreen,
+   ThemeStudioScreen, BatchScanScreen, CompareScanScreen, VaultScreen, AboutScreen
+4. Compile errors fix kiye (Analytics Triple args, History OutlinedTextField colors/Star icon,
+   HomeScreen ColumnScope.weight, MainScreen VaultScreen trailing lambda).
+5. PUSH kiya aur CI GREEN confirm kiya.
+6. Deep audit complete: UI screens + composables mein bugs/UX issues inventory banaya.
+7. BLOCKER fixes apply kiye:
+   - HomeScreen camera lifecycle leak -> DisposableEffect + unbind on dispose + flash toggle
+   - ResultScreen duplicate DB insert on rotation -> rememberSaveable(savedId)
+   - CompareScanScreen placeholder scan -> real CompareCameraSheet with CameraX
+   - MainScreen mein product_lookup/{barcode} route register kiya
+   - Onboarding null state pe CircularProgressIndicator
+   - ResultScreen action buttons wire kiye (WiFi connect, vCard save contact, URL/Done)
+
+ABHI BACHA HAI (next session target)
+-------------------------------------
+HIGH PRIORITY
+[] 1. SettingsScreen ToggleRow local-state bug fix karna (Switch out of sync)
+[] 2. SettingsScreen "Clear all history" + "Rate App" + "Share App" + "Default action" actions wire karna
+[] 3. LeakCheckScreen synchronous main-thread check -> coroutine/ViewModel + loading state
+[] 4. BannerAd.kt AdView destroy in onDispose fix karna (memory leak)
+[] 5. AnalyticsScreen fake fallback data hatao (124/42/15) -> real zero-state + real data
+[] 6. BatchScanScreen "Save All" actually persist to DB; duplicate flag theek karna
+[] 7. QRGeneratorScreen ViewModel state f1..f4 ko observable/saveable banao + ImeAction
+[] 8. ThemeStudioScreen selected colors ko rememberSaveable + DataStore persistence
+[] 9. TemplatesScreen rows clickable banao -> QRGenerator prefill
+[] 10. VaultScreen biometric gate add karna (BiometricPrompt)
+
+MEDIUM PRIORITY
+[] 11. Navigation transitions add karna (MainScreen NavHost animated transitions)
+[] 12. Empty/error states polish:
+      - HomeScreen no camera permission UI + rationale
+      - HistoryScreen empty search state
+      - VaultScreen empty favorites state
+      - LeakCheck empty recent checks state
+      - Analytics no-data state
+[] 13. Camera/scan UX: scan beep sound, haptic feedback confirm, permission retry
+[] 14. contentDescription add karna interactive icons pe (settings, star, delete, chevron rows)
+[] 15. WindowInsets / edge-to-edge handle karna (status bar, nav bar, IME)
+[] 16. Touch targets >=48dp ensure karna (chips, tiles, pills)
+
+RELEASE HYGIENE
+[] 17. ProGuard/R8 rules audit + keep rules for Room/ZXing/MLKit
+[] 18. Unused dependencies check karna
+[] 19. Version bump final (2.0.0 release ready)
+[] 20. App Bundle signing + release build verify karna (CI already builds AAB)
+[] 21. Play Store screenshots / feature graphic from Stitch screenshots generate karna
+
+TESTING
+[] 22. Unit tests add karna:
+      - QRContentBuilder.parse / generate
+      - PasswordLeakChecker.check
+      - LinkSafetyChecker.analyze
+      - TimelineBuilder.build
+      - BarcodeTypeDetector.detectType
+
+NOTES
+-----
+- External services: Firebase Crashlytics + OneSignal free tier allowed, par abhi OneSignal stub hi hai.
+- Local build allowed for verification, final release via GitHub Actions.
+- No paid APIs; all core features offline.
+- DO NOT ship with AdMob test IDs (CI already blocks release with test IDs).
