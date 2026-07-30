@@ -15,14 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
-
 import com.dhanuk.quickscanpro.ui.composables.EmptyState
 import com.dhanuk.quickscanpro.ui.composables.GlassCard
 import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.HistoryExporter
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
@@ -31,6 +31,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * History screen — clean professional layout:
+ *  - Search input at top
+ *  - Horizontal filter chips for type + favorites
+ *  - Collection chips row
+ *  - Clean white list rows with type icon, content, note, time, actions
+ * All collections/notes/favorites/vault/compare features preserved.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) {
@@ -60,11 +68,17 @@ fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) 
         topBar = {
             TopAppBar(
                 title = {
-                    Text("History", style = MaterialTheme.typography.headlineSmall)
+                    Column {
+                        Text("History", style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold)
+                        Text(
+                            "${fullHistory.size} saved scans",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     IconButton(onClick = onOpenCompare) {
                         Icon(Icons.Filled.CompareArrows, contentDescription = "Compare")
@@ -97,15 +111,15 @@ fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) 
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(horizontal = 16.dp)
         ) {
-            // Search
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 placeholder = { Text("Search history...") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(vertical = 8.dp),
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
@@ -118,13 +132,51 @@ fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) 
                 }
             )
 
+            // Type filter chips
+            val typeChips = listOf(
+                BarcodeTypeDetector.TYPE_URL,
+                BarcodeTypeDetector.TYPE_TEXT,
+                BarcodeTypeDetector.TYPE_WIFI,
+                BarcodeTypeDetector.TYPE_VCARD,
+                BarcodeTypeDetector.TYPE_PHONE,
+                BarcodeTypeDetector.TYPE_PRODUCT
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = selectedType == null && !showFavoritesOnly,
+                    onClick = { selectedType = null; showFavoritesOnly = false },
+                    label = { Text("All") }
+                )
+                typeChips.forEach { type ->
+                    FilterChip(
+                        selected = selectedType == type,
+                        onClick = {
+                            selectedType = if (selectedType == type) null else type
+                            showFavoritesOnly = false
+                        },
+                        label = { Text(type.uppercase()) }
+                    )
+                }
+                FilterChip(
+                    selected = showFavoritesOnly,
+                    onClick = { showFavoritesOnly = !showFavoritesOnly },
+                    label = { Text("Favorites") },
+                    leadingIcon = { Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                )
+            }
+
             // Collections row
             if (collections.isNotEmpty()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -152,46 +204,6 @@ fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) 
                 }
             }
 
-            // Type filter chips
-            val typeChips = listOf(
-                BarcodeTypeDetector.TYPE_URL,
-                BarcodeTypeDetector.TYPE_TEXT,
-                BarcodeTypeDetector.TYPE_WIFI,
-                BarcodeTypeDetector.TYPE_VCARD,
-                BarcodeTypeDetector.TYPE_PHONE,
-                BarcodeTypeDetector.TYPE_PRODUCT
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = selectedType == null && !showFavoritesOnly && selectedCollectionId == null,
-                    onClick = { selectedType = null; showFavoritesOnly = false; selectedCollectionId = null },
-                    label = { Text("All") }
-                )
-                typeChips.forEach { type ->
-                    FilterChip(
-                        selected = selectedType == type,
-                        onClick = {
-                            selectedType = if (selectedType == type) null else type
-                            showFavoritesOnly = false
-                        },
-                        label = { Text(type.uppercase()) }
-                    )
-                }
-                FilterChip(
-                    selected = showFavoritesOnly,
-                    onClick = { showFavoritesOnly = !showFavoritesOnly },
-                    label = { Text("★ Fav") }
-                )
-            }
-
-            // List
             if (filtered.isEmpty()) {
                 EmptyState(
                     icon = if (fullHistory.isEmpty()) Icons.Filled.History else Icons.Filled.SearchOff,
@@ -202,9 +214,7 @@ fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) 
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(filtered, key = { it.id }) { scanResult ->
@@ -269,7 +279,7 @@ fun HistoryScreen(onOpenVault: () -> Unit = {}, onOpenCompare: () -> Unit = {}) 
         NewCollectionDialog(
             onDismiss = { showNewCollectionDialog = false },
             onCreate = { name, emoji ->
-                viewModel.addCollection(name, 0x700B97L, emoji)
+                viewModel.addCollection(name, 0x1F3A8AL, emoji)
                 showNewCollectionDialog = false
             }
         )
@@ -295,7 +305,8 @@ private fun NewCollectionDialog(
                     onValueChange = { name = it },
                     placeholder = { Text("Collection name...") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
                 )
                 Spacer(Modifier.height(12.dp))
                 Text("Icon", style = MaterialTheme.typography.labelLarge)
@@ -342,48 +353,68 @@ private fun HistoryItem(
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        cornerRadius = 18.dp,
-        glowColor = if (scanResult.isFavorite) LuminaPrimaryGlow else null
+            .padding(vertical = 2.dp)
+            .clickable { },
+        cornerRadius = 14.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    typeIcon(scanResult.type),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = scanResult.content,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 2
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = FontWeight.Medium
                 )
                 if (scanResult.note.isNotBlank()) {
                     Spacer(Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.StickyNote2, contentDescription = null,
                             modifier = Modifier.size(12.dp),
-                            tint = LuminaPrimaryGlow)
+                            tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = scanResult.note,
                             style = MaterialTheme.typography.labelSmall,
-                            color = LuminaPrimaryGlow,
-                            maxLines = 1
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+                Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "[${scanResult.type.uppercase()}]",
+                        text = scanResult.type.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = formatTimestamp(scanResult.timestamp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
                     )
                 }
             }
@@ -391,7 +422,7 @@ private fun HistoryItem(
                 Icon(
                     Icons.Filled.EditNote,
                     contentDescription = "Note",
-                    tint = if (scanResult.note.isNotBlank()) LuminaPrimaryGlow
+                    tint = if (scanResult.note.isNotBlank()) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
@@ -399,16 +430,16 @@ private fun HistoryItem(
                 Icon(
                     if (scanResult.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
                     contentDescription = "Favorite",
-                    tint = if (scanResult.isFavorite)
-                        Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    tint = if (scanResult.isFavorite) Color(0xFFF59E0B)
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
             IconButton(onClick = { showCollectionPicker = true }) {
                 Icon(
                     if (scanResult.collectionId != null) Icons.Filled.Folder else Icons.Filled.FolderOpen,
                     contentDescription = "Collection",
-                    tint = if (scanResult.collectionId != null)
-                        LuminaPrimaryGlow else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    tint = if (scanResult.collectionId != null) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
             IconButton(onClick = onDelete) {
@@ -429,7 +460,8 @@ private fun HistoryItem(
                     onValueChange = { noteText = it },
                     placeholder = { Text("Add a reminder or note...") },
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 2
+                    minLines = 2,
+                    shape = RoundedCornerShape(12.dp)
                 )
             },
             confirmButton = {
@@ -457,7 +489,7 @@ private fun HistoryItem(
                                 if (scanResult.collectionId == null) Icons.Filled.RadioButtonChecked
                                 else Icons.Filled.RadioButtonUnchecked,
                                 contentDescription = null,
-                                tint = LuminaPrimaryGlow
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         },
                         modifier = Modifier.clickable {
@@ -474,7 +506,7 @@ private fun HistoryItem(
                                     if (scanResult.collectionId == collection.id) Icons.Filled.RadioButtonChecked
                                     else Icons.Filled.RadioButtonUnchecked,
                                     contentDescription = null,
-                                    tint = LuminaPrimaryGlow
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             },
                             trailingContent = {
@@ -510,6 +542,19 @@ private fun HistoryItem(
             }
         )
     }
+}
+
+private fun typeIcon(type: String) = when (type) {
+    BarcodeTypeDetector.TYPE_URL -> Icons.Filled.Link
+    BarcodeTypeDetector.TYPE_WIFI -> Icons.Filled.Wifi
+    BarcodeTypeDetector.TYPE_VCARD -> Icons.Filled.ContactPhone
+    BarcodeTypeDetector.TYPE_EMAIL -> Icons.Filled.Email
+    BarcodeTypeDetector.TYPE_SMS -> Icons.Filled.Sms
+    BarcodeTypeDetector.TYPE_PHONE -> Icons.Filled.Phone
+    BarcodeTypeDetector.TYPE_CALENDAR -> Icons.Filled.Event
+    BarcodeTypeDetector.TYPE_GEO -> Icons.Filled.LocationOn
+    BarcodeTypeDetector.TYPE_PRODUCT -> Icons.Filled.ShoppingBag
+    else -> Icons.Filled.TextFields
 }
 
 private fun formatTimestamp(timestamp: Long): String {

@@ -26,19 +26,19 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.ui.composables.EmptyState
 import com.dhanuk.quickscanpro.ui.composables.GlassCard
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Secure vault screen — clean professional layout.
+ * Biometric-locked list of vault scans.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VaultScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
-    val dark = androidx.compose.foundation.isSystemInDarkTheme()
-    val accent = if (dark) LuminaPrimaryGlow else LuminaPrimary
     val hvm: HistoryViewModel = viewModel()
     val vaultScans by hvm.vaultScans.collectAsState()
     var unlocked by remember { mutableStateOf(false) }
@@ -58,9 +58,10 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Lock, contentDescription = null,
-                            tint = accent, modifier = Modifier.size(20.dp))
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Secure Vault", style = MaterialTheme.typography.headlineSmall)
+                        Text("Secure Vault", style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold)
                     }
                 },
                 navigationIcon = {
@@ -74,7 +75,8 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
     ) { padding ->
         Box(modifier = Modifier
             .fillMaxSize()
-            .padding(padding)) {
+            .padding(padding)
+            .padding(horizontal = 16.dp)) {
             if (vaultScans.isNotEmpty() && !unlocked) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -82,7 +84,7 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(Icons.Filled.Fingerprint, contentDescription = null,
-                        tint = accent, modifier = Modifier.size(64.dp))
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
                     Spacer(Modifier.height(16.dp))
                     Text("Authenticating…", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(8.dp))
@@ -90,8 +92,10 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(20.dp))
-                    Button(onClick = { showBiometric(context) { unlocked = true } },
-                        shape = RoundedCornerShape(50)) {
+                    Button(
+                        onClick = { showBiometric(context) { unlocked = true } },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
                         Text("Authenticate")
                     }
                 }
@@ -103,24 +107,36 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     item { Spacer(Modifier.height(4.dp)) }
                     items(vaultScans, key = { it.id }) { scan ->
-                        GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 18.dp) {
-                            Row(modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.Lock, contentDescription = null,
-                                    tint = accent, modifier = Modifier.size(20.dp))
-                                Spacer(Modifier.width(12.dp))
+                        GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 14.dp) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Filled.Lock, contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(Modifier.width(14.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(scan.content,
                                         style = MaterialTheme.typography.bodyMedium,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        color = MaterialTheme.colorScheme.onSurface)
-                                    Text("[${scan.type.uppercase()}] · ${formatTime(scan.timestamp)}",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.Medium)
+                                    Text("${scan.type.uppercase()} · ${formatTime(scan.timestamp)}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }

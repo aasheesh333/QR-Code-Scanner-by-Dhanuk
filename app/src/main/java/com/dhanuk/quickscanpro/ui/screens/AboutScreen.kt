@@ -2,7 +2,6 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,13 +15,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 private const val BASE_URL = "https://dhanuk.page.gd/QuickScan-Pro"
 
+/**
+ * About screen — clean professional list of links.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onNavigateBack: () -> Unit) {
@@ -38,7 +40,10 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(text = "About") },
+                title = {
+                    Text("About", style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold)
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -54,39 +59,37 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Spacer(Modifier.height(8.dp))
             AboutItem(
                 icon = Icons.Filled.Info,
                 text = "About Us",
                 onClick = { openUrl("about-us.html") }
             )
-            HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Email,
                 text = "Contact Us",
                 onClick = { openUrl("contact-us.html") }
             )
-            HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.PrivacyTip,
                 text = "Privacy Policy",
                 onClick = { openUrl("privacy-policy.html") }
             )
-            HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Lock,
                 text = "Permissions Usage",
                 onClick = { openUrl("permissions.html") }
             )
-            HorizontalDivider()
             AboutItem(
                 icon = Icons.Filled.Description,
                 text = "Terms & Conditions",
                 onClick = { openUrl("terms.html") }
             )
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -96,8 +99,8 @@ fun AboutItem(icon: ImageVector, text: String, onClick: () -> Unit) {
     com.dhanuk.quickscanpro.ui.composables.GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        cornerRadius = 16.dp
+            .clickable(onClick = onClick),
+        cornerRadius = 14.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -106,9 +109,9 @@ fun AboutItem(icon: ImageVector, text: String, onClick: () -> Unit) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
+                tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge,
@@ -118,7 +121,7 @@ fun AboutItem(icon: ImageVector, text: String, onClick: () -> Unit) {
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
             )
         }
     }

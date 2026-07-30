@@ -12,20 +12,27 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.getBy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.BuildConfig
-import com.dhanuk.quickscanpro.ui.theme.DhanukAccent
 import com.dhanuk.quickscanpro.ui.theme.ThemeMode
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 
+/**
+ * Settings screen — clean professional layout:
+ *  - Appearance section with radio-list theme modes
+ *  - Scanning toggles section
+ *  - Privacy toggle section
+ *  - More links: Theme Studio, About, Rate, Share
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () -> Unit = {}) {
@@ -40,13 +47,14 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
     val themeMode by tvm.themeMode.collectAsState()
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Settings", style = MaterialTheme.typography.headlineSmall) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
-                )
+                title = {
+                    Text("Settings", style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold)
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
@@ -55,21 +63,18 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SectionHeader("Appearance")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
                     ThemeMode.entries.forEach { mode ->
                         val isSelected = themeMode == mode
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 10.dp),
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -85,7 +90,7 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                                     tint = if (isSelected) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                 )
-                                Spacer(Modifier.width(12.dp))
+                                Spacer(Modifier.width(14.dp))
                                 Text(
                                     text = when (mode) {
                                         ThemeMode.LIGHT -> "Light"
@@ -107,13 +112,9 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
             SectionHeader("Scanning")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
                     SettingsSwitchItem(
                         icon = Icons.Filled.Vibration,
                         title = "Vibrate on scan",
@@ -121,6 +122,7 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                         checked = vibrateEnabled,
                         onCheckedChange = { svm.setVibrate(it) }
                     )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsSwitchItem(
                         icon = Icons.Filled.VolumeUp,
                         title = "Sound on scan",
@@ -128,6 +130,7 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                         checked = soundEnabled,
                         onCheckedChange = { svm.setSound(it) }
                     )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsSwitchItem(
                         icon = Icons.Filled.ContentCopy,
                         title = "Auto-copy",
@@ -138,12 +141,8 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
             SectionHeader("Privacy")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
                 SettingsSwitchItem(
                     icon = Icons.Filled.VisibilityOff,
                     title = "Incognito mode",
@@ -153,18 +152,13 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
             SectionHeader("More")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
                     InfoRowItem(
                         icon = Icons.Filled.Palette,
                         title = "Theme Studio",
-                        subtitle = "Custom accent, glass intensity, AMOLED & fonts",
+                        subtitle = "Accent color, AMOLED, fonts",
                         onClick = onNavigateToThemeStudio
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -197,7 +191,7 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                         subtitle = "Tell your friends about QuickScan Pro",
                         onClick = {
                             val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
+                                setType("text/plain")
                                 putExtra(
                                     Intent.EXTRA_TEXT,
                                     "Check out QuickScan Pro on Play Store! https://play.google.com/store/apps/details?id=${context.packageName}"
@@ -209,14 +203,13 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
             Text(
                 "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\nQuickScan Pro by Dhanuk",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -225,8 +218,9 @@ fun SettingsScreen(onNavigateToAbout: () -> Unit, onNavigateToThemeStudio: () ->
 private fun SectionHeader(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontWeight = FontWeight.SemiBold
     )
 }
 
@@ -241,7 +235,7 @@ private fun SettingsSwitchItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -252,9 +246,9 @@ private fun SettingsSwitchItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = DhanukAccent
+                tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
             Column {
                 Text(text = title, style = MaterialTheme.typography.bodyLarge)
                 Text(
@@ -279,7 +273,8 @@ private fun InfoRowItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -287,7 +282,7 @@ private fun InfoRowItem(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -296,12 +291,10 @@ private fun InfoRowItem(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
-        IconButton(onClick = onClick, modifier = Modifier.padding(start = 4.dp)) {
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            )
-        }
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        )
     }
 }

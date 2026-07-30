@@ -5,6 +5,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -33,10 +35,18 @@ import com.dhanuk.quickscanpro.ui.composables.ColorPickerGrid
 import com.dhanuk.quickscanpro.ui.composables.GlassCard
 import com.dhanuk.quickscanpro.ui.composables.GradientButton
 import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
 import com.dhanuk.quickscanpro.util.WifiShareHelper
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 
+/**
+ * QR Generator screen — clean professional layout:
+ *  - Type selector chips
+ *  - White input form card
+ *  - Color customization section
+ *  - Indigo Generate button
+ *  - Preview card with QR bitmap, content snippet, share/save actions
+ * Preserves WiFi autofill, all QR types, save/share.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QRGeneratorScreen() {
@@ -59,10 +69,13 @@ fun QRGeneratorScreen() {
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Create QR Code",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
+                    Column {
+                        Text("Create QR Code", style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold)
+                        Text("Generate and share codes",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent
@@ -80,37 +93,27 @@ fun QRGeneratorScreen() {
         ) {
             TypeSelectorChips(
                 selectedType = selectedType,
-                onTypeSelected = { type ->
-                    vm.setType(type)
-                }
+                onTypeSelected = { vm.setType(it) }
             )
 
             Spacer(Modifier.height(16.dp))
 
-            GlassCard(
-                modifier = Modifier.fillMaxWidth(),
-                cornerRadius = 20.dp
-            ) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     when (selectedType) {
-                        QRContentBuilder.QRType.TEXT -> {
-                            InputField(
-                                value = input1, onValueChange = { input1 = it },
-                                label = "Enter text content",
-                                leadingIcon = Icons.Filled.TextFields,
-                                minLines = 3, maxLines = 6
-                            )
-                        }
-                        QRContentBuilder.QRType.URL -> {
-                            InputField(
-                                value = input1, onValueChange = { input1 = it },
-                                label = "https://example.com",
-                                leadingIcon = Icons.Filled.Link,
-                                keyboardType = KeyboardType.Uri
-                            )
-                        }
+                        QRContentBuilder.QRType.TEXT -> InputField(
+                            value = input1, onValueChange = { input1 = it },
+                            label = "Enter text content",
+                            leadingIcon = Icons.Filled.TextFields,
+                            minLines = 3, maxLines = 6
+                        )
+                        QRContentBuilder.QRType.URL -> InputField(
+                            value = input1, onValueChange = { input1 = it },
+                            label = "https://example.com",
+                            leadingIcon = Icons.Filled.Link,
+                            keyboardType = KeyboardType.Uri
+                        )
                         QRContentBuilder.QRType.WIFI -> {
-                            // Unique feature: one-tap autofill from the connected network
                             TextButton(
                                 onClick = {
                                     WifiShareHelper.getCurrentWifi(context)?.let { input1 = it.ssid }
@@ -123,9 +126,9 @@ fun QRGeneratorScreen() {
                             ) {
                                 Icon(Icons.Filled.WifiTethering, contentDescription = null,
                                     modifier = Modifier.size(16.dp),
-                                    tint = LuminaPrimaryGlow)
+                                    tint = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.width(6.dp))
-                                Text("Use current network", color = LuminaPrimaryGlow,
+                                Text("Use current network", color = MaterialTheme.colorScheme.primary,
                                     style = MaterialTheme.typography.labelLarge)
                             }
                             Spacer(Modifier.height(4.dp))
@@ -173,11 +176,11 @@ fun QRGeneratorScreen() {
                             InputField(value = input2, onValueChange = { input2 = it },
                                 label = "Message", minLines = 3)
                         }
-                        QRContentBuilder.QRType.PHONE -> {
-                            InputField(value = input1, onValueChange = { input1 = it },
-                                label = "+1 555 123 4567", leadingIcon = Icons.Filled.Phone,
-                                keyboardType = KeyboardType.Phone)
-                        }
+                        QRContentBuilder.QRType.PHONE -> InputField(
+                            value = input1, onValueChange = { input1 = it },
+                            label = "+1 555 123 4567", leadingIcon = Icons.Filled.Phone,
+                            keyboardType = KeyboardType.Phone
+                        )
                         QRContentBuilder.QRType.CALENDAR -> {
                             InputField(value = input1, onValueChange = { input1 = it },
                                 label = "Event Title", leadingIcon = Icons.Filled.Event)
@@ -202,16 +205,12 @@ fun QRGeneratorScreen() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Colors",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text("Colors", style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold)
                 TextButton(onClick = { showColorPicker = !showColorPicker }) {
                     Text(if (showColorPicker) "Hide" else "Customize")
                     Icon(
-                        if (showColorPicker) Icons.Filled.ExpandLess
-                        else Icons.Filled.ExpandMore,
+                        if (showColorPicker) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -219,10 +218,7 @@ fun QRGeneratorScreen() {
             }
 
             AnimatedVisibility(visible = showColorPicker, enter = fadeIn(), exit = fadeOut()) {
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    cornerRadius = 16.dp
-                ) {
+                GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         ColorPickerGrid(
                             label = "Foreground",
@@ -251,33 +247,29 @@ fun QRGeneratorScreen() {
 
             AnimatedVisibility(visible = generatedBitmap != null, enter = fadeIn(), exit = fadeOut()) {
                 generatedBitmap?.let { bmp ->
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        cornerRadius = 24.dp,
-                        glowColor = LuminaPrimaryGlow
-                    ) {
+                    GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Surface(
+                            Box(
                                 modifier = Modifier
-                                    .size(260.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                color = Color(bgColor)
+                                    .size(240.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(bgColor))
+                                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Image(
-                                        bitmap = bmp.asImageBitmap(),
-                                        contentDescription = "Generated QR",
-                                        modifier = Modifier.fillMaxSize(0.92f)
-                                    )
-                                }
+                                Image(
+                                    bitmap = bmp.asImageBitmap(),
+                                    contentDescription = "Generated QR",
+                                    modifier = Modifier.fillMaxSize(0.9f)
+                                )
                             }
 
-                            Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(14.dp))
 
                             Text(
                                 text = generatedContent.take(100) + if (generatedContent.length > 100) "..." else "",
@@ -287,16 +279,14 @@ fun QRGeneratorScreen() {
                                 maxLines = 3
                             )
 
-                            Spacer(Modifier.height(20.dp))
+                            Spacer(Modifier.height(16.dp))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 OutlinedButton(
-                                    onClick = {
-                                        vm.saveCurrentQR(selectedType.displayName)
-                                    },
+                                    onClick = { vm.saveCurrentQR(selectedType.displayName) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     contentPadding = PaddingValues(vertical = 10.dp)
@@ -309,7 +299,7 @@ fun QRGeneratorScreen() {
                                 Button(
                                     onClick = {
                                         val intent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
+                                            setType("text/plain")
                                             putExtra(Intent.EXTRA_TEXT, generatedContent)
                                         }
                                         context.startActivity(Intent.createChooser(intent, "Share QR Content"))
@@ -362,7 +352,7 @@ private fun TypeSelectorChips(
                 onClick = { onTypeSelected(type) },
                 label = { Text(type.displayName, style = MaterialTheme.typography.labelMedium) },
                 leadingIcon = {
-                   Icon(
+                    Icon(
                         imageVector = typeIcons[type] ?: Icons.Filled.QrCode2,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)

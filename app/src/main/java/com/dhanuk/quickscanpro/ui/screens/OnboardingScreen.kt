@@ -12,43 +12,44 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.dhanuk.quickscanpro.ui.theme.GradientEnd
-import com.dhanuk.quickscanpro.ui.theme.GradientMid
-import com.dhanuk.quickscanpro.ui.theme.GradientStart
+import androidx.compose.ui.unit.sp
 
 private data class OnboardingPage(
     val icon: ImageVector,
     val title: String,
     val description: String,
-    val color: Color
+    val accent: Color
 )
 
 private val onboardingPages = listOf(
     OnboardingPage(
         Icons.Filled.QrCodeScanner,
         "Scan Anything",
-        "Instantly scan QR codes, barcodes, Wi-Fi, contacts and products — with a gorgeous glass viewfinder.",
-        GradientStart
+        "Instantly scan QR codes, barcodes, Wi-Fi networks, contacts, and products.",
+        Color(0xFF1F3A8A)
     ),
     OnboardingPage(
         Icons.Filled.VerifiedUser,
-        "Link Safety Check",
-        "Unique to QuickScan Pro: every link is scored for phishing signals before you open it — no other scanner does this offline.",
-        GradientMid
+        "Stay Safe",
+        "Offline link safety scoring checks phishing signals before you open links.",
+        Color(0xFF16A34A)
     ),
     OnboardingPage(
-        Icons.Filled.StickyNote2,
-        "Notes & Smart Actions",
-        "Attach notes to scans, connect to Wi-Fi, add contacts, share your own network — all in one tap.",
-        GradientEnd
+        Icons.Filled.AutoAwesome,
+        "Smart Actions",
+        "Connect to Wi-Fi, save contacts, translate text, set reminders, and secure scans in the vault.",
+        Color(0xFF2563EB)
     )
 )
 
+/**
+ * Clean onboarding with light background, simple icon circles,
+ * page dots, and a clear primary CTA.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit) {
@@ -60,64 +61,59 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.weight(1f))
 
             Box(
                 modifier = Modifier
-                    .size(140.dp)
-                    .align(Alignment.CenterHorizontally)
+                    .size(120.dp)
                     .clip(CircleShape)
-                    .background(page.color.copy(alpha = 0.15f)),
+                    .background(page.accent.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = page.icon,
                     contentDescription = null,
-                    tint = page.color,
-                    modifier = Modifier.size(80.dp)
+                    tint = page.accent,
+                    modifier = Modifier.size(56.dp)
                 )
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(36.dp))
 
             Text(
                 text = page.title,
                 style = MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(14.dp))
 
             Text(
                 text = page.description,
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 40.dp)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
             )
 
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(40.dp))
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
                 onboardingPages.forEachIndexed { index, _ ->
                     val selected = index == currentPage
                     Box(
                         modifier = Modifier
-                            .size(if (selected) 12.dp else 8.dp)
-                            .clip(CircleShape)
+                            .width(if (selected) 24.dp else 8.dp)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
                             .background(
-                                if (selected) page.color
+                                if (selected) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
                             )
                     )
@@ -127,38 +123,34 @@ fun OnboardingScreen(onFinished: () -> Unit) {
 
             Spacer(Modifier.weight(1f))
 
-            Row(
+            Button(
+                onClick = {
+                    if (currentPage < onboardingPages.lastIndex) currentPage++
+                    else onFinished()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                if (currentPage > 0) {
-                    TextButton(onClick = { currentPage-- }) {
-                        Text("Back")
-                    }
-                } else {
-                    TextButton(onClick = onFinished) {
-                        Text("Skip")
-                    }
-                }
-
-                Button(
-                    onClick = {
-                        if (currentPage < onboardingPages.lastIndex) currentPage++
-                        else onFinished()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = page.color),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(if (currentPage < onboardingPages.lastIndex) "Next" else "Get Started")
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                Text(if (currentPage < onboardingPages.lastIndex) "Next" else "Get Started",
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                    letterSpacing = 1.sp)
+                if (currentPage < onboardingPages.lastIndex) {
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null,
+                        modifier = Modifier.size(18.dp))
                 }
             }
+
+            TextButton(
+                onClick = onFinished,
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                Text("Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            Spacer(Modifier.height(24.dp))
         }
     }
 }

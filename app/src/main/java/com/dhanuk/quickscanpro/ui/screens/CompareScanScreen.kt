@@ -3,7 +3,6 @@ package com.dhanuk.quickscanpro.ui.screens
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -11,6 +10,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -35,18 +35,21 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.ui.composables.GlassCard
 import com.dhanuk.quickscanpro.ui.composables.HexScanFrame
-import com.dhanuk.quickscanpro.ui.theme.LuminaInk
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
-import com.dhanuk.quickscanpro.ui.theme.LuminaPrimaryGlow
 import com.dhanuk.quickscanpro.ui.theme.SafetyRisky
 import com.dhanuk.quickscanpro.ui.theme.SafetySafe
 
+/**
+ * Compare scan screen — clean professional layout:
+ *  - Two side-by-side slots
+ *  - Inline camera preview
+ *  - Result card showing identical/different + diff stats
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompareScanScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val accent = LuminaPrimaryGlow
+    val accent = MaterialTheme.colorScheme.primary
 
     var first by remember { mutableStateOf<String?>(null) }
     var second by remember { mutableStateOf<String?>(null) }
@@ -66,7 +69,6 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
     )
     LaunchedEffect(Unit) {
         if (!hasCamPermission) launcher.launch(Manifest.permission.CAMERA)
-        // Default current slot to whichever is null
         currentSlot = when {
             first == null -> 1
             second == null -> 2
@@ -78,7 +80,15 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Compare Mode", style = MaterialTheme.typography.headlineSmall) },
+                title = {
+                    Column {
+                        Text("Compare", style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold)
+                        Text("Scan two codes side-by-side",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -95,7 +105,7 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            Text("Scan two QR codes side-by-side. Tap a slot to scan it.",
+            Text("Tap an empty slot, then scan the matching QR code.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(16.dp))
@@ -134,13 +144,13 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                 CompareResultCard(first!!, second!!)
             }
 
-            // Inline camera preview
             if (currentSlot != null && hasCamPermission && cameraError == null) {
                 Spacer(Modifier.height(16.dp))
                 Box(modifier = Modifier
                     .fillMaxWidth()
                     .height(280.dp)
-                    .clip(RoundedCornerShape(24.dp))) {
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.Black)) {
                     key(retryKey, currentSlot) {
                         AndroidView(
                             factory = { ctx ->
@@ -189,16 +199,17 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                         .align(Alignment.Center))
                 }
             }
+
             if (first != null && second != null) {
                 Spacer(Modifier.height(16.dp))
-                Button(
+                OutlinedButton(
                     onClick = {
                         first = null
                         second = null
                         currentSlot = 1
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(50)
+                    shape = RoundedCornerShape(12.dp)
                 ) { Text("Reset & Compare Again") }
             }
             Spacer(Modifier.height(80.dp))
@@ -214,25 +225,26 @@ private fun CompareSlot(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val accent = if (active) LuminaPrimaryGlow else LuminaPrimary
+    val borderColor = if (active) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.outline
     GlassCard(
         modifier = modifier
             .height(120.dp)
-            .clip(RoundedCornerShape(20.dp)),
-        cornerRadius = 20.dp,
-        glowColor = if (active) accent else null
+            .clip(RoundedCornerShape(16.dp)),
+        cornerRadius = 16.dp
     ) {
         Box(modifier = Modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .border(2.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
             contentAlignment = Alignment.Center) {
             if (content == null) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Filled.Add, contentDescription = null,
-                        tint = accent, modifier = Modifier.size(28.dp))
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                     Spacer(Modifier.height(4.dp))
-                    Text("Slot $slot", color = accent,
+                    Text("Slot $slot", color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold)
                     if (active) Text("Scanning…",
@@ -264,12 +276,7 @@ private fun CompareSlot(
 private fun CompareResultCard(first: String, second: String) {
     val isExact = first == second
     val color = if (isExact) SafetySafe else SafetyRisky
-    val accent = LuminaPrimaryGlow
-    GlassCard(
-        modifier = Modifier.fillMaxWidth(),
-        cornerRadius = 22.dp,
-        glowColor = color
-    ) {
+    GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
         Column(modifier = Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(

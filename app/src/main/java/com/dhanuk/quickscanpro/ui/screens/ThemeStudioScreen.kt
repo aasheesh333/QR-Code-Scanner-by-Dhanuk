@@ -4,12 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -18,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -26,9 +24,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.ui.composables.GlassCard
-import com.dhanuk.quickscanpro.ui.theme.*
+import com.dhanuk.quickscanpro.ui.theme.LuminaPrimary
+import com.dhanuk.quickscanpro.ui.theme.ThemeMode
 import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 
+/**
+ * Theme Studio — clean professional layout.
+ * Lets users preview theme modes, accent color presets, and typography.
+ * Sliders/glow removed to match the clean light design.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
@@ -38,14 +42,14 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
 
     val presetAccents = listOf(
-        LuminaPrimary to "Purple",
+        LuminaPrimary to "Indigo",
         Color(0xFF1E88E5) to "Ocean Blue",
         Color(0xFF00897B) to "Teal",
-        Color(0xFFE53935) to "Vibrant Red",
-        Color(0xFFFB8C00) to "Phoenix",
+        Color(0xFFE53935) to "Red",
+        Color(0xFFFB8C00) to "Orange",
         Color(0xFF6D4C41) to "Walnut",
         Color(0xFF7CB342) to "Spring",
-        Color(0xFF5C6BC0) to "Indigo"
+        Color(0xFF5C6BC0) to "Periwinkle"
     )
 
     val fontChoices = listOf(
@@ -59,7 +63,10 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Theme Studio", style = MaterialTheme.typography.headlineSmall) },
+                title = {
+                    Text("Theme Studio", style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold)
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -77,16 +84,16 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
 
             Text("Theme Mode",
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ThemeModeButton("Light", LuminaPrimaryShade(0.95f), themeMode == ThemeMode.LIGHT) {
+                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ThemeModeButton("Light", Color(0xFFF3F4F6), themeMode == ThemeMode.LIGHT) {
                     vm.setThemeMode(ThemeMode.LIGHT)
                 }
-                ThemeModeButton("Dark", LuminaPrimaryShade(0.3f), themeMode == ThemeMode.DARK) {
+                ThemeModeButton("Dark", Color(0xFF1F2937), themeMode == ThemeMode.DARK) {
                     vm.setThemeMode(ThemeMode.DARK)
                 }
-                ThemeModeButton("System", MaterialTheme.colorScheme.primary, themeMode == ThemeMode.SYSTEM) {
+                ThemeModeButton("System", Color(0xFF64748B), themeMode == ThemeMode.SYSTEM) {
                     vm.setThemeMode(ThemeMode.SYSTEM)
                 }
                 ThemeModeButton("AMOLED", Color.Black, themeMode == ThemeMode.AMOLED) {
@@ -95,32 +102,35 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
             }
             Spacer(Modifier.height(24.dp))
 
-            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 22.dp) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text("Accent Color",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(4.dp))
-                    Text("Power users can pick a custom accent to override the default purple",
+                    Text("Pick a preview accent. Restart to apply globally.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(14.dp))
                     Row(modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         presetAccents.forEach { (color, name) ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Box(
                                     modifier = Modifier
-                                        .size(44.dp)
+                                        .size(42.dp)
                                         .clip(CircleShape)
                                         .background(color)
                                         .border(2.dp,
-                                            if (MaterialTheme.colorScheme.primary == color) Color.White
-                                            else Color.Transparent, CircleShape)
+                                            if (MaterialTheme.colorScheme.primary == color)
+                                                MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                            CircleShape)
                                         .clickable {
-                                            android.widget.Toast.makeText(context, "Preview: $name (saved in Settings)", android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(context,
+                                                "Preview: $name (saved in Settings)",
+                                                android.widget.Toast.LENGTH_SHORT).show()
                                         },
                                     contentAlignment = Alignment.Center
                                 ) { }
@@ -135,48 +145,16 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
             }
             Spacer(Modifier.height(16.dp))
 
-            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 22.dp) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Text("Ambience",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(10.dp))
-                    SliderRow(
-                        label = "Glass Intensity",
-                        value = 0.6f,
-                        suffix = ""
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    SliderRow(
-                        label = "Ambient Glow",
-                        value = 0.4f,
-                        suffix = ""
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    val dimBackground = themeMode != ThemeMode.LIGHT
-                    ToggleRow(
-                        label = "Pure AMOLED Black",
-                        description = "Saves battery on OLED screens",
-                        checked = themeMode == ThemeMode.AMOLED,
-                        onToggle = {
-                            vm.setThemeMode(if (it) ThemeMode.AMOLED
-                            else if (isDark) ThemeMode.DARK else ThemeMode.LIGHT)
-                        }
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-
-            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 22.dp) {
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text("Typography",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(14.dp))
                     Row(modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         fontChoices.forEach { (family, name) ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Box(
@@ -187,7 +165,9 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
                                             MaterialTheme.colorScheme.outlineVariant,
                                             RoundedCornerShape(12.dp))
                                         .clickable {
-                                            android.widget.Toast.makeText(context, "Preview: $name (saved in Settings)", android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(context,
+                                                "Preview: $name (saved in Settings)",
+                                                android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                         .padding(horizontal = 18.dp, vertical = 18.dp)
                                 ) {
@@ -205,7 +185,7 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
                         }
                     }
                     Spacer(Modifier.height(8.dp))
-                    Text("In your preferences saved preset. Picks a saved font family as a hot preview — restart to apply full effect.",
+                    Text("Preview only. A full font switch requires saving the preference and restarting.",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                 }
@@ -219,54 +199,23 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
 private fun ThemeModeButton(label: String, color: Color, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(72.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .weight(1f)
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(14.dp))
             .background(color)
             .border(
-                width = if (selected) 3.dp else 0.dp,
-                color = if (selected) Color.White else Color.Transparent,
-                shape = RoundedCornerShape(18.dp)
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(14.dp)
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         if (selected) Icon(Icons.Filled.Check, contentDescription = null,
-            tint = Color.White, modifier = Modifier.size(22.dp))
-        else Text(label, color = Color.White,
+            tint = if (label == "Light") Color.Black else Color.White,
+            modifier = Modifier.size(22.dp))
+        else Text(label, color = if (label == "Light") Color.Black else Color.White,
             style = MaterialTheme.typography.labelSmall)
     }
 }
-
-@Composable
-private fun SliderRow(label: String, value: Float, suffix: String) {
-    var v by remember { mutableStateOf(value) }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.onSurface)
-        Text("${(v * 100).toInt()}$suffix",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    Slider(
-        value = v,
-        onValueChange = { v = it },
-        modifier = Modifier.fillMaxWidth()
-    )
-}
-
-@Composable
-private fun ToggleRow(label: String, description: String, checked: Boolean, onToggle: (Boolean) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(description, style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Switch(checked = checked, onCheckedChange = onToggle)
-    }
-}
-
-private fun LuminaPrimaryShade(factor: Float): Color =
-    Color(LuminaPrimary.red * factor, LuminaPrimary.green * factor, LuminaPrimary.blue * factor)

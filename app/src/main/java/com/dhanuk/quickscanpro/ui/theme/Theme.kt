@@ -7,44 +7,44 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val LuminaDarkScheme = darkColorScheme(
-    primary = LuminaPrimaryGlow,
-    onPrimary = LuminaInk,
-    primaryContainer = LuminaPrimary,
-    onPrimaryContainer = LuminaPrimaryFaint,
-    secondary = Color(0xFFBBC5EB),
-    onSecondary = LuminaNavy,
-    secondaryContainer = Color(0xFF3B4665),
-    onSecondaryContainer = Color(0xFFAAB4D9),
-    tertiary = Color(0xFFC6C4DF),
-    onTertiary = LuminaInk,
+private val CleanDarkScheme = darkColorScheme(
+    primary = LuminaPrimaryBright,
+    onPrimary = Color.White,
+    primaryContainer = LuminaSurfaceDark,
+    onPrimaryContainer = Color.White,
+    secondary = LuminaOnSurfaceVariantDark,
+    onSecondary = Color.White,
+    secondaryContainer = LuminaSurfaceHighDark,
+    onSecondaryContainer = Color.White,
+    tertiary = LuminaOnSurfaceVariantDark,
+    onTertiary = Color.White,
     background = LuminaBackgroundDark,
     onBackground = LuminaOnBackgroundDark,
-    surface = LuminaBackgroundDark,
+    surface = LuminaSurfaceDark,
     onSurface = LuminaOnBackgroundDark,
     surfaceVariant = LuminaSurfaceHighDark,
     onSurfaceVariant = LuminaOnSurfaceVariantDark,
-    surfaceContainerLowest = Color(0xFF0D0E0F),
-    surfaceContainerLow = LuminaSurfaceDark,
-    surfaceContainer = Color(0xFF1E2020),
+    surfaceContainerLowest = Color(0xFF0B0F19),
+    surfaceContainerLow = Color(0xFF1F2937),
+    surfaceContainer = LuminaSurfaceDark,
     surfaceContainerHigh = LuminaSurfaceHighDark,
-    surfaceContainerHighest = Color(0xFF333535),
+    surfaceContainerHighest = Color(0xFF4B5563),
     outline = LuminaOutlineDark,
-    outlineVariant = Color(0xFF4E4351),
+    outlineVariant = Color(0xFF374151),
     error = LuminaError,
-    onError = Color(0xFF690005)
+    onError = Color.White
 )
 
-private val LuminaLightScheme = lightColorScheme(
+private val CleanLightScheme = lightColorScheme(
     primary = LuminaPrimary,
     onPrimary = Color.White,
     primaryContainer = LuminaPrimaryFaint,
     onPrimaryContainer = LuminaPrimary,
-    secondary = Color(0xFF3B4665),
+    secondary = LuminaPrimaryBright,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFDAE1FF),
-    onSecondaryContainer = Color(0xFF252F4D),
-    tertiary = Color(0xFF45455B),
+    secondaryContainer = LuminaPrimarySoft,
+    onSecondaryContainer = LuminaPrimary,
+    tertiary = LuminaOnSurfaceVariantLight,
     onTertiary = Color.White,
     background = LuminaBackgroundLight,
     onBackground = LuminaOnBackgroundLight,
@@ -53,20 +53,21 @@ private val LuminaLightScheme = lightColorScheme(
     surfaceVariant = LuminaSurfaceHighLight,
     onSurfaceVariant = LuminaOnSurfaceVariantLight,
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFAF8FD),
-    surfaceContainer = Color(0xFFF1ECF9),
+    surfaceContainerLow = Color(0xFFFAFAFA),
+    surfaceContainer = Color(0xFFF9FAFB),
     surfaceContainerHigh = LuminaSurfaceHighLight,
-    surfaceContainerHighest = Color(0xFFE4DDF0),
+    surfaceContainerHighest = Color(0xFFE5E7EB),
     outline = LuminaOutlineLight,
-    outlineVariant = Color(0xFFCAC4D8),
+    outlineVariant = Color(0xFFE5E7EB),
     error = LuminaErrorLight,
     onError = Color.White
 )
 
-private val LuminaAmoledScheme = LuminaDarkScheme.copy(
+private val CleanAmoledScheme = CleanDarkScheme.copy(
     background = Color.Black,
     surface = Color.Black,
-    surfaceContainerLowest = Color.Black
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = Color.Black
 )
 
 enum class ThemeMode {
@@ -80,10 +81,10 @@ fun QuickScanProTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeMode) {
-        ThemeMode.LIGHT -> LuminaLightScheme
-        ThemeMode.DARK -> LuminaDarkScheme
-        ThemeMode.AMOLED -> LuminaAmoledScheme
-        ThemeMode.SYSTEM -> if (darkTheme) LuminaDarkScheme else LuminaLightScheme
+        ThemeMode.LIGHT -> CleanLightScheme
+        ThemeMode.DARK -> CleanDarkScheme
+        ThemeMode.AMOLED -> CleanAmoledScheme
+        ThemeMode.SYSTEM -> if (darkTheme) CleanDarkScheme else CleanLightScheme
     }
 
     MaterialTheme(

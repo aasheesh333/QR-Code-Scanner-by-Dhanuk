@@ -7,12 +7,10 @@ import android.provider.ContactsContract
 import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -26,10 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,12 +47,20 @@ import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
+/**
+ * Result screen — clean professional layout:
+ *  - Top bar with back, type badge, vault icon
+ *  - White content card with the scanned data and translate hint
+ *  - Horizontal scroll of contextual action pills
+ *  - Link safety card with linear progress + signal list
+ *  - Bottom action bar: Speak, Remind, Vault
+ * All 15 unique features preserved.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: (String) -> Unit) {
     val context = LocalContext.current
-    val dark = isSystemInDarkTheme()
-    val accent = if (dark) LuminaPrimaryGlow else LuminaPrimary
+    val accent = MaterialTheme.colorScheme.primary
     val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
     val historyViewModel: HistoryViewModel = viewModel()
     val settingsViewModel: SettingsViewModel = viewModel()
@@ -93,21 +96,21 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
-                            shape = RoundedCornerShape(50),
-                            color = accent.copy(alpha = 0.2f)
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.padding(end = 8.dp)
                         ) {
                             Text(
                                 detectedType.uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = accent,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
-                        Spacer(Modifier.width(8.dp))
                         if (incognitoMode) {
                             Icon(Icons.Filled.VisibilityOff, contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                                tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
                         }
                     }
                 },
@@ -120,40 +123,12 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
                     }
                 },
                 actions = {
-                    ActionOrbTop(
-                        onClick = {
-                            // Vault toggle with biometric prompt
-                            if (!inVault) {
-                                showBiometric(context) {
-                                    inVault = true
-                                    val justAdded = historyViewModel.history.value.firstOrNull {
-                                        it.content == decodedData
-                                    }
-                                    justAdded?.let {
-                                        historyViewModel.setVault(it, true, context)
-                                        Toast.makeText(context, "Moved to Secure Vault",
-                                            Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            } else {
-                                val justAdded = historyViewModel.history.value.firstOrNull {
-                                    it.content == decodedData
-                                }
-                                justAdded?.let {
-                                    historyViewModel.setVault(it, false, context)
-                                    inVault = false
-                                    Toast.makeText(context, "Removed from Vault",
-                                        Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        },
-                        active = inVault
-                    ) {
+                    IconButton(onClick = { toggleVault(context, decodedData, historyViewModel, inVault) { inVault = !inVault } }) {
                         Icon(
                             if (inVault) Icons.Filled.Lock else Icons.Filled.LockOpen,
                             contentDescription = "Vault",
-                            tint = if (inVault) LuminaPrimaryGlow else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
+                            tint = if (inVault) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
@@ -168,17 +143,12 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Hero card with content
-            GlassCard(
-                modifier = Modifier.fillMaxWidth(),
-                cornerRadius = 24.dp,
-                glowColor = accent
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+            // Content card
+            GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Text(
                         decodedData,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
                         modifier = Modifier.fillMaxWidth()
                     )
                     if (isForeign) {
@@ -190,14 +160,15 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
                             Spacer(Modifier.width(8.dp))
                             Surface(
                                 shape = RoundedCornerShape(50),
-                                color = accent.copy(alpha = 0.15f),
+                                color = MaterialTheme.colorScheme.primaryContainer,
                                 modifier = Modifier.clickable {
                                     val intent = Intent(Intent.ACTION_PROCESS_TEXT).apply {
                                         type = "text/plain"
                                         putExtra(Intent.EXTRA_PROCESS_TEXT, decodedData)
                                     }
-                                    try { context.startActivity(Intent.createChooser(intent, "Translate")) }
-                                    catch (e: Exception) {
+                                    try {
+                                        context.startActivity(Intent.createChooser(intent, "Translate"))
+                                    } catch (e: Exception) {
                                         clipboardManager.setText(
                                             androidx.compose.ui.text.AnnotatedString(decodedData))
                                         Toast.makeText(context, "Copied — open Translate app to paste",
@@ -222,14 +193,15 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
                 }
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(18.dp))
 
-            // AI Action pills (horizontal scroll) — the star feature
-            Text("AI ACTIONS",
+            // Actions
+            Text("QUICK ACTIONS",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp)
+            Spacer(Modifier.height(10.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,21 +213,18 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
 
             Spacer(Modifier.height(18.dp))
 
-            // Safety Score card (circular gauge)
+            // Safety card
             if (safety.level != LinkSafetyChecker.Level.NOT_A_LINK) {
-                SafetyGaugeCard(safety)
+                SafetyCard(safety)
                 Spacer(Modifier.height(18.dp))
             }
 
-            // Bottom action row — Speak / Remind / Vault
+            // Bottom action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                RoundActionButton(
-                    label = if (isSpeaking) "Stop" else "Speak",
-                    icon = if (isSpeaking) Icons.Filled.Stop else Icons.Filled.VolumeUp,
-                    color = accent,
+                OutlinedButton(
                     onClick = {
                         if (isSpeaking) {
                             VoiceSpeaker.stop()
@@ -264,41 +233,34 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
                             VoiceSpeaker.speak(decodedData)
                             isSpeaking = true
                         }
-                    }
-                )
-                RoundActionButton(
-                    label = "Remind",
-                    icon = Icons.Filled.Alarm,
-                    color = LuminaWarning,
-                    onClick = { showReminderSheet = true }
-                )
-                RoundActionButton(
-                    label = if (inVault) "Unvault" else "Vault",
-                    icon = if (inVault) Icons.Filled.Lock else Icons.Filled.LockOpen,
-                    color = LuminaNavy,
-                    onClick = {
-                        if (!inVault) {
-                            showBiometric(context) {
-                                inVault = true
-                                historyViewModel.history.value.firstOrNull {
-                                    it.content == decodedData
-                                }?.let {
-                                    historyViewModel.setVault(it, true, context)
-                                    Toast.makeText(context, "Moved to Secure Vault",
-                                        Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        } else {
-                            historyViewModel.history.value.firstOrNull {
-                                it.content == decodedData
-                            }?.let {
-                                historyViewModel.setVault(it, false, context)
-                                inVault = false
-                            }
-                        }
-                    }
-                )
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(if (isSpeaking) Icons.Filled.Stop else Icons.Filled.VolumeUp, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (isSpeaking) "Stop" else "Speak")
+                }
+                OutlinedButton(
+                    onClick = { showReminderSheet = true },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Filled.Alarm, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Remind")
+                }
+                Button(
+                    onClick = { toggleVault(context, decodedData, historyViewModel, inVault) { inVault = !inVault } },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(if (inVault) Icons.Filled.LockOpen else Icons.Filled.Lock, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (inVault) "Unvault" else "Vault")
+                }
             }
+
             Spacer(Modifier.height(80.dp))
         }
     }
@@ -319,114 +281,25 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit, onNavigateToProduct: 
     }
 }
 
-@Composable
-private fun ActionOrbTop(
-    onClick: () -> Unit,
-    active: Boolean,
-    content: @Composable () -> Unit
+private fun toggleVault(
+    context: Context,
+    decodedData: String,
+    historyViewModel: HistoryViewModel,
+    currentlyInVault: Boolean,
+    onComplete: () -> Unit
 ) {
-    GlassCard(cornerRadius = 50.dp, modifier = Modifier.size(36.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) { content() }
-    }
-}
-
-@Composable
-private fun RoundActionButton(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector,
-                              color: Color, onClick: () -> Unit) {
-    val dark = isSystemInDarkTheme()
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape)
-                .background(if (dark) GlassFillDark else GlassFillLight)
-                .border(1.dp, color.copy(alpha = 0.5f), CircleShape)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(26.dp))
+    val target = historyViewModel.history.value.firstOrNull { it.content == decodedData }
+    if (target == null) return
+    if (!currentlyInVault) {
+        showBiometric(context) {
+            historyViewModel.setVault(target, true, context)
+            onComplete()
+            Toast.makeText(context, "Moved to Secure Vault", Toast.LENGTH_SHORT).show()
         }
-        Spacer(Modifier.height(6.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = color,
-            fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun SafetyGaugeCard(report: LinkSafetyChecker.Report) {
-    val color = when (report.level) {
-        LinkSafetyChecker.Level.SAFE -> SafetySafe
-        LinkSafetyChecker.Level.CAUTION -> SafetyCaution
-        LinkSafetyChecker.Level.RISKY -> SafetyRisky
-        LinkSafetyChecker.Level.NOT_A_LINK -> SafetySafe
-    }
-    GlassCard(
-        modifier = Modifier.fillMaxWidth(),
-        cornerRadius = 22.dp,
-        glowColor = color
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                SafetyGauge(score = report.score, color = color, modifier = Modifier.size(72.dp))
-                Spacer(Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        when (report.level) {
-                            LinkSafetyChecker.Level.SAFE -> "Looks Safe"
-                            LinkSafetyChecker.Level.CAUTION -> "Be Cautious"
-                            LinkSafetyChecker.Level.RISKY -> "High Risk"
-                            else -> ""
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                        color = color, fontWeight = FontWeight.Bold
-                    )
-                    Text("${report.score}/100 safety score",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Tap signals for details",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            report.signals.forEach { signal ->
-                Row(modifier = Modifier.padding(vertical = 3.dp),
-                    verticalAlignment = Alignment.Top) {
-                    Text("•", color = color,
-                        modifier = Modifier.padding(end = 8.dp),
-                        fontWeight = FontWeight.Bold)
-                    Text(signal, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SafetyGauge(score: Int, color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val sweep = (score / 100f) * 360f
-        drawCircle(color = color.copy(alpha = 0.1f), style = Stroke(width = 8f, cap = StrokeCap.Round))
-        drawArc(
-            color = color,
-            startAngle = -90f,
-            sweepAngle = sweep,
-            useCenter = false,
-            style = Stroke(width = 8f, cap = StrokeCap.Round)
-        )
-    }
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(score.toString(), color = color, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-            Text("SAFE", color = color.copy(alpha = 0.6f),
-                fontSize = 8.sp, fontWeight = FontWeight.Bold)
-        }
+    } else {
+        historyViewModel.setVault(target, false, context)
+        onComplete()
+        Toast.makeText(context, "Removed from Vault", Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -442,13 +315,13 @@ private fun ReminderBottomSheet(onDismiss: () -> Unit, onSchedule: (Long?) -> Un
             Text("Get notified about this scan at the chosen time",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
             options.forEach { (label, millis) ->
                 ListItem(
                     headlineContent = { Text(label) },
                     leadingContent = {
                         Icon(Icons.Filled.Schedule, contentDescription = null,
-                            tint = LuminaPrimaryGlow)
+                            tint = MaterialTheme.colorScheme.primary)
                     },
                     modifier = Modifier.clickable { onSchedule(millis) }
                 )
@@ -462,6 +335,65 @@ private fun ReminderBottomSheet(onDismiss: () -> Unit, onSchedule: (Long?) -> Un
                 },
                 modifier = Modifier.clickable { onSchedule(null) }
             )
+        }
+    }
+}
+
+@Composable
+private fun SafetyCard(report: LinkSafetyChecker.Report) {
+    val color = when (report.level) {
+        LinkSafetyChecker.Level.SAFE -> SafetySafe
+        LinkSafetyChecker.Level.CAUTION -> SafetyCaution
+        LinkSafetyChecker.Level.RISKY -> SafetyRisky
+        LinkSafetyChecker.Level.NOT_A_LINK -> SafetySafe
+    }
+    val statusText = when (report.level) {
+        LinkSafetyChecker.Level.SAFE -> "Safe"
+        LinkSafetyChecker.Level.CAUTION -> "Caution"
+        LinkSafetyChecker.Level.RISKY -> "High Risk"
+        else -> ""
+    }
+    GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 16.dp) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(color.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.Security, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(statusText,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = color, fontWeight = FontWeight.Bold)
+                    Text("${report.score}/100 safety score",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            LinearProgressIndicator(
+                progress = { report.score / 100f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = color,
+                trackColor = color.copy(alpha = 0.15f)
+            )
+            Spacer(Modifier.height(12.dp))
+            report.signals.forEach { signal ->
+                Row(modifier = Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.Top) {
+                    Text("•", color = color, modifier = Modifier.padding(end = 8.dp),
+                        fontWeight = FontWeight.Bold)
+                    Text(signal, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }
@@ -559,7 +491,6 @@ private fun buildActionPills(
         }
     }
 
-    // Common pills
     add("Copy", Icons.Filled.ContentCopy) {
         clipboard.setText(androidx.compose.ui.text.AnnotatedString(content))
         Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
@@ -575,15 +506,8 @@ private fun buildActionPills(
     when (type) {
         BarcodeTypeDetector.TYPE_URL -> {
             add("Open", Icons.Filled.OpenInNew) {
-                try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(content)))
-                } catch (e: Exception) { Toast.makeText(context, "Cannot open", Toast.LENGTH_SHORT).show() }
-            }
-            add("Save Offline", Icons.Filled.Save) {
-                Toast.makeText(context, "Page text will be fetched on next open",
-                    Toast.LENGTH_SHORT).show()
                 try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(content))) }
-                catch (e: Exception) {}
+                catch (e: Exception) { Toast.makeText(context, "Cannot open", Toast.LENGTH_SHORT).show() }
             }
         }
         BarcodeTypeDetector.TYPE_EMAIL -> {
@@ -592,7 +516,6 @@ private fun buildActionPills(
                 try { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$addr"))) }
                 catch (e: Exception) {}
             }
-            add("Contact", Icons.Filled.PersonAdd) { /* reuse contact add */ }
         }
         BarcodeTypeDetector.TYPE_PHONE -> {
             add("Call", Icons.Filled.Call) {
@@ -602,14 +525,7 @@ private fun buildActionPills(
             }
             add("WhatsApp", Icons.Filled.Message) {
                 val number = content.removePrefix("tel:").replace(Regex("[^+0-9]"), "")
-                try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://wa.me/$number")))
-                } catch (e: Exception) {}
-            }
-            add("SMS", Icons.Filled.Sms) {
-                val number = if (content.startsWith("tel:")) content.substring(4) else content
-                try { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:$number"))) }
+                try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$number"))) }
                 catch (e: Exception) {}
             }
         }
@@ -645,10 +561,8 @@ private fun buildActionPills(
                     putExtra(android.provider.CalendarContract.Events.TITLE, event.summary)
                     if (event.location.isNotBlank())
                         putExtra(android.provider.CalendarContract.Events.EVENT_LOCATION, event.location)
-                    parseEventDate(event.start)?.let {
-                        putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, it) }
-                    parseEventDate(event.end)?.let {
-                        putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, it) }
+                    parseEventDate(event.start)?.let { putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, it) }
+                    parseEventDate(event.end)?.let { putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, it) }
                 }
                 context.startActivity(intent)
             } catch (e: Exception) {}
