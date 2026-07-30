@@ -10,12 +10,13 @@ import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.util.AutoOrganizer
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.ReminderScheduler
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class HistoryViewModel(application: Application) : AndroidViewModel(application) {
@@ -42,15 +43,15 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     val autoCategoryCounts = scanResultDao.getCountByAutoCategory()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    private val autoFavsQuery: Flow<Triple<String, Boolean, String>> = combine(
+    private val autoFavsQuery: Flow<Triple<String, Boolean, String?>> = combine(
         searchQuery, showFavoritesOnly, selectedAutoCategory
-    ) { q, fav, auto -> Triple(q, fav, auto) }
+    ) { q, fav, auto -> Triple<String, Boolean, String?>(q, fav, auto) }
 
     private val typeCollection: Flow<Pair<String?, Int?>> = combine(
         selectedType, selectedCollectionId
     ) { t, c -> Pair(t, c) }
 
-    val filteredHistory: Flow<List<ScanResult>> = scanResultDao.getAll().combine(
+    val filteredHistory: StateFlow<List<ScanResult>> = scanResultDao.getAll().combine(
         autoFavsQuery.combine(typeCollection) { a, b -> Pair(a, b) }
     ) { all, (autoFavs, typeColl) ->
         val (q, favsOnly, autoCat) = autoFavs
