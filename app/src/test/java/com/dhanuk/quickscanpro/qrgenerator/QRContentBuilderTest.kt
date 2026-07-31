@@ -56,7 +56,7 @@ class QRContentBuilderTest {
         assertTrue(result.contains("VERSION:3.0"))
         assertTrue(result.contains("FN:John Doe"))
         assertTrue(result.contains("TEL;TYPE=CELL:+1234567890"))
-        assertTrue(result.contains("EMAIL:john@example.com"))
+        assertTrue(result.contains("EMAIL;TYPE=INTERNET:john@example.com"))
         assertTrue(result.contains("ORG:Acme"))
         assertTrue(result.contains("END:VCARD"))
     }
