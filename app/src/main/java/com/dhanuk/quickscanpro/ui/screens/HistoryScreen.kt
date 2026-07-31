@@ -1,8 +1,8 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +38,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +49,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +67,7 @@ import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.EmptyState
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,20 +77,24 @@ fun HistoryScreen(
     onOpenVault: () -> Unit,
     onOpenCompare: () -> Unit,
     onNavigateToScanner: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onRowClick: (ScanResult) -> Unit
 ) {
     val vm: HistoryViewModel = viewModel()
     val items by vm.filteredHistory.collectAsState()
     val allScans by vm.history.collectAsState()
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     AppBackground()
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-                color = Color.White
+                color = MaterialTheme.colorScheme.surface
             ) {
                 Column {
                     Row(
@@ -198,8 +209,18 @@ fun HistoryScreen(
                     onToggleFavorite = { vm.toggleFavorite(scan) },
                     onDelete = {
                         vm.delete(scan.id)
-                        Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show()
-                    }
+                        scope.launch {
+                            val result = snackbarHostState.showSnackbar(
+                                message = "Scan deleted",
+                                actionLabel = "Undo",
+                                duration = SnackbarDuration.Short
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                vm.restore(scan)
+                            }
+                        }
+                    },
+                    onRowClick = { onRowClick(scan) }
                 )
             }
             item { Spacer(Modifier.height(80.dp)) }
@@ -212,7 +233,8 @@ fun HistoryScreen(
 private fun HistoryRow(
     scan: ScanResult,
     onToggleFavorite: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onRowClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -220,6 +242,7 @@ private fun HistoryRow(
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .clickable { onRowClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

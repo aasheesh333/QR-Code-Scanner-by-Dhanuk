@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
@@ -62,6 +61,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,7 +115,8 @@ fun HomeScreen(
                 PackageManager.PERMISSION_GRANTED
         )
     }
-    var showRationale by remember { mutableStateOf(false) }
+    var showRationale by rememberSaveable { mutableStateOf(false) }
+    var hasRequestedPermission by rememberSaveable { mutableStateOf(false) }
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -126,8 +127,14 @@ fun HomeScreen(
             ) == true
     }
 
+    // Auto-request camera permission exactly once per session. After the first
+    // request we leave the decision to the explicit "Grant permission" button
+    // to avoid permission-spam (Play policy anti-pattern).
     LaunchedEffect(Unit) {
-        if (!hasCameraPermission) permLauncher.launch(Manifest.permission.CAMERA)
+        if (!hasCameraPermission && !hasRequestedPermission) {
+            hasRequestedPermission = true
+            permLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
 
     val haptic = LocalHapticFeedback.current
@@ -237,7 +244,7 @@ private fun CameraViewfinder(
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor = remember(context) { ContextCompat.getMainExecutor(context) }
     val analyzer = remember(onScan) { BarcodeAnalyzer(onScan) }
-    var flashEnabled by remember { mutableStateOf(false) }
+    var flashEnabled by rememberSaveable { mutableStateOf(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
     val haptic = LocalHapticFeedback.current
     val previewView = remember { PreviewView(context).apply {
@@ -386,39 +393,9 @@ private fun CameraViewfinder(
             ScanFrame(modifier = Modifier.fillMaxWidth())
         }
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Button(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                },
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 32.dp, vertical = 16.dp
-                )
-            ) {
-                Icon(
-                    Icons.Filled.QrCode2,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "Scan Now",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
+        // The "Scan Now" CTA button previously sat here as a placebo — the
+        // camera above auto-detects, so the button had no real action.
+        // Removed to avoid a misleading / dead click.
     }
 }
 

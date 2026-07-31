@@ -32,9 +32,10 @@ object BarcodeTypeDetector {
         // Email pattern simple check
         if (content.contains("@") && content.contains(".") && !content.contains(" ")) return TYPE_EMAIL
 
-        // Product barcode (EAN/UPC): 8, 12, 13, or 14 digits (check before phone
-        // since pure-digit strings match the phone pattern too)
-        if (content.matches(Regex("^\\d{8,14}$"))) return TYPE_PRODUCT
+        // Product barcode (EAN-8/UPC-A/EAN-13/ITF-14): exactly 8, 12, 13, or 14 digits.
+        // 9/10/11-digit strings are NOT valid product barcodes. Checked before the
+        // phone pattern because pure-digit strings also match phone.
+        if (content.matches(Regex("^\\d{8}$|^\\d{12,14}$"))) return TYPE_PRODUCT
 
         // Phone pattern
         if (content.matches(Regex("^\\+?[0-9\\-\\s()]{7,20}$"))) return TYPE_PHONE
@@ -46,16 +47,63 @@ object BarcodeTypeDetector {
     data class WifiInfo(val ssid: String, val password: String, val encryption: String)
 
     fun parseWifi(rawContent: String): WifiInfo? {
-        // WIFI:T:WPA;S:<ssid>;P:<password>;;
-        // Values may contain escaped chars (\; \, \: \\ \") so match greedily
-        // up to an *unescaped* semicolon.
-        val regex = Regex("""WIFI:T:(\w+);S:((?:\\.|[^;\\])*);P:((?:\\.|[^;\\])*);+""", RegexOption.IGNORE_CASE)
-        val match = regex.find(rawContent) ?: return null
-        return WifiInfo(
-            ssid = unescapeWifi(match.groupValues[2]),
-            password = unescapeWifi(match.groupValues[3]),
-            encryption = match.groupValues[1]
-        )
+        // WIFI:T:<auth>;S:<ssid>;P:<password>;H:<hidden>;;
+        // Per the ZXing spec the fields may appear in any order. Each field
+        // value may contain escaped chars (\; \, \: \\ \"). We scan field by
+        // field using a tokenizer anchored at `;` boundaries (respecting
+        // backslash escapes).
+        if (!rawContent.trimStart().startsWith("WIFI:", ignoreCase = true)) return null
+        val body = rawContent.trim().substringAfter(":").trimEnd(';')
+
+        var ssid = ""
+        var password = ""
+        var encryption = ""
+        val tokens = tokenizeWifi(body)
+        for (tok in tokens) {
+            val colon = indexOfUnescaped(tok, ':')
+            if (colon < 0) continue
+            val key = tok.substring(0, colon).uppercase()
+            val value = unescapeWifi(tok.substring(colon + 1))
+            when (key) {
+                "T" -> encryption = value
+                "S" -> ssid = value
+                "P" -> password = value
+            }
+        }
+        if (ssid.isEmpty()) return null
+        return WifiInfo(ssid = ssid, password = password, encryption = encryption)
+    }
+
+    /** Splits the body of a WIFI payload on unescaped `;` characters. */
+    private fun tokenizeWifi(body: String): List<String> {
+        val out = mutableListOf<String>()
+        val sb = StringBuilder()
+        var i = 0
+        while (i < body.length) {
+            val c = body[i]
+            if (c == '\\' && i + 1 < body.length) {
+                sb.append(c).append(body[i + 1]); i += 2; continue
+            }
+            if (c == ';') {
+                if (sb.isNotEmpty()) out += sb.toString()
+                sb.setLength(0)
+                i++; continue
+            }
+            sb.append(c); i++
+        }
+        if (sb.isNotEmpty()) out += sb.toString()
+        return out
+    }
+
+    /** Finds the first `:` that is not preceded by a backslash. */
+    private fun indexOfUnescaped(s: String, target: Char): Int {
+        var i = 0
+        while (i < s.length) {
+            if (s[i] == '\\' && i + 1 < s.length) { i += 2; continue }
+            if (s[i] == target) return i
+            i++
+        }
+        return -1
     }
 
     private fun unescapeWifi(value: String): String {
@@ -77,11 +125,14 @@ object BarcodeTypeDetector {
     data class ContactInfo(val name: String, val phone: String, val email: String, val org: String)
 
     fun parseVCard(rawContent: String): ContactInfo {
+        // RFC 6350 §3.2: long property values may be folded across lines by
+        // prefixing the continuation line with a space or tab. Unfold first.
+        val unfolded = unfoldVCardLines(rawContent)
         var name = ""
         var phone = ""
         var email = ""
         var org = ""
-        for (line in rawContent.split("\n")) {
+        for (line in unfolded) {
             val trimmed = line.trim()
             when {
                 trimmed.uppercase().startsWith("FN:") -> name = trimmed.substring(3).trim()
@@ -99,6 +150,19 @@ object BarcodeTypeDetector {
             }
         }
         return ContactInfo(name, phone, email, org)
+    }
+
+    private fun unfoldVCardLines(rawContent: String): List<String> {
+        val rawLines = rawContent.replace("\r\n", "\n").split("\n")
+        val out = mutableListOf<String>()
+        for (line in rawLines) {
+            if (line.isNotEmpty() && (line[0] == ' ' || line[0] == '\t') && out.isNotEmpty()) {
+                out[out.lastIndex] = out.last() + line.substring(1)
+            } else {
+                out += line
+            }
+        }
+        return out
     }
 
     // ---- Calendar (vEvent) parser ----
@@ -139,7 +203,10 @@ object BarcodeTypeDetector {
     data class GeoInfo(val latitude: Double, val longitude: Double)
 
     fun parseGeo(rawContent: String): GeoInfo? {
-        val regex = Regex("""geo:(-?\d+\.\d+),(-?\d+\.\d+)""", RegexOption.IGNORE_CASE)
+        // RFC 5870 allows integer or decimal lat/lon. Optional query/altitude
+        // suffixes are ignored. e.g. geo:40,-73  /  geo:40.7,-73.9?q=...  /
+        // geo:40.7,-73.9,100
+        val regex = Regex("""geo:(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
         val match = regex.find(rawContent) ?: return null
         return GeoInfo(
             latitude = match.groupValues[1].toDouble(),

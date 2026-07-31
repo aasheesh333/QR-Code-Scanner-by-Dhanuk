@@ -1,11 +1,21 @@
 package com.dhanuk.quickscanpro.qrgenerator
 
+import android.content.ContentResolver
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.common.BitMatrix
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import java.io.File
+import java.io.FileOutputStream
 
 object QRCodeGenerator {
 
@@ -43,7 +53,71 @@ object QRCodeGenerator {
     }
 
     fun estimateCapacity(content: String): Boolean {
-        // QR code can hold up to 4296 alphanumeric chars (version 40, L correction)
         return content.length <= 3000
+    }
+
+    fun saveToGallery(context: Context, bitmap: Bitmap, displayName: String): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val resolver: ContentResolver = context.contentResolver
+                val collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                val values = android.content.ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "$displayName.png")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/QuickScanPro")
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+                val uri = resolver.insert(collection, values)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { out ->
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                    values.clear()
+                    values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    resolver.update(uri, values, null, null)
+                    true
+                } else false
+            } else {
+                val dir = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                    "QuickScanPro"
+                )
+                if (!dir.exists()) dir.mkdirs()
+                val file = File(dir, "$displayName.png")
+                FileOutputStream(file).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+                val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                intent.data = Uri.fromFile(file)
+                context.sendBroadcast(intent)
+                true
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun shareQrBitmap(context: Context, bitmap: Bitmap) {
+        try {
+            val cacheDir = File(context.cacheDir, "shared_qr")
+            if (!cacheDir.exists()) cacheDir.mkdirs()
+            val file = File(cacheDir, "qr_share.png")
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, "Share QR Code"))
+        } catch (e: Exception) {
+            Toast.makeText(context, "Could not share QR", Toast.LENGTH_SHORT).show()
+        }
     }
 }

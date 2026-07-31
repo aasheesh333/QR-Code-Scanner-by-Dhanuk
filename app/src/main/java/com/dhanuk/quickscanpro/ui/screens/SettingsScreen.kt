@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +28,6 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LockClock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RocketLaunch
@@ -53,6 +53,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,6 +69,8 @@ import com.dhanuk.quickscanpro.config.AppConfig
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
+import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
+import com.dhanuk.quickscanpro.ui.theme.ThemeMode
 
 @Composable
 fun SettingsScreen(
@@ -77,15 +80,18 @@ fun SettingsScreen(
 ) {
     val settingsVm: SettingsViewModel = viewModel()
     val historyVm: HistoryViewModel = viewModel()
+    val themeVm: ThemeViewModel = viewModel()
     val sound by settingsVm.soundEnabled.collectAsState()
     val vibrate by settingsVm.vibrateEnabled.collectAsState()
     val autoSave by settingsVm.autoCopyOnScan.collectAsState()
     val biometrics by settingsVm.biometricLock.collectAsState()
-    val pushEnabled = remember { mutableStateOf(false) }
+    val themeMode by themeVm.themeMode.collectAsState()
+    var pushEnabled by rememberSaveable { mutableStateOf(false) }
     val defaultAction by settingsVm.defaultAction.collectAsState()
     val context = LocalContext.current
-    var showDefaultActionDialog by remember { mutableStateOf(false) }
-    var showClearConfirmDialog by remember { mutableStateOf(false) }
+    var showDefaultActionDialog by rememberSaveable { mutableStateOf(false) }
+    var showClearConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showThemeDialog by rememberSaveable { mutableStateOf(false) }
 
     AppBackground()
     Scaffold(
@@ -110,6 +116,13 @@ fun SettingsScreen(
                         title = "Default action after scan",
                         trailing = defaultActionLabel(defaultAction),
                         onClick = { showDefaultActionDialog = true }
+                    )
+                    GroupDivider()
+                    SubvalueRow(
+                        icon = Icons.Filled.Palette,
+                        title = "Theme",
+                        trailing = themeMode.label,
+                        onClick = { showThemeDialog = true }
                     )
                     GroupDivider()
                     ToggleRow(
@@ -141,16 +154,11 @@ fun SettingsScreen(
                         checked = biometrics,
                         onChange = { settingsVm.setBiometricLock(it) }
                     )
-                    GroupDivider()
-                    SubvalueRow(
-                        icon = Icons.Filled.LockClock,
-                        title = "Auto-lock vault (minutes)",
-                        trailing = "5",
-                        onClick = {}
-                    )
+                }
+                Spacer(Modifier.height(24.dp))
+                SettingsGroup(label = "Data") {
                     val error = MaterialTheme.colorScheme.error
                     val errorContainer = MaterialTheme.colorScheme.errorContainer
-                    GroupDivider()
                     DangerRow(
                         icon = Icons.Filled.DeleteForever,
                         title = "Clear all history",
@@ -165,9 +173,9 @@ fun SettingsScreen(
                         icon = Icons.Filled.Notifications,
                         title = "Push notifications",
                         subtitle = "Powered by OneSignal",
-                        checked = pushEnabled.value,
+                        checked = pushEnabled,
                         onChange = { enabled ->
-                            pushEnabled.value = enabled
+                            pushEnabled = enabled
                             initOneSignalStub(enabled)
                         }
                     )
@@ -190,9 +198,13 @@ fun SettingsScreen(
                         icon = Icons.Filled.Star,
                         title = "Rate App",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.PLAY_STORE_URL))
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(intent)
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.PLAY_STORE_URL))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                Toast.makeText(context, "No app to open Play Store", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                     GroupDivider()
@@ -200,12 +212,16 @@ fun SettingsScreen(
                         icon = Icons.Filled.Share,
                         title = "Share App",
                         onClick = {
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_SUBJECT, "QuickScan Pro")
-                                putExtra(Intent.EXTRA_TEXT, "Check out QuickScan Pro on the Play Store: ${AppConfig.PLAY_STORE_URL}")
+                            try {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT, "QuickScan Pro")
+                                    putExtra(Intent.EXTRA_TEXT, "Check out QuickScan Pro on the Play Store: ${AppConfig.PLAY_STORE_URL}")
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share via"))
+                            } catch (_: Exception) {
+                                Toast.makeText(context, "No app to share", Toast.LENGTH_SHORT).show()
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "Share via"))
                         }
                     )
                     GroupDivider()
@@ -213,9 +229,13 @@ fun SettingsScreen(
                         icon = Icons.Filled.Shield,
                         title = "Privacy Policy",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.PRIVACY_POLICY))
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(intent)
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.PRIVACY_POLICY))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                Toast.makeText(context, "No browser available", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                     GroupDivider()
@@ -223,9 +243,13 @@ fun SettingsScreen(
                         icon = Icons.Filled.Description,
                         title = "Terms of Use",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.TERMS))
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(intent)
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.TERMS))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                Toast.makeText(context, "No browser available", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                     GroupDivider()
@@ -233,9 +257,13 @@ fun SettingsScreen(
                         icon = Icons.Filled.ContactPage,
                         title = "Contact Us",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.CONTACT_US))
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(intent)
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.CONTACT_US))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                Toast.makeText(context, "No browser available", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                 }
@@ -280,6 +308,14 @@ fun SettingsScreen(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    if (showThemeDialog) {
+        ThemeModeDialog(
+            current = themeMode,
+            onSelect = { themeVm.setThemeMode(it); showThemeDialog = false },
+            onDismiss = { showThemeDialog = false }
         )
     }
 }
@@ -348,10 +384,47 @@ private fun initOneSignalStub(enabled: Boolean) {
 }
 
 @Composable
+private fun ThemeModeDialog(
+    current: ThemeMode,
+    onSelect: (ThemeMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Theme") },
+        text = {
+            Column {
+                ThemeMode.entries.forEach { mode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onSelect(mode)
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = current == mode,
+                            onClick = { onSelect(mode) }
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(mode.label, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
 private fun SettingsHeader(onNavigateBack: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = Color.White
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier
@@ -394,7 +467,7 @@ private fun SettingsGroup(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp
         ) {
             Column {
@@ -491,7 +564,7 @@ private fun SubvalueRow(
             Spacer(Modifier.width(8.dp))
         }
         Icon(
-            imageVector = icon,
+            imageVector = Icons.Filled.ChevronRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)

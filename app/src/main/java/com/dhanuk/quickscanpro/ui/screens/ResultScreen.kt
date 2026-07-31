@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,6 +56,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -175,7 +177,7 @@ fun ResultScreen(
 private fun WifiVariant(data: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val parts = remember(data) { parseWifi(data) }
-    var showPass by remember { mutableStateOf(false) }
+    var showPass by rememberSaveable { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -364,7 +366,6 @@ private fun WifiSafetySection(security: String, ssid: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(0.dp))
-                    .clickable { }
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -628,6 +629,12 @@ private fun UrlVariant(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+    var showRiskConfirm by rememberSaveable { mutableStateOf(false) }
+    val isRisky = safetyReport?.level == LinkSafetyChecker.Level.RISKY
+
+    fun tryOpenUrl() {
+        if (isRisky) showRiskConfirm = true else openUrl(context, data)
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -681,7 +688,7 @@ private fun UrlVariant(
         UrlPillChip("Copy", Icons.Filled.ContentCopy) { copyToClipboard(context, data) }
         UrlPillChip("Share", Icons.Filled.Share) { shareText(context, data) }
         if (type == BarcodeTypeDetector.TYPE_URL) {
-            UrlPillChip("Open", Icons.Filled.OpenInNew) { openUrl(context, data) }
+            UrlPillChip("Open", Icons.Filled.OpenInNew) { tryOpenUrl() }
         }
     }
 
@@ -692,7 +699,7 @@ private fun UrlVariant(
     Spacer(Modifier.height(24.dp))
     PrimaryButton(
         text = "Open Link",
-        onClick = { openUrl(context, data) },
+        onClick = { tryOpenUrl() },
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(Icons.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -705,6 +712,33 @@ private fun UrlVariant(
         onClick = onNavigateBack,
         modifier = Modifier.fillMaxWidth()
     )
+
+    if (showRiskConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRiskConfirm = false },
+            title = { Text("Warning: Unsafe Link") },
+            text = {
+                Text(
+                    "This link has been flagged as potentially dangerous.\n\n" +
+                    safetyReport?.signals?.joinToString("\n")?.let { "$it\n\n" } +
+                    "Are you sure you want to open it?"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRiskConfirm = false
+                    openUrl(context, data)
+                }) {
+                    Text("Open anyway", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRiskConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable

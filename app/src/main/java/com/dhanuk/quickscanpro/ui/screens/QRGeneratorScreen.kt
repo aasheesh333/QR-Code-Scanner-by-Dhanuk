@@ -1,6 +1,7 @@
 package com.dhanuk.quickscanpro.ui.screens
 
 import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,7 +36,9 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.TextSnippet
 import androidx.compose.material.icons.filled.Wifi
@@ -56,6 +59,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +68,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -71,12 +76,14 @@ import com.dhanuk.quickscanpro.qrgenerator.QRCodeGenerator
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
+import com.dhanuk.quickscanpro.ui.composables.SecondaryButton
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QRGeneratorScreen() {
     val vm: QRGeneratorViewModel = viewModel()
+    val context = LocalContext.current
     val selectedType by vm.selectedType.collectAsState()
     val bitmap by vm.generatedBitmap.collectAsState()
     val f1 by vm.f1.collectAsState()
@@ -120,11 +127,51 @@ fun QRGeneratorScreen() {
             PrimaryButton(
                 text = "Generate QR Code",
                 onClick = { vm.generateFromInputs() },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = f1.isNotBlank()
             ) {
                 Icon(Icons.Filled.AddBox, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Generate QR Code")
+            }
+            if (bitmap != null) {
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SecondaryButton(
+                        text = "Save",
+                        onClick = {
+                            val saved = QRCodeGenerator.saveToGallery(
+                                context,
+                                bitmap!!,
+                                "qr_${System.currentTimeMillis()}"
+                            )
+                            Toast.makeText(
+                                context,
+                                if (saved) "Saved to gallery" else "Save failed",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Save")
+                    }
+                    SecondaryButton(
+                        text = "Share",
+                        onClick = {
+                            QRCodeGenerator.shareQrBitmap(context, bitmap!!)
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Share")
+                    }
+                }
             }
             Spacer(Modifier.height(80.dp))
         }
@@ -138,10 +185,10 @@ private fun GenerateHeader(
     fgColor: Int,
     bgColor: Int
 ) {
-    var showSettings by remember { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = Color.White
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier

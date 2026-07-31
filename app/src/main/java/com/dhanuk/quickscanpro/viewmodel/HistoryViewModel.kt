@@ -142,6 +142,12 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun restore(scanResult: ScanResult) {
+        viewModelScope.launch {
+            scanResultDao.insert(scanResult)
+        }
+    }
+
     fun deleteAll() {
         viewModelScope.launch {
             scanResultDao.deleteAll()

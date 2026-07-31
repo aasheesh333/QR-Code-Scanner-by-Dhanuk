@@ -174,7 +174,7 @@ private fun rememberTopSources(history: List<com.dhanuk.quickscanpro.database.Sc
 private fun AnalyticsHeader() {
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = Color.White
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier
@@ -184,10 +184,11 @@ private fun AnalyticsHeader() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = {}) {
+                // Decorative spacer for symmetric SpaceBetween layout.
                 Icon(
                     imageVector = Icons.Filled.QrCodeScanner,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.Transparent
                 )
             }
             Text(
@@ -198,10 +199,11 @@ private fun AnalyticsHeader() {
                 textAlign = TextAlign.Center
             )
             IconButton(onClick = {}) {
+                // Decorative spacer for symmetric SpaceBetween layout.
                 Icon(
                     imageVector = Icons.Filled.Settings,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.Transparent
                 )
             }
         }

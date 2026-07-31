@@ -27,7 +27,8 @@ object HistoryExporter {
             appendLine("id,content,type,favorite,timestamp")
             for (item in list) {
                 val escapedContent = "\"${item.content.replace("\"", "\"\"")}\""
-                appendLine("${item.id},$escapedContent,${item.type},${item.isFavorite},${item.timestamp}")
+                val safeType = sanitizeCsvField(item.type)
+                appendLine("${item.id},$escapedContent,$safeType,${item.isFavorite},${item.timestamp}")
             }
         }
 
@@ -37,12 +38,16 @@ object HistoryExporter {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                     put(MediaStore.MediaColumns.MIME_TYPE, "text/csv")
                     put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }
                 val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
                 uri?.let {
                     context.contentResolver.openOutputStream(it)?.use { os ->
                         os.write(csvContent.toByteArray())
                     }
+                    values.clear()
+                    values.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                    context.contentResolver.update(it, values, null, null)
                 }
                 uri
             } else {
@@ -61,12 +66,24 @@ object HistoryExporter {
         }
     }
 
-    fun shareCsv(context: Context, uri: Uri) {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/csv"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    private fun sanitizeCsvField(field: String): String {
+        val escaped = "\"${field.replace("\"", "\"\"")}\""
+        if (field.isNotEmpty() && field[0] in "=+@-") {
+            return "\"'${field.replace("\"", "\"\"")}\""
         }
-        context.startActivity(Intent.createChooser(intent, "Share history"))
+        return escaped
+    }
+
+    fun shareCsv(context: Context, uri: Uri) {
+        try {
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/csv"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            }
+            context.startActivity(Intent.createChooser(intent, "Share history"))
+        } catch (_: Exception) {
+            Toast.makeText(context, "No app to share CSV", Toast.LENGTH_SHORT).show()
+        }
     }
 }

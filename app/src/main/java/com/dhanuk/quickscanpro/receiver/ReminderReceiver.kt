@@ -27,12 +27,23 @@ class ReminderReceiver : BroadcastReceiver() {
         val content = intent.getStringExtra(EXTRA_CONTENT) ?: "Scan result"
         val id = intent.getIntExtra(EXTRA_SCAN_ID, 0)
         ensureChannel(context)
+
+        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+        val pendingIntent = if (launchIntent != null) {
+            android.app.PendingIntent.getActivity(
+                context, id, launchIntent,
+                android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        } else null
+
         val notif = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("QuickScan Pro Reminder")
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

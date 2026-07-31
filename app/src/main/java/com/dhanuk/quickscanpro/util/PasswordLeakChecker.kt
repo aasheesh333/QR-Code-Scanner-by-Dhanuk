@@ -12,12 +12,12 @@ import java.security.MessageDigest
  */
 object PasswordLeakChecker {
 
-    /** Domains known to have suffered public breaches. Curated, offline. */
+    /** Domains known to have suffered public breaches. Curated, offline. Normalized to lowercase, no whitespace. */
     private val KNOWN_LEAKED_DOMAINS = setOf(
         "adobe.com", "linkedin.com", "dropbox.com", "myspace.com", "tumblr.com",
         "yahoo.com", "ebay.com", "adobe.net", "sony.com", "anthropic.com",
         "bitly.com", "vk.com", "mail.ru", "ashleymadison.com", "adultfriendfinder.com",
-        "evernote.com", " Patreon.com", "zynga.com", "canva.com", "组分.com",
+        "evernote.com", "patreon.com", "zynga.com", "canva.com",
         "dailymotion.com", "yahoo.co.jp", "sina.com.cn", "quora.com", "wattpad.com",
         "flagstar.com", "easyjet.com", "t-mobile.com", "optus.com.au", "medibank.com.au"
     )
@@ -40,8 +40,11 @@ object PasswordLeakChecker {
             rawUrl.lowercase().removePrefix("www.")
         }
 
-        if (domain.isBlank()) {
-            return LeakReport(domain, false)
+        // Strip any path so "example.com/login" does not pollute the domain label.
+        val normalizedDomain = domain.substringBefore('/').trim()
+
+        if (normalizedDomain.isBlank()) {
+            return LeakReport(normalizedDomain, false)
         }
 
         val signals = mutableListOf<String>()
@@ -49,16 +52,16 @@ object PasswordLeakChecker {
         var breachCount = 0
         var firstSeenYear = 0
 
-        if (domain in KNOWN_LEAKED_DOMAINS) {
+        if (normalizedDomain in KNOWN_LEAKED_DOMAINS) {
             leaked = true
-            breachCount = when (domain) {
+            breachCount = when (normalizedDomain) {
                 "linkedin.com" -> 1
                 "adobe.com", "adobe.net" -> 1
                 "yahoo.com", "yahoo.co.jp" -> 2
                 "dropbox.com", "tumblr.com" -> 1
                 else -> 1
             }
-            firstSeenYear = when (domain) {
+            firstSeenYear = when (normalizedDomain) {
                 "linkedin.com" -> 2012
                 "adobe.com", "adobe.net" -> 2013
                 "dropbox.com" -> 2012
@@ -83,28 +86,27 @@ object PasswordLeakChecker {
             signals += "Domain appears in public breach disclosure database"
         }
 
-        // Heuristic signals — weak domain hygiene patterns
-        if (domain.contains('-') && domain.split('-').size >= 3) {
+        // Heuristic signals — weak domain hygiene patterns. These are informational
+        // signals only and do NOT flip `leaked` to true. `leaked` is reserved for
+        // confirmed breach matches so users are not misled about real exposure.
+        if (normalizedDomain.contains('-') && normalizedDomain.split('-').size >= 3) {
             signals += "Suspicious multi-hyphen domain pattern"
         }
-        if (domain.endsWith(".xyz") || domain.endsWith(".top") || domain.endsWith(".click") || domain.endsWith(".work")) {
+        if (normalizedDomain.endsWith(".xyz") || normalizedDomain.endsWith(".top") || normalizedDomain.endsWith(".click") || normalizedDomain.endsWith(".work")) {
             signals += "High-abuse TLD"
         }
-        if (domain.count { it == '.' } >= 3) {
+        if (normalizedDomain.count { it == '.' } >= 3) {
             signals += "Deeply nested subdomain — common in phishing"
         }
-        if (domain.length > 30) {
+        if (normalizedDomain.length > 30) {
             signals += "Unusually long domain — possible impersonation"
         }
-        if (looksTyposquat(domain)) {
+        if (looksTyposquat(normalizedDomain)) {
             signals += "Possible typosquat of a known brand"
         }
 
-        val score = signals.size
-        if (!leaked && score >= 2) leaked = true
-
         return LeakReport(
-            domain = domain,
+            domain = normalizedDomain,
             leaked = leaked,
             breachCount = breachCount,
             firstSeenYear = firstSeenYear,

@@ -85,12 +85,14 @@ private fun AppBottomBar(navController: NavHostController) {
         listOf("result/{data}")
 
     if (currentRoute == null) return
-    if (!showBarRoutes.contains(currentRoute.split("/").first().substringBefore("?"))) {
+    val routePrefix = currentRoute.split("/").first().substringBefore("?")
+    val showBarPrefixes = showBarRoutes.map { it.split("/").first() }
+    if (!showBarPrefixes.contains(routePrefix)) {
         return
     }
 
     NavigationBar(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
         BottomNavItem.entries.forEach { item ->
@@ -171,7 +173,11 @@ private fun AppNavigation(navController: NavHostController) {
                 onOpenVault = { navController.navigate("vault") },
                 onOpenCompare = { navController.navigate("compare_scan") },
                 onNavigateToScanner = { navController.navigate(BottomNavItem.Home.route) },
-                onNavigateToSettings = { navController.navigate(BottomNavItem.Settings.route) }
+                onNavigateToSettings = { navController.navigate(BottomNavItem.Settings.route) },
+                onRowClick = { scan ->
+                    val encoded = URLEncoder.encode(scan.content, StandardCharsets.UTF_8.toString())
+                    navController.navigate("result/$encoded")
+                }
             )
         }
         composable(BottomNavItem.Analytics.route) { AnalyticsScreen() }
@@ -230,10 +236,5 @@ private fun AppNavigation(navController: NavHostController) {
             )
         }
         composable("about") { AboutScreen { navController.popBackStack() } }
-        composable("about_us") { AboutUsScreen { navController.popBackStack() } }
-        composable("contact_us") { ContactUsScreen { navController.popBackStack() } }
-        composable("privacy_policy") { PrivacyPolicyScreen { navController.popBackStack() } }
-        composable("permissions") { PermissionsUsageScreen { navController.popBackStack() } }
-        composable("terms") { TermsAndConditionsScreen { navController.popBackStack() } }
     }
 }

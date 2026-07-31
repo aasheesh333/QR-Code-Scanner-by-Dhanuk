@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -109,6 +110,15 @@ fun TermsAndConditionsScreen(onNavigateBack: () -> Unit) =
 @Composable
 private fun InfoScreen(title: String, body: String, url: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
+    val openUrl: () -> Unit = {
+        try {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        } catch (_: Exception) {
+            Toast.makeText(context, "No browser available", Toast.LENGTH_SHORT).show()
+        }
+    }
     AppBackground()
     Scaffold(
         topBar = {
@@ -120,9 +130,7 @@ private fun InfoScreen(title: String, body: String, url: String, onNavigateBack:
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    }) {
+                    IconButton(onClick = openUrl) {
                         Icon(Icons.Filled.OpenInNew, contentDescription = "View online")
                     }
                 },
@@ -149,9 +157,7 @@ private fun InfoScreen(title: String, body: String, url: String, onNavigateBack:
             Surface(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
                 color = MaterialTheme.colorScheme.surfaceVariant,
-                onClick = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                }
+                onClick = openUrl
             ) {
                 androidx.compose.foundation.layout.Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),

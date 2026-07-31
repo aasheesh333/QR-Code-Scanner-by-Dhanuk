@@ -30,6 +30,11 @@ class BarcodeAnalyzer(
                     }
                 }
             }
+            .addOnFailureListener {
+                // Ensure the ImageProxy is always released so the camera pipeline
+                // never stalls waiting for a buffer that was lost to an exception.
+                imageProxy.close()
+            }
             .addOnCompleteListener {
                 imageProxy.close()
             }

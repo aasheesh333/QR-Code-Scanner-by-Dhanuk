@@ -21,7 +21,14 @@ object ProductLookup {
     suspend fun lookup(barcode: String): Result<ProductInfo> = withContext(Dispatchers.IO) {
         try {
             val url = URL("$API_BASE/$barcode.json")
-            val response = url.readText()
+            val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                connectTimeout = 10_000
+                readTimeout = 10_000
+                requestMethod = "GET"
+                setRequestProperty("Accept", "application/json")
+            }
+            val response = conn.inputStream.bufferedReader().use { it.readText() }
+            conn.disconnect()
             val json = JSONObject(response)
 
             val status = json.optInt("status", 0)

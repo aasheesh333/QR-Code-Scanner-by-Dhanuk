@@ -85,7 +85,12 @@ private val AppAmoledScheme = AppDarkScheme.copy(
     surfaceContainer = Color(0xFF111111)
 )
 
-enum class ThemeMode { LIGHT, DARK, SYSTEM, AMOLED }
+enum class ThemeMode(val label: String) {
+    LIGHT("Light"),
+    DARK("Dark"),
+    SYSTEM("System default"),
+    AMOLED("AMOLED black")
+}
 
 @Composable
 fun QuickScanProTheme(

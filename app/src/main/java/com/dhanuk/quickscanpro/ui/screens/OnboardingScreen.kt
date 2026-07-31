@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -63,6 +64,17 @@ fun OnboardingScreen(onFinished: () -> Unit) {
     )
     val pagerState = rememberPagerState(initialPage = 0) { pages.size }
     val scope = rememberCoroutineScope()
+
+    // On the first page, system back should complete onboarding (otherwise the
+    // app exits with the onboarding flag still false and the loop restarts).
+    // On later pages, system back should walk back through the pager.
+    BackHandler {
+        if (pagerState.currentPage == 0) {
+            onFinished()
+        } else {
+            scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+        }
+    }
 
     AppBackground()
 

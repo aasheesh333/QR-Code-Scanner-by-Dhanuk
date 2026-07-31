@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -54,7 +55,13 @@ import com.dhanuk.quickscanpro.ui.composables.AppBackground
 fun AboutScreen(onNavigateBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val openUrl = { url: String ->
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        try {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        } catch (_: Exception) {
+            Toast.makeText(context, "No app to open this link", Toast.LENGTH_SHORT).show()
+        }
     }
     AppBackground()
     Scaffold(
@@ -218,7 +225,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             ) {
                 Column(Modifier.padding(vertical = 4.dp)) {
                     AboutLink("Privacy Policy") { openUrl(AppConfig.Legal.PRIVACY_POLICY) }
-                    AboutLink("Open Source") { openUrl(AppConfig.Legal.ABOUT_US) }
+                    AboutLink("About Us") { openUrl(AppConfig.Legal.ABOUT_US) }
                     AboutLink("Terms of Use") { openUrl(AppConfig.Legal.TERMS) }
                     AboutLink("Help & Support") { openUrl(AppConfig.Legal.CONTACT_US) }
                 }

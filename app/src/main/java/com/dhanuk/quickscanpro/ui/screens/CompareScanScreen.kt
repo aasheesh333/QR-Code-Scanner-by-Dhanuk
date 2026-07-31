@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -76,6 +77,13 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
     val isMatch = !scanA.isNullOrEmpty() && !scanB.isNullOrEmpty() && scanA == scanB
     var isScanning by rememberSaveable { mutableStateOf(false) }
     var activeSlot by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    // While the modal camera sheet is open, system back should dismiss the sheet
+    // (preserving both scans) instead of leaving the whole screen.
+    BackHandler(enabled = isScanning) {
+        isScanning = false
+        activeSlot = null
+    }
 
     AppBackground()
     Scaffold(

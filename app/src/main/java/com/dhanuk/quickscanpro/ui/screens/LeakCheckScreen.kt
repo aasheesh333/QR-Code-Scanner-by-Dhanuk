@@ -1,7 +1,6 @@
 package com.dhanuk.quickscanpro.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.filled.Domain
 import androidx.compose.material.icons.filled.GppGood
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -65,10 +64,9 @@ import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeakCheckScreen(onNavigateBack: () -> Unit) {
-    var input by remember { mutableStateOf("") }
-    var mode by remember { mutableStateOf(LeakMode.DOMAIN) }
+    var input by rememberSaveable { mutableStateOf("") }
     var report by remember { mutableStateOf<PasswordLeakChecker.LeakReport?>(null) }
-    var isChecking by remember { mutableStateOf(false) }
+    var isChecking by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val vm: HistoryViewModel = viewModel()
     val checks by vm.leakChecks.collectAsState()
@@ -97,13 +95,11 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
                 .imePadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            SegmentedControl(mode) { mode = it }
-            Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = input,
                 onValueChange = { input = it },
-                leadingIcon = { Icon(leaderIcon(mode), contentDescription = null) },
-                placeholder = { Text(if (mode == LeakMode.DOMAIN) "e.g. acmecorp.com" else "Enter password") },
+                leadingIcon = { Icon(Icons.Filled.Domain, contentDescription = null) },
+                placeholder = { Text("e.g. acmecorp.com") },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -151,7 +147,7 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
             )
             if (checks.isNotEmpty()) {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(checks) { c -> RecentCheckRow(c) }
+                    items(checks, key = { it.id }) { c -> RecentCheckRow(c) }
                 }
             } else {
                 Surface(
@@ -189,45 +185,6 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             DisclaimerFooter()
             Spacer(Modifier.height(80.dp))
-        }
-    }
-}
-
-private enum class LeakMode { DOMAIN, PASSWORD }
-
-private fun leaderIcon(mode: LeakMode) =
-    if (mode == LeakMode.DOMAIN) Icons.Filled.Domain else Icons.Filled.Password
-
-@Composable
-private fun SegmentedControl(selected: LeakMode, onSelect: (LeakMode) -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(50)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        tonalElevation = 0.dp
-    ) {
-        Row(modifier = Modifier.padding(4.dp)) {
-            LeakMode.entries.forEach { mode ->
-                val isSelected = mode == selected
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .clickable { onSelect(mode) }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = mode.name.lowercase().replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
         }
     }
 }
@@ -278,9 +235,14 @@ private fun ResultBanner(r: PasswordLeakChecker.LeakReport) {
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = if (isLeaked) "Seen in ${r.breachCount} known breach${if (r.breachCount > 1) "es" else ""}." +
+                        text = when {
+                            isLeaked && r.breachCount > 0 ->
+                                "Seen in ${r.breachCount} known breach${if (r.breachCount > 1) "es" else ""}." +
                                 if (r.firstSeenYear > 0) " First seen $r.firstSeenYear." else ""
-                        else if (r.domain.isNotBlank()) "${r.domain} looks clean." else "No known breaches.",
+                            isLeaked -> "Suspicious domain pattern matches known phishing infrastructure."
+                            r.domain.isNotBlank() -> "${r.domain} looks clean."
+                            else -> "No known breaches."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = contentColor.copy(alpha = 0.8f)
                     )
@@ -348,8 +310,7 @@ private fun RecentCheckRow(c: LeakCheck) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { },
+            .clip(RoundedCornerShape(12.dp)),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
@@ -369,7 +330,7 @@ private fun RecentCheckRow(c: LeakCheck) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (c.leaked) Icons.Filled.Domain else Icons.Filled.Password,
+                        imageVector = Icons.Filled.Domain,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp)

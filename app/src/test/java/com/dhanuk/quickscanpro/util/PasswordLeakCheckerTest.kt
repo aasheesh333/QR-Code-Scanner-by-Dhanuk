@@ -81,9 +81,11 @@ class PasswordLeakCheckerTest {
     }
 
     @Test
-    fun check_multipleSignals_marksAsLeaked() {
+    fun check_multipleSignals_doesNotMarkAsLeaked() {
+        // Heuristics surface signals but never flip `leaked` to true.
+        // `leaked` is reserved for confirmed breach-list matches.
         val report = PasswordLeakChecker.check("a.b.c.d.suspicious-site.xyz")
-        assertTrue(report.leaked)
+        assertFalse(report.leaked)
         assertTrue(report.signals.size >= 2)
     }
 

@@ -113,9 +113,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Filled.Info, contentDescription = "Sort")
-                    }
+                    // Info / sort removed — no implementation yet.
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background

@@ -104,9 +104,19 @@ object CalendarImporter {
     }
 
     private fun parseICSDate(s: String): Long? {
-        val v = s.trim().removeSuffix("Z")
-        return runCatching { icsDateFmt.parse(v)?.time }.getOrNull()
+        val raw = s.trim()
+        val isUtc = raw.endsWith("Z", ignoreCase = true)
+        val v = raw.removeSuffix("Z").removeSuffix("z")
+        val ms = runCatching { icsDateFmt.parse(v)?.time }.getOrNull()
             ?: runCatching { icsDateFmtNoTime.parse(v)?.time }.getOrNull()
+            ?: return null
+        return if (isUtc) {
+            val tz = java.util.TimeZone.getTimeZone("UTC")
+            val local = java.util.TimeZone.getDefault()
+            ms - tz.getOffset(ms) + local.getOffset(ms)
+        } else {
+            ms
+        }
     }
 
     private fun unescapeICS(s: String): String =
@@ -123,7 +133,7 @@ object CalendarImporter {
                 put(CalendarContract.Events.DTSTART, event.startMs)
                 put(CalendarContract.Events.DTEND, event.endMs ?: event.startMs + TimeUnit.HOURS.toMillis(1))
                 put(CalendarContract.Events.CALENDAR_ID, getPrimaryCalendarId(resolver) ?: 1)
-                put(CalendarContract.Events.EVENT_TIMEZONE, "UTC")
+                put(CalendarContract.Events.EVENT_TIMEZONE, java.util.Calendar.getInstance().timeZone.id)
             }
             val uri: Uri? = resolver.insert(CalendarContract.Events.CONTENT_URI, values)
             uri?.let { ContentUris.parseId(it) }
@@ -151,10 +161,14 @@ object CalendarImporter {
 
     /** Open the calendar app at a specific time. */
     fun openCalendar(context: Context, startMs: Long) {
-        val builder = ContentUris.appendId(
-            CalendarContract.CONTENT_URI.buildUpon().appendPath("time"),
-            startMs
-        )
-        context.startActivity(Intent(Intent.ACTION_VIEW).setData(builder.build()))
+        try {
+            val builder = ContentUris.appendId(
+                CalendarContract.CONTENT_URI.buildUpon().appendPath("time"),
+                startMs
+            )
+            context.startActivity(Intent(Intent.ACTION_VIEW).setData(builder.build()))
+        } catch (_: Exception) {
+            android.widget.Toast.makeText(context, "No calendar app available", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 }

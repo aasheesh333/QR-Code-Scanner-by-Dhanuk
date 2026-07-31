@@ -24,15 +24,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,14 +66,14 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VaultScreen(onNavigateBack: () -> Unit, onAddToVault: () -> Unit = {}) {
+fun VaultScreen(onNavigateBack: () -> Unit) {
     val settingsVm: SettingsViewModel = viewModel()
     val biometricLock by settingsVm.biometricLock.collectAsState()
     val context = LocalContext.current
-    var unlocked by remember { mutableStateOf(!biometricLock) }
+    var unlocked by remember { mutableStateOf(false) }
 
     LaunchedEffect(biometricLock) {
-        if (!biometricLock) unlocked = true
+        unlocked = !biometricLock
     }
 
     AppBackground()
@@ -89,26 +87,14 @@ fun VaultScreen(onNavigateBack: () -> Unit, onAddToVault: () -> Unit = {}) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Filled.Sort, contentDescription = "Sort")
-                    }
+                    // Sort removed — sorting not yet implemented.
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
-        floatingActionButton = {
-            if (unlocked) {
-                FloatingActionButton(
-                    onClick = onAddToVault,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add")
-                }
-            }
-        },
+        floatingActionButton = {},
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (!unlocked) {
@@ -174,8 +160,7 @@ fun VaultScreen(onNavigateBack: () -> Unit, onAddToVault: () -> Unit = {}) {
             return@Scaffold
         }
         VaultContent(
-            padding = padding,
-            onAddToVault = onAddToVault
+            padding = padding
         )
     }
 }
@@ -203,11 +188,8 @@ private fun showBiometricPrompt(activity: FragmentActivity, onResult: (Boolean) 
     val info = BiometricPrompt.PromptInfo.Builder()
         .setTitle("Unlock Vault")
         .setSubtitle("Authenticate to access vaulted scans")
-        .setAllowedAuthenticators(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-            BiometricManager.Authenticators.BIOMETRIC_WEAK or
-            BiometricManager.Authenticators.DEVICE_CREDENTIAL
-        )
+        .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
+        .setNegativeButtonText("Cancel")
         .build()
     prompt.authenticate(info)
 }
@@ -215,12 +197,11 @@ private fun showBiometricPrompt(activity: FragmentActivity, onResult: (Boolean) 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VaultContent(
-    padding: androidx.compose.foundation.layout.PaddingValues,
-    onAddToVault: () -> Unit
+    padding: androidx.compose.foundation.layout.PaddingValues
 ) {
     val vm: HistoryViewModel = viewModel()
     val vault by vm.vaultScans.collectAsState()
-    var showFavoritesOnly by remember { mutableStateOf(false) }
+    var showFavoritesOnly by rememberSaveable { mutableStateOf(false) }
 
     if (vault.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
