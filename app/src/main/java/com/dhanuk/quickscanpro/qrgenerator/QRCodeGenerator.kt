@@ -31,21 +31,23 @@ object QRCodeGenerator {
             val hints = mutableMapOf<com.google.zxing.EncodeHintType, Any>(
                 com.google.zxing.EncodeHintType.ERROR_CORRECTION to errorCorrectionLevel,
                 com.google.zxing.EncodeHintType.CHARACTER_SET to "UTF-8",
-                com.google.zxing.EncodeHintType.MARGIN to 2
+                com.google.zxing.EncodeHintType.MARGIN to 4
             )
 
             val writer = QRCodeWriter()
             val bitMatrix: BitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size, hints)
 
-            val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-            val pixels = IntArray(size * size)
-            for (x in 0 until size) {
-                val offset = x * size
-                for (y in 0 until size) {
-                    pixels[offset + y] = if (bitMatrix[x, y]) foregroundColor else backgroundColor
+            val matrixWidth = bitMatrix.width
+            val matrixHeight = bitMatrix.height
+            val bmp = Bitmap.createBitmap(matrixWidth, matrixHeight, Bitmap.Config.ARGB_8888)
+            val pixels = IntArray(matrixWidth * matrixHeight)
+            for (y in 0 until matrixHeight) {
+                val offset = y * matrixWidth
+                for (x in 0 until matrixWidth) {
+                    pixels[offset + x] = if (bitMatrix[x, y]) foregroundColor else backgroundColor
                 }
             }
-            bmp.setPixels(pixels, 0, size, 0, 0, size, size)
+            bmp.setPixels(pixels, 0, matrixWidth, 0, 0, matrixWidth, matrixHeight)
             bmp
         } catch (e: Exception) {
             null
@@ -53,7 +55,7 @@ object QRCodeGenerator {
     }
 
     fun estimateCapacity(content: String): Boolean {
-        return content.length <= 3000
+        return content.length <= 1500
     }
 
     fun saveToGallery(context: Context, bitmap: Bitmap, displayName: String): Boolean {
@@ -69,12 +71,17 @@ object QRCodeGenerator {
                 }
                 val uri = resolver.insert(collection, values)
                 if (uri != null) {
+                    var success = false
                     resolver.openOutputStream(uri)?.use { out ->
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                        success = bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
                     }
                     values.clear()
                     values.put(MediaStore.Images.Media.IS_PENDING, 0)
                     resolver.update(uri, values, null, null)
+                    if (!success) {
+                        resolver.delete(uri, null, null)
+                        return false
+                    }
                     true
                 } else false
             } else {
@@ -82,7 +89,7 @@ object QRCodeGenerator {
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                     "QuickScanPro"
                 )
-                if (!dir.exists()) dir.mkdirs()
+                if (!dir.exists() && !dir.mkdirs()) return false
                 val file = File(dir, "$displayName.png")
                 FileOutputStream(file).use { out ->
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -101,7 +108,7 @@ object QRCodeGenerator {
         try {
             val cacheDir = File(context.cacheDir, "shared_qr")
             if (!cacheDir.exists()) cacheDir.mkdirs()
-            val file = File(cacheDir, "qr_share.png")
+            val file = File(cacheDir, "qr_share_${System.currentTimeMillis()}.png")
             FileOutputStream(file).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }

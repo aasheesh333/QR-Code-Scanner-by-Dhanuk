@@ -172,8 +172,20 @@ private fun AppNavigation(navController: NavHostController) {
             HistoryScreen(
                 onOpenVault = { navController.navigate("vault") },
                 onOpenCompare = { navController.navigate("compare_scan") },
-                onNavigateToScanner = { navController.navigate(BottomNavItem.Home.route) },
-                onNavigateToSettings = { navController.navigate(BottomNavItem.Settings.route) },
+                onNavigateToScanner = {
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onNavigateToSettings = {
+                    navController.navigate(BottomNavItem.Settings.route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
                 onRowClick = { scan ->
                     val encoded = URLEncoder.encode(scan.content, StandardCharsets.UTF_8.toString())
                     navController.navigate("result/$encoded")
@@ -183,9 +195,9 @@ private fun AppNavigation(navController: NavHostController) {
         composable(BottomNavItem.Analytics.route) { AnalyticsScreen() }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
-                onNavigateBack = { navController.navigate(BottomNavItem.Home.route) },
-                onNavigateToAbout = { navController.navigate("about") },
-                onNavigateToThemeStudio = { navController.navigate("theme_studio") }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAbout = { navController.navigate("about") { launchSingleTop = true } },
+                onNavigateToThemeStudio = { navController.navigate("theme_studio") { launchSingleTop = true } }
             )
         }
 

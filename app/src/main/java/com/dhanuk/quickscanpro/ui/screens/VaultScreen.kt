@@ -70,10 +70,10 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
     val settingsVm: SettingsViewModel = viewModel()
     val biometricLock by settingsVm.biometricLock.collectAsState()
     val context = LocalContext.current
-    var unlocked by remember { mutableStateOf(false) }
+    var unlocked by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(biometricLock) {
-        unlocked = !biometricLock
+        if (!biometricLock) unlocked = true
     }
 
     AppBackground()

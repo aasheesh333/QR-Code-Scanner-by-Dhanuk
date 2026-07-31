@@ -2,16 +2,19 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.QuickScanPro" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/dhanuk_primary</item>
-        <item name="colorPrimaryVariant">@color/dhanuk_primary_variant</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/dhanuk_secondary</item>
-        <item name="colorSecondaryVariant">@color/dhanuk_secondary_variant</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor">@color/dhanuk_background</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/dhanuk_background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
     </style>
 
-    <style name="Theme.QuickScanPro.Splash" parent="Theme.QuickScanPro">
-        <item name="android:windowBackground">@drawable/splash_background</item>
+    <style name="Theme.QuickScanPro.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/dhanuk_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.QuickScanPro</item>
     </style>
 </resources>

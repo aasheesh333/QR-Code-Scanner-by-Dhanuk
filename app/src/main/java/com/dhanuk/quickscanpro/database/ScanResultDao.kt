@@ -46,6 +46,9 @@ interface ScanResultDao {
     @Query("SELECT * FROM scan_results WHERE reminder_time IS NOT NULL AND reminder_time > 0 ORDER BY reminder_time ASC")
     fun getReminders(): Flow<List<ScanResult>>
 
+    @Query("SELECT * FROM scan_results WHERE reminder_time IS NOT NULL AND reminder_time > :now ORDER BY reminder_time ASC")
+    suspend fun getPendingReminders(now: Long): List<ScanResult>
+
     @Update
     suspend fun update(scanResult: ScanResult)
 

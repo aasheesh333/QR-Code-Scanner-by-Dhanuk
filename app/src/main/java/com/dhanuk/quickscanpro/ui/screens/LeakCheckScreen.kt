@@ -238,7 +238,7 @@ private fun ResultBanner(r: PasswordLeakChecker.LeakReport) {
                         text = when {
                             isLeaked && r.breachCount > 0 ->
                                 "Seen in ${r.breachCount} known breach${if (r.breachCount > 1) "es" else ""}." +
-                                if (r.firstSeenYear > 0) " First seen $r.firstSeenYear." else ""
+                                if (r.firstSeenYear > 0) " First seen ${r.firstSeenYear}." else ""
                             isLeaked -> "Suspicious domain pattern matches known phishing infrastructure."
                             r.domain.isNotBlank() -> "${r.domain} looks clean."
                             else -> "No known breaches."

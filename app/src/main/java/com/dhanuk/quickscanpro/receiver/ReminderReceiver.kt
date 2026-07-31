@@ -24,7 +24,7 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val content = intent.getStringExtra(EXTRA_CONTENT) ?: "Scan result"
+        val rawContent = intent.getStringExtra(EXTRA_CONTENT) ?: ""
         val id = intent.getIntExtra(EXTRA_SCAN_ID, 0)
         ensureChannel(context)
 
@@ -37,12 +37,13 @@ class ReminderReceiver : BroadcastReceiver() {
         } else null
 
         val notif = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("QuickScan Pro Reminder")
-            .setContentText(content)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setContentText("You have a saved scan result to review")
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText("You have a saved scan result to review. Tap to open."))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()

@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dhanuk.quickscanpro.database.AppDatabase
@@ -13,11 +14,14 @@ import com.dhanuk.quickscanpro.util.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+private const val TAG = "HistoryViewModel"
 
 class HistoryViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -205,23 +209,32 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private var lastSavedContent: String? = null
+    private var lastSavedTime: Long = 0L
 
     fun addScanResult(scanResult: ScanResult) {
         val detectedType = BarcodeTypeDetector.detectType(scanResult.content)
         val autoCat = AutoOrganizer.categorize(detectedType, scanResult.content)
         val enriched = scanResult.copy(type = detectedType, autoCategory = autoCat)
 
-        // In-memory guard against rapid duplicate inserts (e.g. camera firing
-        // multiple times before the Room flow emits the new row).
-        if (enriched.content == lastSavedContent) return
+        val now = System.currentTimeMillis()
+        val isRapidDup = enriched.content == lastSavedContent &&
+            (now - lastSavedTime) < 2500L
+        if (isRapidDup) return
+
         val latest = history.value.firstOrNull()
-        if (latest != null && latest.content == enriched.content) {
-            lastSavedContent = enriched.content
-            return
-        }
+        val isLatestDup = latest != null && latest.content == enriched.content &&
+            (now - latest.timestamp) < 2500L
+        if (isLatestDup) return
+
         lastSavedContent = enriched.content
+        lastSavedTime = now
+
         viewModelScope.launch {
-            scanResultDao.insert(enriched)
+            try {
+                scanResultDao.insert(enriched)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to insert scan result", e)
+            }
         }
     }
 }

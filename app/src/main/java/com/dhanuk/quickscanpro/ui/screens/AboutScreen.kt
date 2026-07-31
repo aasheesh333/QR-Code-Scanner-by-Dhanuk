@@ -129,7 +129,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Text(
-                            "Version 2.0.0",
+                            "Version ${com.dhanuk.quickscanpro.BuildConfig.VERSION_NAME}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)

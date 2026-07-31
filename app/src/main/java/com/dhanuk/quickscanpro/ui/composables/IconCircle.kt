@@ -7,30 +7,35 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun IconCircle(
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    size: Int = 48,
-    iconSize: Int = 22
+    size: Dp = 48.dp,
+    iconSize: Dp = 22.dp,
+    contentDescription: String? = null,
+    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     Box(
         modifier = modifier
-            .size(size.dp)
+            .size(size)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = androidx.compose.ui.Alignment.Center
+        contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(iconSize.dp)
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(iconSize)
         )
     }
 }

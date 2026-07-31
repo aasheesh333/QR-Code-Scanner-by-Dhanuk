@@ -197,7 +197,7 @@ fun HomeScreen(
 private fun QuickScanHeader(onOpenSettings: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = Color.White
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier
