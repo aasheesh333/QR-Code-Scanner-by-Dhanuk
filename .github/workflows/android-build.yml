@@ -55,6 +55,11 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Run Unit Tests
+        env:
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
         run: ./gradlew testDebugUnitTest --no-daemon
 
       - name: Upload Debug APK
