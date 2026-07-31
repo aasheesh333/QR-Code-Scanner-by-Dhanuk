@@ -32,11 +32,12 @@ object BarcodeTypeDetector {
         // Email pattern simple check
         if (content.contains("@") && content.contains(".") && !content.contains(" ")) return TYPE_EMAIL
 
+        // Product barcode (EAN/UPC): 8, 12, 13, or 14 digits (check before phone
+        // since pure-digit strings match the phone pattern too)
+        if (content.matches(Regex("^\\d{8,14}$"))) return TYPE_PRODUCT
+
         // Phone pattern
         if (content.matches(Regex("^\\+?[0-9\\-\\s()]{7,20}$"))) return TYPE_PHONE
-
-        // Product barcode (EAN/UPC): 8, 12, 13, or 14 digits
-        if (content.matches(Regex("^\\d{8,14}$"))) return TYPE_PRODUCT
 
         return TYPE_TEXT
     }
