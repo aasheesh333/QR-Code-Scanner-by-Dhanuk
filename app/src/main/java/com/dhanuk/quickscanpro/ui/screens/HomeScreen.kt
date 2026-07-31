@@ -1,7 +1,10 @@
 package com.dhanuk.quickscanpro.ui.screens
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,6 +54,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -78,6 +83,7 @@ import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.ScanFrame
+import com.dhanuk.quickscanpro.util.ScanFeedback
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -109,12 +115,36 @@ fun HomeScreen(
                 PackageManager.PERMISSION_GRANTED
         )
     }
+    var showRationale by remember { mutableStateOf(false) }
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted -> hasCameraPermission = granted }
+    ) { granted ->
+        hasCameraPermission = granted
+        showRationale = !granted &&
+            (context as? android.app.Activity)?.shouldShowRequestPermissionRationale(
+                Manifest.permission.CAMERA
+            ) == true
+    }
 
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) permLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    val haptic = LocalHapticFeedback.current
+    val lastScanContent = remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    val lastScanTime = remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+
+    val onScanWithFeedback: (String) -> Unit = { result ->
+        val now = System.currentTimeMillis()
+        val isDup = lastScanContent.value == result && (now - lastScanTime.value) < 2500L
+        if (!isDup) {
+            lastScanContent.value = result
+            lastScanTime.longValue = now
+            ScanFeedback.playBeep()
+            ScanFeedback.vibrate(context)
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onScan(result)
+        }
     }
 
     AppBackground()
@@ -131,8 +161,15 @@ fun HomeScreen(
             Box(modifier = Modifier.fillMaxWidth().weight(0.62f)) {
                 CameraViewfinder(
                     hasCameraPermission = hasCameraPermission,
+                    showRationale = showRationale,
                     onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
-                    onScan = onScan,
+                    onOpenAppSettings = {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    },
+                    onScan = onScanWithFeedback,
                     onBatch = onOpenBatch
                 )
             }
@@ -152,7 +189,7 @@ fun HomeScreen(
 @Composable
 private fun QuickScanHeader(onOpenSettings: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().statusBarsPadding(),
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
@@ -190,7 +227,9 @@ private fun QuickScanHeader(onOpenSettings: () -> Unit) {
 @Composable
 private fun CameraViewfinder(
     hasCameraPermission: Boolean,
+    showRationale: Boolean,
     onRequestPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit,
     onScan: (String) -> Unit,
     onBatch: () -> Unit
 ) {
@@ -257,28 +296,63 @@ private fun CameraViewfinder(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable(onClick = onRequestPermission)
-                    .background(Color.Black.copy(alpha = 0.85f)),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(
-                        shape = CircleShape,
-                        color = Color.White,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Security,
-                            contentDescription = "Camera",
-                            tint = Color.Black,
-                            modifier = Modifier.padding(14.dp)
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Security,
+                        contentDescription = "Camera",
+                        tint = Color.Black,
+                        modifier = Modifier.padding(14.dp)
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = if (showRationale)
+                        "Camera access needed"
+                    else "Grant camera permission",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = if (showRationale)
+                        "QuickScan needs your camera to scan QR codes and barcodes."
+                    else "Allow camera access to start scanning.",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(20.dp))
+                Button(
+                    onClick = onRequestPermission,
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text("Grant permission", style = MaterialTheme.typography.labelLarge)
+                }
+                if (!showRationale) {
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = onOpenAppSettings) {
+                        Text(
+                            "Open app settings",
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.labelMedium
                         )
                     }
-                    Spacer(Modifier.height(12.dp))
-                    Text("Grant camera permission", color = Color.White)
                 }
             }
         }

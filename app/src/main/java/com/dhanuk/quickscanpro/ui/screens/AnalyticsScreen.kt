@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.ui.composables.AppBackground
+import com.dhanuk.quickscanpro.ui.composables.EmptyState
 import com.dhanuk.quickscanpro.viewmodel.AnalyticsViewModel
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 
@@ -79,14 +82,27 @@ fun AnalyticsScreen() {
                     leakChecks = leakChecks
                 )
                 Spacer(Modifier.height(24.dp))
-                if (totalScans > 0) {
-                    ScanTypesCard(stats.topTypes, totalScans)
+                if (totalScans == 0 && generated == 0 && leakChecks == 0) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        EmptyState(
+                            icon = Icons.Filled.QrCodeScanner,
+                            title = "No analytics yet",
+                            subtitle = "Scan codes and generate QRs to see insights here"
+                        )
+                    }
+                } else {
+                    if (totalScans > 0) {
+                        ScanTypesCard(stats.topTypes, totalScans)
+                        Spacer(Modifier.height(24.dp))
+                    }
+                    WeeklyActivityCard()
+                    Spacer(Modifier.height(24.dp))
+                    TopSourcesCard()
                     Spacer(Modifier.height(24.dp))
                 }
-                WeeklyActivityCard()
-                Spacer(Modifier.height(24.dp))
-                TopSourcesCard()
-                Spacer(Modifier.height(24.dp))
                 Spacer(Modifier.height(80.dp))
             }
         }
@@ -96,7 +112,7 @@ fun AnalyticsScreen() {
 @Composable
 private fun AnalyticsHeader() {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().statusBarsPadding(),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
     ) {
         Row(
@@ -222,18 +238,10 @@ private fun ScanTypesCard(
     vmTypes: List<Pair<String, Int>>,
     totalScans: Int
 ) {
-    val types = if (vmTypes.isNotEmpty() && totalScans > 0) {
-        vmTypes.take(3).map { (type, count) ->
-            val pct = count.toFloat() / totalScans * 100f
-            val mapped = typeMeta(type.lowercase())
-            TypeRow(mapped.first, mapped.second, pct, mapped.third)
-        }
-    } else {
-        listOf(
-            TypeRow(Icons.Filled.Link, "URL", 65f, MaterialTheme.colorScheme.primary),
-            TypeRow(Icons.Filled.Wifi, "Wi-Fi", 20f, MaterialTheme.colorScheme.secondary),
-            TypeRow(Icons.Filled.ContactPage, "vCard", 15f, MaterialTheme.colorScheme.tertiary)
-        )
+    val types = vmTypes.take(3).map { (type, count) ->
+        val pct = count.toFloat() / totalScans * 100f
+        val mapped = typeMeta(type.lowercase())
+        TypeRow(mapped.first, mapped.second, pct, mapped.third)
     }
     SurfaceCard {
         CardTitle("Scan Types")

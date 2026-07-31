@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -258,8 +259,17 @@ private fun VaultContent(
             )
         }
         Spacer(Modifier.height(16.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            filtered.forEach { scan ->
+        if (filtered.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().padding(top = 48.dp)) {
+                EmptyState(
+                    icon = Icons.Filled.Star,
+                    title = "No favorites yet",
+                    subtitle = "Tap the star on a vault entry to pin it here"
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                filtered.forEach { scan ->
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -315,6 +325,8 @@ private fun VaultContent(
                     }
                 }
             }
+                }
+            }
         }
         Spacer(Modifier.height(80.dp))
     }
@@ -329,6 +341,7 @@ private fun SegmentChip(
 ) {
     Box(
         modifier = modifier
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(50))
             .background(
                 if (selected)

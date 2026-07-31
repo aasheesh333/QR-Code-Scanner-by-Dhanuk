@@ -1,5 +1,8 @@
 # Add project specific ProGuard rules here.
 
+# Keep Kotlin metadata for reflection-based libraries
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod, RuntimeVisibleAnnotations, AnnotationDefault
+
 # Keep Firebase Crashlytics
 -keepattributes SourceFile,LineNumberTable
 -keep public class * extends java.lang.Exception
@@ -12,6 +15,9 @@
 -keep class * extends androidx.room.RoomDatabase
 -keep @androidx.room.Entity class *
 -keep @androidx.room.Dao class * { *; }
+
+# Keep all database model classes (entities, DAOs, converters)
+-keep class com.dhanuk.quickscanpro.database.** { *; }
 
 # Keep BuildConfig values
 -keep class com.dhanuk.quickscanpro.BuildConfig { *; }
@@ -28,6 +34,15 @@
 
 # Coroutines keeps
 -keepclassmembernames class kotlinx.** { *; }
+-dontwarn kotlinx.coroutines.**
 
-# Keep data classes for Room
--keepattributes Signature, RuntimeVisibleAnnotations, AnnotationDefault
+# DataStore keeps
+-keep class androidx.datastore.** { *; }
+
+# Keep Kotlin metadata
+-keep class kotlin.Metadata { *; }
+
+# Suppress warnings for generated/reference code
+-dontwarn javax.annotation.**
+-dontwarn org.jetbrains.annotations.**
+

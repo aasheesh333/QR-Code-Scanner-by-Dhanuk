@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -71,6 +73,7 @@ fun HistoryScreen(
 ) {
     val vm: HistoryViewModel = viewModel()
     val items by vm.filteredHistory.collectAsState()
+    val allScans by vm.history.collectAsState()
     var query by remember { mutableStateOf("") }
     val context = LocalContext.current
 
@@ -78,7 +81,7 @@ fun HistoryScreen(
     Scaffold(
         topBar = {
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().statusBarsPadding(),
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Column {
@@ -133,6 +136,7 @@ fun HistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .imePadding()
         ) {
             OutlinedTextField(
                 value = query,
@@ -162,11 +166,21 @@ fun HistoryScreen(
 
         if (items.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize()) {
-                EmptyState(
-                    icon = Icons.Filled.History,
-                    title = "No scans yet",
-                    subtitle = "Your scans will appear here"
-                )
+                if (allScans.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Filled.History,
+                        title = "No scans yet",
+                        subtitle = "Your scans will appear here"
+                    )
+                } else {
+                    EmptyState(
+                        icon = Icons.Filled.Search,
+                        title = "No matches found",
+                        subtitle = if (query.isNotBlank())
+                            "No results for \"$query\""
+                        else "No scans match the current filters"
+                    )
+                }
             }
             return@Column
         }

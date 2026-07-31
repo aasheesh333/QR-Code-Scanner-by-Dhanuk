@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -92,6 +94,7 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .imePadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             SegmentedControl(mode) { mode = it }
@@ -140,15 +143,47 @@ fun LeakCheckScreen(onNavigateBack: () -> Unit) {
             }
             Spacer(Modifier.height(20.dp))
             report?.let { r -> ResultBanner(r); Spacer(Modifier.height(20.dp)) }
+            Text(
+                text = "RECENT CHECKS",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            )
             if (checks.isNotEmpty()) {
-                Text(
-                    text = "RECENT CHECKS",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                )
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(checks) { c -> RecentCheckRow(c) }
+                }
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = RoundedCornerShape(12.dp),
+                    tonalElevation = 0.dp
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Filled.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "No checks yet",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Run a check above to see results here",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -178,6 +213,7 @@ private fun SegmentedControl(selected: LeakMode, onSelect: (LeakMode) -> Unit) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(50))
                         .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
                         .clickable { onSelect(mode) }

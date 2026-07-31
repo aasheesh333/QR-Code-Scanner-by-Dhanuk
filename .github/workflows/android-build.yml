@@ -54,6 +54,9 @@ jobs:
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
         run: ./gradlew assembleDebug --no-daemon
 
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         if: success()

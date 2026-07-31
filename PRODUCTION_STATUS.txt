@@ -84,48 +84,80 @@ DONE (current session - HIGH PRIORITY)
 ABHI BACHA HAI (next session target)
 -------------------------------------
 MEDIUM PRIORITY
-[] 11. Navigation transitions add karna (MainScreen NavHost animated transitions)
-[] 12. Empty/error states polish:
-      - HomeScreen no camera permission UI + rationale
-      - HistoryScreen empty search state
-      - VaultScreen empty favorites state
-      - LeakCheck empty recent checks state
-      - Analytics no-data state
-[] 13. Camera/scan UX: scan beep sound, haptic feedback confirm, permission retry
-[] 14. contentDescription add karna interactive icons pe (settings, star, delete, chevron rows)
-[] 15. WindowInsets / edge-to-edge handle karna (status bar, nav bar, IME)
-[] 16. Touch targets >=48dp ensure karna (chips, tiles, pills)
+[x] 11. Navigation transitions add karna (MainScreen NavHost animated transitions)
+      - NavHost pe slideInHorizontally+fadeIn / slideOutHorizontally+fadeOut as defaults.
+      - popEnter/popExit reverse direction for back navigation.
+[x] 12. Empty/error states polish:
+      - HomeScreen no camera permission UI + rationale + "Open app settings" path
+      - HistoryScreen empty search state ("No matches found" distinct from "No scans yet")
+      - VaultScreen empty favorites state ("No favorites yet")
+      - LeakCheck empty recent checks state ("No checks yet" placeholder)
+      - Analytics no-data state (EmptyState when totalScans==0, mock cards hidden)
+[x] 13. Camera/scan UX: scan beep sound, haptic feedback confirm, permission retry
+      - ScanFeedback util (ToneGenerator beep + Vibrator haptic) wired to onScan callback.
+      - 2.5s throttle prevents duplicate scan firing + double navigation.
+      - Permission rationale tracked via shouldShowRequestPermissionRationale.
+      - "Open app settings" intent when permanently denied.
+[x] 14. contentDescription add karna interactive icons pe (settings, star, delete, chevron rows)
+      - Audit complete: Settings/Vault/Compare/Star/Delete/Back all have contentDescription.
+      - Decorative icons correctly null (inside clickable rows).
+[x] 15. WindowInsets / edge-to-edge handle karna (status bar, nav bar, IME)
+      - enableEdgeToEdge() in MainActivity.
+      - statusBarsPadding() on custom Surface top bars (Home, History, Analytics, QRGen, Settings).
+      - imePadding() on input screens (History, LeakCheck, QRGenerator).
+      - CenterAlignedTopAppBar + NavigationBar auto-handle their own insets.
+[x] 16. Touch targets >=48dp ensure karna (chips, tiles, pills)
+      - heightIn(min = 48.dp) on TypeChipRow (QRGen), SegmentChip (Vault), SegmentedControl (LeakCheck).
+      - QuickTile already >=48dp (48dp icon box + text).
 
 RELEASE HYGIENE
-[] 17. ProGuard/R8 rules audit + keep rules for Room/ZXing/MLKit
-[] 18. Unused dependencies check karna
-[] 19. Version bump final (2.0.0 release ready)
-[] 20. App Bundle signing + release build verify karna (CI already builds AAB)
+[x] 17. ProGuard/R8 rules audit + keep rules for Room/ZXing/MLKit
+      - Added: *Annotation* keepattributes, kotlin.Metadata, DataStore keeps,
+        database package keep, dontwarn for kotlinx.coroutines/javax.annotation.
+      - Existing: Room/ZXing/MLKit/CameraX/OneSignal/Firebase/Coroutines already covered.
+[x] 18. Unused dependencies check karna
+      - ui-graphics removed (transitively provided by compose:ui).
+      - guava kept (transitive pin for CameraX/ML Kit ListenableFuture).
+      - All other deps verified USED (fragment-ktx, material, appcompat, animation, splashscreen).
+[x] 19. Version bump final (2.0.0 release ready) — already at versionCode 2 / versionName 2.0.0
+[x] 20. App Bundle signing + release build verify karna (CI already builds AAB)
 [] 21. Play Store screenshots / feature graphic from Stitch screenshots generate karna
 
 TESTING
-[] 22. Unit tests add karna:
-      - QRContentBuilder.parse / generate
-      - PasswordLeakChecker.check
-      - LinkSafetyChecker.analyze
-      - TimelineBuilder.build
-      - BarcodeTypeDetector.detectType
+[x] 22. Unit tests add karna:
+      - QRContentBuilderTest (buildWifi, buildVCARD, buildCalendar, buildPhone, buildGeo, QRType)
+      - PasswordLeakCheckerTest (known leaked domains, safe domains, heuristic signals, sha1Prefix)
+      - LinkSafetyCheckerTest (NOT_A_LINK, HTTP/HTTPS, @, apk, redirect, long URL, scoring)
+      - TimelineBuilderTest (empty, single day, multi-day, sorting, labels)
+      - BarcodeTypeDetectorTest (detectType all types, parseWifi, parseVCard, parseGeo, parseCalendar)
+      - CI workflow updated: testDebugUnitTest step added after assembleDebug.
 
 FILES CHANGED THIS SESSION
 ---------------------------
-- ui/screens/SettingsScreen.kt  (ToggleRow fix, actions wired, defaultAction dialog, clear history dialog)
-- viewmodel/SettingsViewModel.kt  (+defaultAction, biometricLock, themePrimary/Secondary/AccentIndex DataStore keys + setters)
-- ui/screens/LeakCheckScreen.kt  (coroutine check + isChecking state)
-- ui/composables/BannerAd.kt  (onRelease AdView.destroy())
-- ui/screens/AnalyticsScreen.kt  (fake data removed, leakChecks wired to HistoryViewModel)
-- ui/screens/BatchScanScreen.kt  (Save All -> addScanResult, duplicate flag fixed, width import)
-- viewmodel/BatchScanViewModel.kt  (no changes)
-- ui/screens/QRGeneratorScreen.kt  (DynamicInputForm params from StateFlow)
-- viewmodel/QRGeneratorViewModel.kt  (f1..f4 StateFlow, setters, prefill(), setType resets fields)
-- ui/screens/ThemeStudioScreen.kt  (rememberSaveable + SettingsViewModel DataStore wiring)
-- ui/screens/TemplatesScreen.kt  (onUseTemplate callback)
-- ui/screens/VaultScreen.kt  (biometric gate, BiometricPrompt, VaultContent extracted)
-- ui/screens/MainScreen.kt  (Templates onUseTemplate wiring -> qrVm.prefill)
+Phase A (UX Polish):
+- ui/screens/MainScreen.kt  (NavHost animated transitions: slide+fade defaults)
+- ui/screens/HomeScreen.kt  (scan beep+haptic+throttle, permission rationale+settings, statusBarsPadding)
+- ui/screens/HistoryScreen.kt  (empty-search vs no-scans state, statusBarsPadding, imePadding)
+- ui/screens/VaultScreen.kt  (empty-favorites state, SegmentChip min 48dp)
+- ui/screens/LeakCheckScreen.kt  (empty recent-checks state, SegmentedControl min 48dp, imePadding)
+- ui/screens/AnalyticsScreen.kt  (no-data EmptyState, dead fake-data removed, statusBarsPadding)
+- ui/screens/QRGeneratorScreen.kt  (TypeChipRow min 48dp, statusBarsPadding, imePadding)
+- ui/screens/SettingsScreen.kt  (statusBarsPadding on header)
+- ui/composables/EmptyState.kt  (no changes — existing signature sufficient)
+- MainActivity.kt  (enableEdgeToEdge)
+- util/ScanFeedback.kt  (NEW — ToneGenerator beep + Vibrator haptic)
+
+Phase B (Release Hygiene):
+- app/proguard-rules.pro  (expanded keep rules: annotations, metadata, DataStore, database package)
+- app/build.gradle  (removed redundant ui-graphics dep, added testOptions returnDefaultValues)
+
+Phase C (Testing):
+- app/src/test/java/com/dhanuk/quickscanpro/util/BarcodeTypeDetectorTest.kt  (NEW)
+- app/src/test/java/com/dhanuk/quickscanpro/util/PasswordLeakCheckerTest.kt  (NEW)
+- app/src/test/java/com/dhanuk/quickscanpro/util/LinkSafetyCheckerTest.kt  (NEW)
+- app/src/test/java/com/dhanuk/quickscanpro/util/TimelineBuilderTest.kt  (NEW)
+- app/src/test/java/com/dhanuk/quickscanpro/qrgenerator/QRContentBuilderTest.kt  (NEW)
+- .github/workflows/android-build.yml  (+testDebugUnitTest step)
 
 PLAY STORE LEGAL URLs (VERIFIED LIVE INFINITYFREE)
 ---------------------------------------------------

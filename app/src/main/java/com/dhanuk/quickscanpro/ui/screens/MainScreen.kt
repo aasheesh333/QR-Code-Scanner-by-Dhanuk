@@ -1,5 +1,9 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -118,7 +122,14 @@ private fun AppBottomBar(navController: NavHostController) {
 
 @Composable
 private fun AppNavigation(navController: NavHostController) {
-    NavHost(navController, startDestination = BottomNavItem.Home.route) {
+    NavHost(
+        navController = navController,
+        startDestination = BottomNavItem.Home.route,
+        enterTransition = { slideInHorizontally { it / 2 } + fadeIn() },
+        exitTransition = { slideOutHorizontally { -it / 3 } + fadeOut() },
+        popEnterTransition = { slideInHorizontally { -it / 2 } + fadeIn() },
+        popExitTransition = { slideOutHorizontally { it / 3 } + fadeOut() }
+    ) {
         composable(BottomNavItem.Home.route) {
             HomeScreen(
                 onScan = { result ->
