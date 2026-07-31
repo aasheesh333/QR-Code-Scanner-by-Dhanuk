@@ -90,7 +90,7 @@ private fun AppBottomBar(navController: NavHostController) {
     }
 
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = Color.White,
         tonalElevation = 0.dp
     ) {
         BottomNavItem.entries.forEach { item ->

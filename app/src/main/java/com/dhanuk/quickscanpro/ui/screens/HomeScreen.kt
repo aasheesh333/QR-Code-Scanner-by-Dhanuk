@@ -190,7 +190,7 @@ fun HomeScreen(
 private fun QuickScanHeader(onOpenSettings: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = MaterialTheme.colorScheme.surface
+        color = Color.White
     ) {
         Row(
             modifier = Modifier
@@ -240,7 +240,10 @@ private fun CameraViewfinder(
     var flashEnabled by remember { mutableStateOf(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
     val haptic = LocalHapticFeedback.current
-    val previewView = remember { PreviewView(context) }
+    val previewView = remember { PreviewView(context).apply {
+        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+        scaleType = PreviewView.ScaleType.FILL_CENTER
+    } }
 
     DisposableEffect(lifecycleOwner, hasCameraPermission) {
         if (!hasCameraPermission) {

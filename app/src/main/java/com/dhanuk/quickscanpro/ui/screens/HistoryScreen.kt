@@ -82,7 +82,7 @@ fun HistoryScreen(
         topBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-                color = MaterialTheme.colorScheme.surface
+                color = Color.White
             ) {
                 Column {
                     Row(

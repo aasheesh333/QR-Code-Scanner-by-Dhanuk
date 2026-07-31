@@ -27,8 +27,8 @@ fun BannerAd(adUnitId: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainer),
+            .height(50.dp)
+            .background(Color.Transparent),
         contentAlignment = Alignment.Center
     ) {
         AndroidView(

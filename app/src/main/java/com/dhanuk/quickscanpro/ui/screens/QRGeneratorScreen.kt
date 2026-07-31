@@ -141,7 +141,7 @@ private fun GenerateHeader(
     var showSettings by remember { mutableStateOf(false) }
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = MaterialTheme.colorScheme.surface
+        color = Color.White
     ) {
         Row(
             modifier = Modifier

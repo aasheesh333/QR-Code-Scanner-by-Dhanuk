@@ -1,5 +1,6 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +54,8 @@ import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.EmptyState
 import com.dhanuk.quickscanpro.viewmodel.AnalyticsViewModel
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
+import java.util.Calendar
+import java.util.Date
 
 @Composable
 fun AnalyticsScreen() {
@@ -60,9 +63,13 @@ fun AnalyticsScreen() {
     val stats by vm.stats.collectAsState()
     val historyVm: HistoryViewModel = viewModel()
     val leakCheckList by historyVm.leakChecks.collectAsState()
+    val history by historyVm.history.collectAsState()
     val totalScans = stats.totalScans.coerceAtLeast(0)
     val generated = stats.totalGeneratedQRs.coerceAtLeast(0)
     val leakChecks = leakCheckList.size
+
+    val weekData = rememberWeeklyData(history)
+    val topSources = rememberTopSources(history)
 
     AppBackground()
     Scaffold(
@@ -98,10 +105,12 @@ fun AnalyticsScreen() {
                         ScanTypesCard(stats.topTypes, totalScans)
                         Spacer(Modifier.height(24.dp))
                     }
-                    WeeklyActivityCard()
+                    WeeklyActivityCard(weekData)
                     Spacer(Modifier.height(24.dp))
-                    TopSourcesCard()
-                    Spacer(Modifier.height(24.dp))
+                    if (topSources.isNotEmpty()) {
+                        TopSourcesCard(topSources)
+                        Spacer(Modifier.height(24.dp))
+                    }
                 }
                 Spacer(Modifier.height(80.dp))
             }
@@ -110,10 +119,62 @@ fun AnalyticsScreen() {
 }
 
 @Composable
+private fun rememberWeeklyData(history: List<com.dhanuk.quickscanpro.database.ScanResult>): WeekData {
+    return androidx.compose.runtime.remember(history) {
+        val days = listOf("M", "T", "W", "T", "F", "S", "S")
+        val counts = IntArray(7)
+        val cal = Calendar.getInstance()
+        for (scan in history) {
+            cal.time = Date(scan.timestamp)
+            val day = cal.get(Calendar.DAY_OF_WEEK)
+            val idx = when (day) {
+                Calendar.MONDAY -> 0
+                Calendar.TUESDAY -> 1
+                Calendar.WEDNESDAY -> 2
+                Calendar.THURSDAY -> 3
+                Calendar.FRIDAY -> 4
+                Calendar.SATURDAY -> 5
+                Calendar.SUNDAY -> 6
+                else -> 0
+            }
+            counts[idx]++
+        }
+        val maxCount = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
+        val heights = counts.map { it.toFloat() / maxCount }.map { it.coerceAtLeast(0.05f) }
+        val maxIndex = heights.withIndex().maxByOrNull { it.value }?.index ?: 0
+        WeekData(days, heights, maxIndex)
+    }
+}
+
+data class WeekData(val days: List<String>, val heights: List<Float>, val highlightIndex: Int)
+
+@Composable
+private fun rememberTopSources(history: List<com.dhanuk.quickscanpro.database.ScanResult>): List<Source> {
+    return androidx.compose.runtime.remember(history) {
+        val urlScans = history.filter {
+            it.content.startsWith("http://", ignoreCase = true) ||
+            it.content.startsWith("https://", ignoreCase = true)
+        }
+        val domainCounts = mutableMapOf<String, Int>()
+        for (scan in urlScans) {
+            val host = try {
+                Uri.parse(scan.content).host?.removePrefix("www.")?.lowercase()
+            } catch (_: Exception) { null }
+            if (!host.isNullOrBlank()) {
+                domainCounts[host] = domainCounts.getOrDefault(host, 0) + 1
+            }
+        }
+        val sorted = domainCounts.entries.sortedByDescending { it.value }.take(3)
+        val maxCount = sorted.firstOrNull()?.value?.coerceAtLeast(1) ?: 1
+        sorted.map { Source(Icons.Filled.Language, it.key, it.value, it.value.toFloat() / maxCount) }
+    }
+}
+
+@Composable
 private fun AnalyticsHeader() {
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+        color = Color.White
     ) {
         Row(
             modifier = Modifier
@@ -322,73 +383,15 @@ private fun ProgressTrack(percent: Float, color: Color) {
 }
 
 @Composable
-private fun WeeklyActivityCard() {
-    val days = listOf("M", "T", "W", "T", "F", "S", "S")
-    val heights = listOf(0.30f, 0.60f, 0.45f, 0.20f, 0.80f, 1.00f, 0.50f)
-    val maxIndex = 5
+private fun WeeklyActivityCard(data: WeekData) {
     SurfaceCard {
         CardTitle("Weekly Activity")
-        BarChart(days = days, heights = heights, highlightIndex = maxIndex)
+        BarChart(days = data.days, heights = data.heights, highlightIndex = data.highlightIndex)
     }
 }
 
 @Composable
-private fun BarChart(
-    days: List<String>,
-    heights: List<Float>,
-    highlightIndex: Int
-) {
-    val primary = MaterialTheme.colorScheme.primary
-    val track = MaterialTheme.colorScheme.surfaceVariant
-    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp)
-            .padding(top = 16.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        days.indices.forEach { i ->
-            val h = heights.getOrElse(i) { 0.1f }.coerceAtLeast(0.05f)
-            val isHighlight = i == highlightIndex
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                androidx.compose.foundation.Canvas(
-                    modifier = Modifier
-                        .width(24.dp)
-                        .height(120.dp)
-                ) {
-                    val barHeight = size.height * h
-                    val barWidth = size.width
-                    drawRoundRect(
-                        color = if (isHighlight) primary else track,
-                        topLeft = Offset(0f, size.height - barHeight),
-                        size = Size(barWidth, barHeight),
-                        cornerRadius = CornerRadius(4f, 4f)
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = days[i],
-                    style = MaterialTheme.typography.labelSmall,
-                    color = labelColor
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopSourcesCard() {
-    val sources = listOf(
-        Source(Icons.Filled.Language, "google.com", 45, 0.80f),
-        Source(Icons.Filled.Language, "example.com", 22, 0.40f),
-        Source(Icons.Filled.Language, "github.com", 14, 0.25f)
-    )
+private fun TopSourcesCard(sources: List<Source>) {
     SurfaceCard {
         CardTitle("Top Sources")
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {

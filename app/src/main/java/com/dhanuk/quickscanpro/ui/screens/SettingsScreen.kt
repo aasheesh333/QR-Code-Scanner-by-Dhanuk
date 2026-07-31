@@ -351,7 +351,7 @@ private fun initOneSignalStub(enabled: Boolean) {
 private fun SettingsHeader(onNavigateBack: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = MaterialTheme.colorScheme.surface
+        color = Color.White
     ) {
         Row(
             modifier = Modifier
@@ -388,13 +388,13 @@ private fun SettingsGroup(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 16.dp)
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceBright,
+            color = Color.White,
             tonalElevation = 0.dp
         ) {
             Column {
@@ -407,9 +407,9 @@ private fun SettingsGroup(
 @Composable
 private fun GroupDivider() {
     HorizontalDivider(
-        modifier = Modifier.padding(start = 16.dp),
+        modifier = Modifier.padding(start = 56.dp, end = 16.dp),
         thickness = 1.dp,
-        color = MaterialTheme.colorScheme.surfaceContainer
+        color = MaterialTheme.colorScheme.outlineVariant
     )
 }
 
@@ -491,9 +491,9 @@ private fun SubvalueRow(
             Spacer(Modifier.width(8.dp))
         }
         Icon(
-            imageVector = Icons.Filled.ChevronRight,
+            imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
         )
     }
