@@ -383,6 +383,56 @@ private fun ProgressTrack(percent: Float, color: Color) {
 }
 
 @Composable
+private fun BarChart(
+    days: List<String>,
+    heights: List<Float>,
+    highlightIndex: Int
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    val track = MaterialTheme.colorScheme.surfaceVariant
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp)
+            .padding(top = 16.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        days.indices.forEach { i ->
+            val h = heights.getOrElse(i) { 0.1f }.coerceAtLeast(0.05f)
+            val isHighlight = i == highlightIndex
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                androidx.compose.foundation.Canvas(
+                    modifier = Modifier
+                        .width(24.dp)
+                        .height(120.dp)
+                ) {
+                    val barHeight = size.height * h
+                    val barWidth = size.width
+                    drawRoundRect(
+                        color = if (isHighlight) primary else track,
+                        topLeft = Offset(0f, size.height - barHeight),
+                        size = Size(barWidth, barHeight),
+                        cornerRadius = CornerRadius(4f, 4f)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = days[i],
+                    style = MaterialTheme.typography.labelSmall,
+                    color = labelColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun WeeklyActivityCard(data: WeekData) {
     SurfaceCard {
         CardTitle("Weekly Activity")
