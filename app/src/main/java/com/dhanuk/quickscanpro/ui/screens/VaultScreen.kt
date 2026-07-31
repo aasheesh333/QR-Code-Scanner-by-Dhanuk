@@ -324,7 +324,6 @@ private fun VaultContent(
                         }
                     }
                 }
-            }
                 }
             }
         }

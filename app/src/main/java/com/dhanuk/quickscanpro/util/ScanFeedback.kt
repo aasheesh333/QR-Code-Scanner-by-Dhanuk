@@ -31,12 +31,17 @@ object ScanFeedback {
                 vm?.defaultVibrator?.vibrate(
                     VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
                 )
-            } else {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 @Suppress("DEPRECATION")
                 val v = context.getSystemService(Vibrator::class.java)
                 v?.vibrate(
                     VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
                 )
+            } else {
+                @Suppress("DEPRECATION")
+                val v = context.getSystemService(Vibrator::class.java)
+                @Suppress("DEPRECATION")
+                v?.vibrate(durationMs)
             }
         } catch (_: Exception) {
         }
