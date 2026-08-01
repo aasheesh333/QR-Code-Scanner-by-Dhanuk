@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>QuickScan Pro - Onboarding 1</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#6cf8bb",
+                      "tertiary": "#943700",
+                      "surface-bright": "#f9f9ff",
+                      "on-tertiary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "error-container": "#ffdad6",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "primary": "#004ac6",
+                      "on-tertiary-fixed-variant": "#7d2d00",
+                      "secondary-fixed-dim": "#4edea3",
+                      "outline-variant": "#c3c6d7",
+                      "secondary": "#006c49",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "outline": "#737686",
+                      "tertiary-container": "#bc4800",
+                      "surface-dim": "#d3daef",
+                      "on-background": "#141b2b",
+                      "surface-container": "#e9edff",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "inverse-primary": "#b4c5ff",
+                      "surface-tint": "#0053db",
+                      "error": "#ba1a1a",
+                      "primary-fixed": "#dbe1ff",
+                      "on-secondary-fixed-variant": "#005236",
+                      "on-primary-container": "#eeefff",
+                      "on-surface": "#141b2b",
+                      "on-secondary-fixed": "#002113",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-container": "#00714d",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-tertiary-fixed": "#360f00",
+                      "surface-container-highest": "#dce2f7",
+                      "on-error": "#ffffff",
+                      "surface": "#f9f9ff",
+                      "inverse-on-surface": "#edf0ff",
+                      "tertiary-fixed": "#ffdbcd",
+                      "background": "#f9f9ff",
+                      "surface-container-low": "#f1f3ff",
+                      "on-surface-variant": "#434655",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-primary-fixed": "#00174b",
+                      "inverse-surface": "#293040",
+                      "surface-container-high": "#e1e8fd",
+                      "surface-variant": "#dce2f7",
+                      "on-tertiary-container": "#ffede6",
+                      "primary-container": "#2563eb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "1rem",
+                      "stack-lg": "1.5rem",
+                      "margin-desktop": "2rem",
+                      "margin-mobile": "1.25rem",
+                      "stack-md": "1rem",
+                      "stack-sm": "0.5rem"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .symbol-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Subtle entrance animation */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up {
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar (Transactional - Nav hidden, but Header remains for 'Skip') -->
+<header class="w-full top-0 left-0 sticky bg-surface flex items-center justify-between px-margin-mobile h-16 flat no shadows z-50">
+<div class="flex items-center gap-2">
+<!-- Brand Logo (Hidden in this specific onboarding design based on prompt, but keeping structure if needed) -->
+</div>
+<!-- Trailing Action -->
+<button class="text-primary font-label-md text-label-md hover:opacity-80 transition-opacity active:scale-95 duration-100 px-4 py-2 rounded-full hover:bg-surface-variant/50">
+            Skip
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col items-center justify-center px-margin-mobile pb-24 max-w-md mx-auto w-full relative">
+<!-- Illustration Area -->
+<div class="w-full aspect-square max-w-[280px] mb-stack-lg relative flex items-center justify-center animate-fade-up opacity-0" style="animation-delay: 0ms;">
+<!-- Background Blob/Shape -->
+<div class="absolute inset-0 bg-primary-container/10 rounded-full blur-3xl transform scale-110"></div>
+<!-- Icon/Illustration Container -->
+<div class="relative w-48 h-48 bg-surface-container rounded-[2rem] shadow-lg flex items-center justify-center overflow-hidden border border-surface-variant">
+<!-- Subtle grid background pattern -->
+<div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(var(--tw-colors-primary) 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Main Icon -->
+<div class="relative z-10 flex flex-col items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[80px] mb-2" style="font-variation-settings: 'wght' 200;">qr_code_scanner</span>
+<div class="w-16 h-1 bg-secondary rounded-full animate-pulse mt-2 shadow-[0_0_8px_var(--tw-colors-secondary)]"></div>
+</div>
+</div>
+<!-- Floating Elements for Depth -->
+<div class="absolute top-4 -right-4 w-12 h-12 bg-surface rounded-xl shadow-md flex items-center justify-center border border-surface-variant animate-bounce" style="animation-duration: 3s;">
+<span class="material-symbols-outlined text-tertiary">barcode</span>
+</div>
+<div class="absolute bottom-10 -left-6 w-10 h-10 bg-surface rounded-full shadow-md flex items-center justify-center border border-surface-variant animate-bounce" style="animation-duration: 4s; animation-delay: 1s;">
+<span class="material-symbols-outlined text-secondary text-sm">check</span>
+</div>
+</div>
+<!-- Typography Section -->
+<div class="text-center w-full flex flex-col gap-stack-sm animate-fade-up opacity-0 delay-100">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface">
+                Scan Anything
+            </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant px-4">
+                Point your camera at any QR code or barcode and we'll read it instantly, even offline.
+            </p>
+</div>
+</main>
+<!-- Bottom Action Area (Sticky to bottom) -->
+<div class="fixed bottom-0 left-0 w-full bg-gradient-to-t from-surface via-surface to-transparent pt-12 pb-8 px-margin-mobile z-40 animate-fade-up opacity-0 delay-200">
+<div class="max-w-md mx-auto flex flex-col items-center gap-stack-lg">
+<!-- Pager Indicators -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-2 rounded-full bg-primary transition-all duration-300"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant transition-all duration-300"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant transition-all duration-300"></div>
+</div>
+<!-- Primary Action -->
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-4 rounded-full shadow-[0px_8px_24px_rgba(0,74,198,0.25)] hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+<span>Next</span>
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Navigation Shell Suppressed: This is a linear onboarding flow, not a main destination -->
+</body></html>

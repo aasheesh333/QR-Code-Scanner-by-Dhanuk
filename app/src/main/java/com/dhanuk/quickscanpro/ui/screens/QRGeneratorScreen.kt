@@ -173,7 +173,6 @@ fun QRGeneratorScreen() {
                     }
                 }
             }
-            Spacer(Modifier.height(80.dp))
         }
     }
 }

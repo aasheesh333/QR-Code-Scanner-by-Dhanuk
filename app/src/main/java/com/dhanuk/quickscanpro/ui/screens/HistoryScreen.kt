@@ -223,7 +223,6 @@ fun HistoryScreen(
                     onRowClick = { onRowClick(scan) }
                 )
             }
-            item { Spacer(Modifier.height(80.dp)) }
         }
     }
     }

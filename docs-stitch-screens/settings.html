@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Settings - QuickScan Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f9f9ff",
+                        "tertiary": "#943700",
+                        "on-primary-container": "#eeefff",
+                        "on-secondary-fixed": "#002113",
+                        "primary-container": "#2563eb",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#d3daef",
+                        "on-background": "#141b2b",
+                        "background": "#f9f9ff",
+                        "surface-tint": "#0053db",
+                        "surface-container": "#e9edff",
+                        "on-tertiary-container": "#ffede6",
+                        "on-tertiary-fixed": "#360f00",
+                        "tertiary-container": "#bc4800",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#dbe1ff",
+                        "inverse-surface": "#293040",
+                        "outline-variant": "#c3c6d7",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-fixed-variant": "#005236",
+                        "inverse-primary": "#b4c5ff",
+                        "inverse-on-surface": "#edf0ff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#dce2f7",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-fixed": "#6ffbbe",
+                        "secondary": "#006c49",
+                        "secondary-container": "#6cf8bb",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-secondary-container": "#00714d",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#141b2b",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#004ac6",
+                        "surface": "#f9f9ff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-low": "#f1f3ff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-variant": "#dce2f7",
+                        "surface-container-high": "#e1e8fd",
+                        "on-primary": "#ffffff",
+                        "outline": "#737686",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#434655"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1rem",
+                        "stack-sm": "0.5rem",
+                        "margin-desktop": "2rem",
+                        "margin-mobile": "1.25rem",
+                        "stack-md": "1rem",
+                        "stack-lg": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #004ac6; /* primary */
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #004ac6; /* primary */
+        }
+        .toggle-checkbox:checked + .toggle-label::after {
+            transform: translateX(100%);
+            border-color: white;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-transparent flex justify-between items-center px-margin-mobile py-stack-md bg-surface/80 backdrop-blur-md">
+<button class="text-primary dark:text-primary-fixed-dim hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface dark:text-inverse-on-surface text-center flex-grow">Settings</h1>
+<div class="w-6 h-6"></div> <!-- Placeholder for layout balance -->
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-[88px] px-margin-mobile flex flex-col gap-stack-lg max-w-2xl mx-auto w-full">
+<!-- Group 1: General -->
+<section class="flex flex-col gap-stack-sm">
+<h2 class="font-label-md text-label-md text-primary ml-4">General</h2>
+<div class="bg-surface-bright rounded-xl overflow-hidden">
+<!-- Item: Default action after scan -->
+<button class="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-surface-container-low transition-colors border-b border-surface-container">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">rocket_launch</span>
+<span class="font-body-md text-body-md text-on-surface">Default action after scan</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md text-on-surface-variant">Show result only</span>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</button>
+<!-- Item: Beep on scan -->
+<div class="w-full flex items-center justify-between px-4 py-3 bg-white border-b border-surface-container">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">volume_up</span>
+<span class="font-body-md text-body-md text-on-surface">Beep on scan</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-surface-variant top-0 right-0 z-10 checked:border-primary" id="beep_toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer checked:bg-primary" for="beep_toggle"></label>
+</div>
+</div>
+<!-- Item: Vibrate on scan -->
+<div class="w-full flex items-center justify-between px-4 py-3 bg-white border-b border-surface-container">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">vibration</span>
+<span class="font-body-md text-body-md text-on-surface">Vibrate on scan</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-surface-variant top-0 left-0 z-10 checked:border-primary" id="vibrate_toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer checked:bg-primary" for="vibrate_toggle"></label>
+</div>
+</div>
+<!-- Item: Auto-save scans -->
+<div class="w-full flex items-center justify-between px-4 py-3 bg-white">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">save</span>
+<span class="font-body-md text-body-md text-on-surface">Auto-save scans</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-surface-variant top-0 right-0 z-10 checked:border-primary" id="autosave_toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer checked:bg-primary" for="autosave_toggle"></label>
+</div>
+</div>
+</div>
+</section>
+<!-- Group 2: Privacy & Security -->
+<section class="flex flex-col gap-stack-sm">
+<h2 class="font-label-md text-label-md text-primary ml-4">Privacy &amp; Security</h2>
+<div class="bg-surface-bright rounded-xl overflow-hidden">
+<!-- Item: Lock app with biometrics -->
+<div class="w-full flex items-center justify-between px-4 py-3 bg-white border-b border-surface-container">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">fingerprint</span>
+<span class="font-body-md text-body-md text-on-surface">Lock app with biometrics</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-surface-variant top-0 left-0 z-10 checked:border-primary" id="bio_toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer checked:bg-primary" for="bio_toggle"></label>
+</div>
+</div>
+<!-- Item: Auto-lock vault -->
+<button class="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-surface-container-low transition-colors border-b border-surface-container">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">lock_clock</span>
+<span class="font-body-md text-body-md text-on-surface">Auto-lock vault (minutes)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md text-on-surface-variant">5</span>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</button>
+<!-- Item: Clear all history -->
+<button class="w-full flex items-center justify-start px-4 py-3 bg-white hover:bg-error-container/20 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error">delete_forever</span>
+<span class="font-body-md text-body-md text-error">Clear all history</span>
+</div>
+</button>
+</div>
+</section>
+<!-- Version Label -->
+<div class="text-center py-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">Version 2.0.0</span>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface/90 dark:bg-inverse-surface/90 bg-surface dark:bg-inverse-surface backdrop-blur-xl border-t border-outline-variant/30 shadow-lg flex justify-around items-center w-full px-2 py-3 pb-safe md:hidden">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<!-- Generate -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">add_box</span>
+<span class="font-label-sm text-label-sm mt-1">Generate</span>
+</a>
+<!-- History -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+<span class="font-label-sm text-label-sm mt-1">History</span>
+</a>
+<!-- Analytics -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">insights</span>
+<span class="font-label-sm text-label-sm mt-1">Analytics</span>
+</a>
+<!-- Settings (Active) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 transition-colors transform scale-95 duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-sm text-label-sm mt-1">Settings</span>
+</a>
+</nav>
+<!-- Script for toggle behavior visual update if needed -->
+<script>
+        document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                if (this.checked) {
+                    this.classList.remove('left-0');
+                    this.classList.add('right-0');
+                    this.classList.add('border-primary');
+                    this.nextElementSibling.classList.add('bg-primary');
+                } else {
+                    this.classList.remove('right-0');
+                    this.classList.add('left-0');
+                    this.classList.remove('border-primary');
+                    this.nextElementSibling.classList.remove('bg-primary');
+                }
+            });
+        });
+    </script>
+</body></html>

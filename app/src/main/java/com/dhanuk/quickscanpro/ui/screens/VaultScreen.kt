@@ -308,7 +308,6 @@ private fun VaultContent(
                 }
             }
         }
-        Spacer(Modifier.height(80.dp))
     }
 }
 

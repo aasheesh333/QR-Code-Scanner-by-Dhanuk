@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Templates - QuickScan Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#dce2f7",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-fixed": "#00174b",
+                        "inverse-surface": "#293040",
+                        "secondary-fixed-dim": "#4edea3",
+                        "primary-container": "#2563eb",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "outline": "#737686",
+                        "on-surface": "#141b2b",
+                        "primary": "#004ac6",
+                        "outline-variant": "#c3c6d7",
+                        "inverse-primary": "#b4c5ff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-dim": "#d3daef",
+                        "surface-bright": "#f9f9ff",
+                        "on-secondary-container": "#00714d",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e1e8fd",
+                        "tertiary-container": "#bc4800",
+                        "secondary-container": "#6cf8bb",
+                        "on-background": "#141b2b",
+                        "on-secondary-fixed": "#002113",
+                        "surface-variant": "#dce2f7",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#e9edff",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#006c49",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#edf0ff",
+                        "tertiary": "#943700",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "surface": "#f9f9ff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-surface-variant": "#434655",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-tint": "#0053db",
+                        "surface-container-low": "#f1f3ff",
+                        "background": "#f9f9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "1rem",
+                        "margin-mobile": "1.25rem",
+                        "margin-desktop": "2rem",
+                        "stack-sm": "0.5rem",
+                        "stack-lg": "1.5rem",
+                        "gutter": "1rem"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-md antialiased md:max-w-md md:mx-auto md:border-x border-outline-variant/30">
+<!-- Top App Bar -->
+<header class="bg-surface sticky top-0 left-0 w-full z-10 flex items-center justify-between px-margin-mobile h-16 w-full">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 duration-100 flex items-center justify-center p-2 -ml-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-background flex-1 text-center font-bold tracking-tight pr-8">
+            Templates
+        </h1>
+</header>
+<main class="px-margin-mobile pb-8 pt-4 flex flex-col gap-stack-lg">
+<!-- Recent Section -->
+<section>
+<h2 class="font-label-md text-label-md text-on-surface-variant mb-stack-sm uppercase tracking-wider pl-1">Recent</h2>
+<div class="flex flex-col gap-2">
+<!-- Recent Item 1 -->
+<button class="flex items-center justify-between w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">badge</span>
+</div>
+<span class="font-body-md text-body-md text-on-background font-medium">Business Card</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</button>
+<!-- Recent Item 2 -->
+<button class="flex items-center justify-between w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">wifi</span>
+</div>
+<span class="font-body-md text-body-md text-on-background font-medium">Home Wi-Fi</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- All Templates Section -->
+<section>
+<h2 class="font-label-md text-label-md text-on-surface-variant mb-stack-md uppercase tracking-wider pl-1">All Templates</h2>
+<div class="flex flex-col gap-3">
+<!-- Template Card 1 -->
+<button class="flex items-center justify-between w-full p-4 bg-surface-container-lowest border border-outline-variant rounded-xl hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98] text-left group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center text-primary group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">badge</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background font-semibold">Business Card</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">vCard with name, phone, email</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-[24px]">chevron_right</span>
+</button>
+<!-- Template Card 2 -->
+<button class="flex items-center justify-between w-full p-4 bg-surface-container-lowest border border-outline-variant rounded-xl hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98] text-left group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary group-hover:bg-secondary-container/20 transition-colors">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">wifi</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background font-semibold">Home Wi-Fi</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Share your Wi-Fi with guests</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-[24px]">chevron_right</span>
+</button>
+<!-- Template Card 3 -->
+<button class="flex items-center justify-between w-full p-4 bg-surface-container-lowest border border-outline-variant rounded-xl hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98] text-left group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary group-hover:bg-tertiary-container/20 transition-colors">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">event</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background font-semibold">Event Invite</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">ICS calendar event</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-[24px]">chevron_right</span>
+</button>
+<!-- Template Card 4 -->
+<button class="flex items-center justify-between w-full p-4 bg-surface-container-lowest border border-outline-variant rounded-xl hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98] text-left group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-tint/10 flex items-center justify-center text-surface-tint group-hover:bg-surface-tint/20 transition-colors">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">phone</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background font-semibold">Tap-to-Call</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">tel: link</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-[24px]">chevron_right</span>
+</button>
+<!-- Template Card 5 -->
+<button class="flex items-center justify-between w-full p-4 bg-surface-container-lowest border border-outline-variant rounded-xl hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98] text-left group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center text-primary group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">link</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background font-semibold">Website Link</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Any URL you want to share</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-[24px]">chevron_right</span>
+</button>
+<!-- Template Card 6 -->
+<button class="flex items-center justify-between w-full p-4 bg-surface-container-lowest border border-outline-variant rounded-xl hover:bg-surface-variant/20 transition-colors duration-150 active:scale-[0.98] text-left group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary group-hover:bg-tertiary-container/20 transition-colors">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">mail</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background font-semibold">Support Email</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Pre-filled mail message</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-[24px]">chevron_right</span>
+</button>
+</div>
+</section>
+</main>
+</body></html>

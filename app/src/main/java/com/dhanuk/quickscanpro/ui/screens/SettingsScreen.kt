@@ -277,7 +277,6 @@ fun SettingsScreen(
                         .padding(vertical = 16.dp),
                     textAlign = TextAlign.Center
                 )
-                Spacer(Modifier.height(80.dp))
             }
         }
     }

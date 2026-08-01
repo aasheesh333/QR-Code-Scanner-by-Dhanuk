@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#93000a",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#bc4800",
+                      "secondary-fixed-dim": "#4edea3",
+                      "surface-container": "#e9edff",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "on-secondary-fixed": "#002113",
+                      "on-tertiary-fixed-variant": "#7d2d00",
+                      "secondary-fixed": "#6ffbbe",
+                      "outline": "#737686",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed": "#00174b",
+                      "inverse-on-surface": "#edf0ff",
+                      "primary": "#004ac6",
+                      "on-tertiary-container": "#ffede6",
+                      "inverse-surface": "#293040",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed": "#ffdbcd",
+                      "on-tertiary-fixed": "#360f00",
+                      "on-surface-variant": "#434655",
+                      "outline-variant": "#c3c6d7",
+                      "inverse-primary": "#b4c5ff",
+                      "background": "#f9f9ff",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#005236",
+                      "secondary": "#006c49",
+                      "on-primary-container": "#eeefff",
+                      "primary-fixed": "#dbe1ff",
+                      "surface-tint": "#0053db",
+                      "surface-variant": "#dce2f7",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#6cf8bb",
+                      "surface-dim": "#d3daef",
+                      "error-container": "#ffdad6",
+                      "surface": "#f9f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-container": "#2563eb",
+                      "on-surface": "#141b2b",
+                      "surface-container-low": "#f1f3ff",
+                      "surface-bright": "#f9f9ff",
+                      "on-background": "#141b2b",
+                      "on-secondary-container": "#00714d",
+                      "tertiary": "#943700",
+                      "surface-container-high": "#e1e8fd",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "surface-container-highest": "#dce2f7",
+                      "on-primary-fixed-variant": "#003ea8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "0.5rem",
+                      "stack-lg": "1.5rem",
+                      "margin-mobile": "1.25rem",
+                      "margin-desktop": "2rem",
+                      "stack-md": "1rem",
+                      "gutter": "1rem"
+              },
+              "fontFamily": {
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md h-screen flex flex-col antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md flex justify-between items-center px-margin-mobile py-stack-md transition-opacity">
+<button class="scale-95 active:scale-90 transition-transform text-on-surface-variant hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface dark:text-inverse-on-surface text-center">Analytics</h1>
+<button class="scale-95 active:scale-90 transition-transform text-on-surface-variant hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto pt-[80px] pb-[90px] px-margin-mobile">
+<!-- KPI Cards -->
+<section class="mb-stack-lg">
+<div class="grid grid-cols-3 gap-stack-sm">
+<!-- Card 1 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary mb-1" data-icon="qr_code">qr_code</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">124</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center mt-1">Total Scans</span>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-secondary mb-1" data-icon="add_box">add_box</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">42</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center mt-1">Generated</span>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-tertiary mb-1" data-icon="gpp_maybe">gpp_maybe</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">15</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center mt-1">Leak Checks</span>
+</div>
+</div>
+</section>
+<!-- Scan Types (Horizontal Breakdown) -->
+<section class="mb-stack-lg bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-stack-md">Scan Types</h2>
+<div class="space-y-4">
+<!-- URL -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="link">link</span>
+<span class="font-label-md text-label-md text-on-surface">URL</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">65%</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<!-- Wi-Fi -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="wifi">wifi</span>
+<span class="font-label-md text-label-md text-on-surface">Wi-Fi</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">20%</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full" style="width: 20%"></div>
+</div>
+</div>
+<!-- vCard -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="contact_page">contact_page</span>
+<span class="font-label-md text-label-md text-on-surface">vCard</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">15%</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-tertiary h-2 rounded-full" style="width: 15%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Weekly Activity (Vertical Bar Chart) -->
+<section class="mb-stack-lg bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-stack-md">Weekly Activity</h2>
+<div class="flex items-end justify-between h-40 pt-4 pb-2">
+<!-- Mon -->
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-6 bg-surface-variant rounded-t-sm h-[30%]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">M</span>
+</div>
+<!-- Tue -->
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-6 bg-primary rounded-t-sm h-[60%] shadow-[0px_4px_12px_rgba(37,99,235,0.2)]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">T</span>
+</div>
+<!-- Wed -->
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-6 bg-surface-variant rounded-t-sm h-[45%]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">W</span>
+</div>
+<!-- Thu -->
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-6 bg-surface-variant rounded-t-sm h-[20%]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">T</span>
+</div>
+<!-- Fri -->
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-6 bg-surface-variant rounded-t-sm h-[80%]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">F</span>
+</div>
+<!-- Sat -->
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-6 bg-surface-variant rounded-t-sm h-[100%]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">S</span>
+</div>
+<!-- Sun -->
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-6 bg-surface-variant rounded-t-sm h-[50%]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">S</span>
+</div>
+</div>
+</section>
+<!-- Top Sources -->
+<section class="bg-surface-container-lowest rounded-xl p-4 shadow-sm mb-stack-md">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-stack-md">Top Sources</h2>
+<ul class="space-y-4">
+<li class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-sm" data-icon="language">language</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface">google.com</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-variant rounded-full h-1.5">
+<div class="bg-primary h-1.5 rounded-full" style="width: 80%"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant w-8 text-right">45</span>
+</div>
+</li>
+<li class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-sm" data-icon="language">language</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface">example.com</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-variant rounded-full h-1.5">
+<div class="bg-primary h-1.5 rounded-full" style="width: 40%"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant w-8 text-right">22</span>
+</div>
+</li>
+<li class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-sm" data-icon="language">language</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface">github.com</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-variant rounded-full h-1.5">
+<div class="bg-primary h-1.5 rounded-full" style="width: 25%"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant w-8 text-right">14</span>
+</div>
+</li>
+</ul>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface dark:bg-inverse-surface backdrop-blur-xl shadow-lg flex justify-around items-center px-2 py-3 pb-safe border-none md:hidden">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<!-- Generate -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="add_box">add_box</span>
+<span class="font-label-sm text-label-sm mt-1">Generate</span>
+</a>
+<!-- History -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-sm text-label-sm mt-1">History</span>
+</a>
+<!-- Analytics (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1 scale-95 duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="insights" data-weight="fill" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-sm text-label-sm mt-1">Analytics</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-3 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant/20 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

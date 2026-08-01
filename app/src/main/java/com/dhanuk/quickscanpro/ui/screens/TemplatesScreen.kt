@@ -90,7 +90,6 @@ fun TemplatesScreen(
                 all.forEach { AllTemplateRow(it, onUseTemplate) }
             }
             Spacer(Modifier.height(20.dp))
-            Spacer(Modifier.height(80.dp))
         }
     }
 }

@@ -271,7 +271,6 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     BatchRow(idx, item.content, item.type, isDuplicate = item.content in duplicateIds)
                 }
             }
-            item { Spacer(Modifier.height(80.dp)) }
         }
     }
 }

@@ -167,7 +167,6 @@ fun ResultScreen(
                 BarcodeTypeDetector.TYPE_VCARD -> VCardVariant(data, onNavigateBack)
                 else -> UrlVariant(data, type, safetyReport, onNavigateBack)
             }
-            Spacer(Modifier.height(80.dp))
         }
     }
 }

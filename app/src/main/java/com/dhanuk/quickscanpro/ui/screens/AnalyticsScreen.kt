@@ -112,7 +112,6 @@ fun AnalyticsScreen() {
                         Spacer(Modifier.height(24.dp))
                     }
                 }
-                Spacer(Modifier.height(80.dp))
             }
         }
     }

@@ -145,7 +145,6 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
                         onNavigateBack()
                     }
                 )
-                Spacer(Modifier.height(80.dp))
             }
         }
     }

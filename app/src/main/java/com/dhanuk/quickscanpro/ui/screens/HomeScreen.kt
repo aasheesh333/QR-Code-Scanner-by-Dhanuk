@@ -20,20 +20,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material.icons.filled.ChevronRight
@@ -50,8 +48,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -66,9 +62,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.drawscope.StrokeCap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -76,12 +80,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.database.ScanResult
-import com.dhanuk.quickscanpro.ui.composables.AppBackground
 import com.dhanuk.quickscanpro.ui.composables.ScanFrame
 import com.dhanuk.quickscanpro.util.ScanFeedback
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
@@ -96,9 +100,9 @@ fun HomeScreen(
     onScan: (String) -> Unit,
     onViewAllHistory: () -> Unit,
     onOpenBatch: () -> Unit,
-    onOpenCompare: () -> Unit,
-    onOpenVault: () -> Unit,
-    onOpenTimeline: () -> Unit,
+    onOpenCompare: () -> Unit = {},
+    onOpenVault: () -> Unit = {},
+    onOpenTimeline: () -> Unit = {},
     onOpenTemplates: () -> Unit,
     onOpenLeakCheck: () -> Unit,
     onOpenSettings: () -> Unit = {},
@@ -127,9 +131,6 @@ fun HomeScreen(
             ) == true
     }
 
-    // Auto-request camera permission exactly once per session. After the first
-    // request we leave the decision to the explicit "Grant permission" button
-    // to avoid permission-spam (Play policy anti-pattern).
     LaunchedEffect(Unit) {
         if (!hasCameraPermission && !hasRequestedPermission) {
             hasRequestedPermission = true
@@ -138,8 +139,8 @@ fun HomeScreen(
     }
 
     val haptic = LocalHapticFeedback.current
-    val lastScanContent = remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
-    val lastScanTime = remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+    val lastScanContent = remember { mutableStateOf<String?>(null) }
+    val lastScanTime = remember { mutableLongStateOf(0L) }
 
     val onScanWithFeedback: (String) -> Unit = { result ->
         val now = System.currentTimeMillis()
@@ -154,65 +155,66 @@ fun HomeScreen(
         }
     }
 
-    AppBackground()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        CameraViewfinder(
+            hasCameraPermission = hasCameraPermission,
+            showRationale = showRationale,
+            onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
+            onOpenAppSettings = {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+                context.startActivity(intent)
+            },
+            onScan = onScanWithFeedback,
+            onBatch = onOpenBatch,
+            modifier = Modifier.fillMaxSize()
+        )
 
-    Scaffold(
-        topBar = { QuickScanHeader(onOpenSettings = onOpenSettings) },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            Box(modifier = Modifier.fillMaxWidth().weight(0.62f)) {
-                CameraViewfinder(
-                    hasCameraPermission = hasCameraPermission,
-                    showRationale = showRationale,
-                    onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
-                    onOpenAppSettings = {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
-                        context.startActivity(intent)
-                    },
-                    onScan = onScanWithFeedback,
-                    onBatch = onOpenBatch
-                )
-            }
+        StitchBottomSheet(
+            recent = recent1,
+            onGenerate = onOpenGenerate,
+            onHistory = onViewAllHistory,
+            onTemplates = onOpenTemplates,
+            onLeak = onOpenLeakCheck,
+            onRecentClick = onViewAllHistory,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
 
-            StitchBottomSheet(
-                recent = recent1,
-                onGenerate = onOpenGenerate,
-                onHistory = onViewAllHistory,
-                onTemplates = onOpenTemplates,
-                onLeak = onOpenLeakCheck,
-                onRecentClick = onViewAllHistory
-            )
-        }
+        QuickScanHeader(
+            onOpenSettings = onOpenSettings,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 
 @Composable
-private fun QuickScanHeader(onOpenSettings: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = MaterialTheme.colorScheme.surface
+private fun QuickScanHeader(
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.dp, end = 14.dp, top = 18.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Filled.QrCodeScanner,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
-            Spacer(Modifier.width(8.dp))
             Text(
                 text = "QuickScan Pro",
                 style = MaterialTheme.typography.titleMedium,
@@ -227,7 +229,6 @@ private fun QuickScanHeader(onOpenSettings: () -> Unit) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        }
     }
 }
 
@@ -238,7 +239,8 @@ private fun CameraViewfinder(
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
     onScan: (String) -> Unit,
-    onBatch: () -> Unit
+    onBatch: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -246,7 +248,6 @@ private fun CameraViewfinder(
     val analyzer = remember(onScan) { BarcodeAnalyzer(onScan) }
     var flashEnabled by rememberSaveable { mutableStateOf(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
-    val haptic = LocalHapticFeedback.current
     val previewView = remember { PreviewView(context).apply {
         implementationMode = PreviewView.ImplementationMode.COMPATIBLE
         scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -296,15 +297,49 @@ private fun CameraViewfinder(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
+        modifier = modifier.background(Color.Black)
     ) {
         if (hasCameraPermission) {
             AndroidView(
                 factory = { previewView },
                 modifier = Modifier.fillMaxSize()
             )
+
+            ScanOverlayWithCutout(modifier = Modifier.fillMaxSize())
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ScanFrame(
+                    modifier = Modifier.fillMaxWidth(),
+                    aspectRatio = 1f
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(top = 64.dp, end = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GlassCircleButton(
+                    onClick = {
+                        flashEnabled = !flashEnabled
+                        camera?.cameraControl?.enableTorch(flashEnabled)
+                    },
+                    icon = Icons.Filled.FlashOn,
+                    contentDescription = "Flash"
+                )
+                GlassCircleButton(
+                    onClick = onBatch,
+                    icon = Icons.Filled.AutoAwesomeMotion,
+                    contentDescription = "Batch scan"
+                )
+            }
         } else {
             Column(
                 modifier = Modifier
@@ -313,10 +348,12 @@ private fun CameraViewfinder(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White,
-                    modifier = Modifier.size(56.dp)
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Filled.Security,
@@ -366,36 +403,27 @@ private fun CameraViewfinder(
                 }
             }
         }
+    }
+}
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 16.dp, end = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            GlassCircleButton(
-                onClick = {
-                    flashEnabled = !flashEnabled
-                    camera?.cameraControl?.enableTorch(flashEnabled)
-                },
-                icon = Icons.Filled.FlashOn,
-                contentDescription = "Flash"
-            )
-            GlassCircleButton(onClick = onBatch, icon = Icons.Filled.AutoAwesomeMotion, contentDescription = "Batch scan")
+@Composable
+private fun ScanOverlayWithCutout(modifier: Modifier = Modifier) {
+    val density = LocalDensity.current
+    val cornerRadius = with(density) { 20.dp.toPx() }
+    Canvas(modifier = modifier) {
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+        val scanSize = minOf(canvasWidth * 0.7f, with(density) { 300.dp.toPx() })
+        val left = (canvasWidth - scanSize) / 2f
+        val top = (canvasHeight - scanSize) / 2f
+        val scanRect = Rect(left, top, left + scanSize, top + scanSize)
+
+        val path = Path().apply {
+            addRect(Rect(Offset.Zero, size))
+            addRoundRect(RoundRect(scanRect, CornerRadius(cornerRadius, cornerRadius)))
+            fillType = PathFillType.EvenOdd
         }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 48.dp, vertical = 24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            ScanFrame(modifier = Modifier.fillMaxWidth())
-        }
-
-        // The "Scan Now" CTA button previously sat here as a placebo — the
-        // camera above auto-detects, so the button had no real action.
-        // Removed to avoid a misleading / dead click.
+        drawPath(path, Color.Black.copy(alpha = 0.8f))
     }
 }
 
@@ -405,74 +433,66 @@ private fun GlassCircleButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     contentDescription: String?
 ) {
-    Surface(
-        shape = CircleShape,
-        color = Color.White.copy(alpha = 0.2f),
+    Box(
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .border(width = 1.dp, color = Color.White.copy(alpha = 0.2f), shape = CircleShape)
-            .clickable(onClick = onClick)
+            .background(Color.White.copy(alpha = 0.2f))
+            .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Icon(
-                icon,
-                contentDescription = contentDescription,
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        Icon(
+            icon,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
 @Composable
-private fun ColumnScope.StitchBottomSheet(
+private fun StitchBottomSheet(
     recent: ScanResult?,
     onGenerate: () -> Unit,
     onHistory: () -> Unit,
     onTemplates: () -> Unit,
     onLeak: () -> Unit,
-    onRecentClick: () -> Unit
+    onRecentClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = Modifier
+    Column(
+        modifier = modifier
             .fillMaxWidth()
-            .weight(0.38f),
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp
+            .navigationBarsPadding()
+            .shadow(8.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 20.dp)
+            .padding(top = 8.dp, bottom = 12.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            DragHandle()
+                .width(48.dp)
+                .height(4.dp)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                .align(Alignment.CenterHorizontally)
+        )
 
-            QuickTilesRow(
-                onGenerate = onGenerate,
-                onHistory = onHistory,
-                onTemplates = onTemplates,
-                onLeak = onLeak
-            )
+        Spacer(Modifier.height(16.dp))
 
-            RecentScanSnippet(recent, onRecentClick)
-        }
+        QuickTilesRow(
+            onGenerate = onGenerate,
+            onHistory = onHistory,
+            onTemplates = onTemplates,
+            onLeak = onLeak
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        RecentScanSnippet(recent, onRecentClick)
     }
-}
-
-@Composable
-private fun DragHandle() {
-    Box(
-        modifier = Modifier
-            .width(48.dp)
-            .height(6.dp)
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        contentAlignment = Alignment.Center
-    ) {}
 }
 
 @Composable

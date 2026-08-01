@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leak Check - QuickScan Pro</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Design System Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#dce2f7",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container": "#e9edff",
+                    "secondary": "#006c49",
+                    "on-error-container": "#93000a",
+                    "outline": "#737686",
+                    "on-tertiary-fixed": "#360f00",
+                    "inverse-primary": "#b4c5ff",
+                    "primary-container": "#2563eb",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "tertiary": "#943700",
+                    "tertiary-container": "#bc4800",
+                    "surface-variant": "#dce2f7",
+                    "surface-dim": "#d3daef",
+                    "on-secondary-fixed-variant": "#005236",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#4edea3",
+                    "surface-bright": "#f9f9ff",
+                    "on-surface-variant": "#434655",
+                    "outline-variant": "#c3c6d7",
+                    "on-primary-fixed": "#00174b",
+                    "surface-tint": "#0053db",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-background": "#141b2b",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#002113",
+                    "tertiary-fixed": "#ffdbcd",
+                    "on-primary-container": "#eeefff",
+                    "inverse-on-surface": "#edf0ff",
+                    "on-surface": "#141b2b",
+                    "background": "#f9f9ff",
+                    "secondary-container": "#6cf8bb",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#f9f9ff",
+                    "on-tertiary-container": "#ffede6",
+                    "on-secondary": "#ffffff",
+                    "primary": "#004ac6",
+                    "surface-container-low": "#f1f3ff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#00714d",
+                    "surface-container-high": "#e1e8fd",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "inverse-surface": "#293040"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "0.5rem",
+                    "margin-mobile": "1.25rem",
+                    "stack-lg": "1.5rem",
+                    "stack-md": "1rem",
+                    "margin-desktop": "2rem",
+                    "gutter": "1rem"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar (Task-Focused Sub-screen) -->
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md flex justify-between items-center px-margin-mobile py-stack-md border-b border-outline-variant/20 shadow-sm transition-all duration-300" id="topAppBar">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary/50">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface absolute left-1/2 -translate-x-1/2">
+            Leak Check
+        </h1>
+<!-- Empty placeholder to maintain flex-between centering -->
+<div class="w-10 h-10"></div>
+</header>
+<!-- Main Content Canvas -->
+<!-- Note: Top padding accounts for fixed header (approx 72px) -->
+<main class="flex-1 w-full max-w-lg mx-auto pt-24 px-margin-mobile pb-8 flex flex-col gap-stack-lg">
+<!-- Input Section -->
+<section class="flex flex-col gap-stack-md">
+<!-- Segmented Control -->
+<div class="flex p-1 bg-surface-container-high rounded-full w-full border border-outline-variant/20">
+<button class="flex-1 py-2.5 font-label-md text-label-md bg-primary text-on-primary rounded-full shadow-sm text-center transition-all">
+                    Domain
+                </button>
+<button class="flex-1 py-2.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant/80 rounded-full text-center transition-colors">
+                    Password
+                </button>
+</div>
+<!-- Outlined Text Field -->
+<div class="relative flex items-center border-2 border-outline-variant rounded-xl bg-surface focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20 transition-all overflow-hidden group">
+<div class="pl-4 pr-3 text-outline group-focus-within:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+</div>
+<input autocomplete="off" class="flex-1 py-4 pr-4 bg-transparent border-none outline-none font-body-md text-on-surface placeholder:text-outline w-full focus:ring-0" placeholder="e.g. acmecorp.com" type="text"/>
+</div>
+<!-- Action Button -->
+<button class="w-full mt-2 bg-primary hover:bg-on-primary-fixed-variant text-on-primary py-4 rounded-xl flex items-center justify-center gap-2 shadow-[0px_8px_24px_rgba(0,74,198,0.25)] active:scale-[0.98] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="search" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="font-label-md text-label-md">Check for Leaks</span>
+</button>
+</section>
+<!-- Result Card (Visible state: Compromised) -->
+<section class="animate-[fadeIn_0.4s_ease-out]">
+<div class="bg-error-container/40 rounded-2xl p-5 flex flex-col gap-stack-md border border-error/20 shadow-sm relative overflow-hidden">
+<!-- Subtle background warning pattern/glow -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-error/10 rounded-full blur-2xl"></div>
+<div class="flex items-start gap-4 relative z-10">
+<div class="bg-error text-on-error w-12 h-12 rounded-full flex flex-shrink-0 items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[28px]" data-icon="gpp_bad" style="font-variation-settings: 'FILL' 1;">gpp_bad</span>
+</div>
+<div class="flex-1 pt-1">
+<h2 class="font-headline-md text-headline-md text-on-error-container mb-0.5 font-bold tracking-tight">Compromised</h2>
+<p class="font-body-md text-body-md text-on-error-container/80">Seen in 3 known breaches.</p>
+</div>
+</div>
+<div class="mt-1 flex flex-col gap-2 relative z-10">
+<!-- Signal Chip 1 -->
+<div class="flex items-start gap-3 bg-surface-container-lowest/80 backdrop-blur-sm rounded-xl p-3.5 border border-error/10 shadow-sm">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-2 flex-shrink-0 animate-pulse"></div>
+<span class="font-body-md text-body-md text-on-error-container">Domain found in prominent 2023 credentials compilation lists.</span>
+</div>
+<!-- Signal Chip 2 -->
+<div class="flex items-start gap-3 bg-surface-container-lowest/80 backdrop-blur-sm rounded-xl p-3.5 border border-error/10 shadow-sm">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-2 flex-shrink-0"></div>
+<span class="font-body-md text-body-md text-on-error-container">Associated infrastructure flagged for recent phishing activity.</span>
+</div>
+</div>
+<!-- Warning Line -->
+<div class="mt-2 pt-4 border-t border-error/10 flex items-start gap-2 relative z-10">
+<span class="material-symbols-outlined text-[18px] text-error opacity-80 mt-0.5" data-icon="info">info</span>
+<p class="font-label-sm text-label-sm text-on-error-container/70 leading-relaxed">
+                        Includes exact match and type-similarity flags. Consider updating related authentication protocols immediately.
+                    </p>
+</div>
+</div>
+</section>
+<!-- Recent Activity Section -->
+<section class="flex flex-col gap-stack-md mt-2">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider pl-1">Recent Checks</h3>
+<div class="bg-surface border border-outline-variant/40 rounded-xl overflow-hidden flex flex-col shadow-sm">
+<!-- Row 1: Breach -->
+<div class="flex items-center justify-between p-4 border-b border-outline-variant/30 last:border-0 hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">acme-corp.com</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">2 hours ago</span>
+</div>
+</div>
+<div class="flex items-center justify-center w-8 h-8">
+<div class="w-2.5 h-2.5 rounded-full bg-error shadow-[0_0_8px_rgba(186,26,26,0.6)]"></div>
+</div>
+</div>
+<!-- Row 2: Safe -->
+<div class="flex items-center justify-between p-4 border-b border-outline-variant/30 last:border-0 hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="password">password</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium tracking-[0.2em] mt-1">••••••••••</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Yesterday</span>
+</div>
+</div>
+<div class="flex items-center justify-center w-8 h-8">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(0,108,73,0.5)]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Disclaimer Footer -->
+<footer class="mt-auto pt-6 pb-2">
+<div class="flex items-start justify-center gap-2 px-4 opacity-70">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0 mt-0.5" data-icon="lock">lock</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center max-w-[280px]">
+                    All checks run entirely on your device using a small built-in breach database. Nothing is sent to any server.
+                </p>
+</div>
+</footer>
+</main>
+<!-- Custom inline styles for micro-animations -->
+<style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Subtle scroll effect for header */
+        .scrolled-header {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-bottom-color: transparent;
+        }
+    </style>
+<script>
+        // Simple vanilla JS to add shadow to header on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('topAppBar');
+            if (window.scrollY > 10) {
+                header.classList.add('scrolled-header');
+            } else {
+                header.classList.remove('scrolled-header');
+            }
+        });
+    </script>
+</body></html>
