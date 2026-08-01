@@ -38,8 +38,11 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -136,7 +139,7 @@ private fun WifiVariant(data: String, onNavigateBack: () -> Unit) {
             Row(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(if (parts.second.isNotEmpty()) (if (showPass) parts.second else "•".repeat(parts.second.length.coerceAtMost(12))) else "No password stored", style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 2.sp)
                 Spacer(Modifier.width(8.dp))
-                IconButton(onClick = { showPass = !showPass }, modifier = Modifier.size(24.dp)) { Icon(if (showPass) Icons.Filled.Visibility else Icons.Filled.Visibility, contentDescription = "Show password", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
+                IconButton(onClick = { showPass = !showPass }, modifier = Modifier.size(24.dp)) { Icon(if (showPass) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = "Show password", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
             }
             Spacer(Modifier.height(16.dp))
             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

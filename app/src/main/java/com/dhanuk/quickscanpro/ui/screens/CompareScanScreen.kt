@@ -41,8 +41,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,18 +62,21 @@ import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
 
 @Composable
 fun CompareScanScreen(onNavigateBack: () -> Unit) {
-    var slotA by remember { mutableStateOf<String?>(null) }
-    var slotB by remember { mutableStateOf<String?>(null) }
-    var scanning by remember { mutableStateOf<Int?>(null) }
+    val slotAState = remember { mutableStateOf<String?>(null) }
+    val slotBState = remember { mutableStateOf<String?>(null) }
+    val scanningState = remember { mutableStateOf<Int?>(null) }
+    val slotA = slotAState.value
+    val slotB = slotBState.value
+    val scanning = scanningState.value
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         CompareHeader(onNavigateBack)
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                ScanSlot("Slot A", slotA, scanning == 1, { scanning = 1 }, Modifier.weight(1f))
-                ScanSlot("Slot B", slotB, scanning == 2, { scanning = 2 }, Modifier.weight(1f))
+                ScanSlot("Slot A", slotA, scanning == 1, { scanningState.value = 1 }, Modifier.weight(1f))
+                ScanSlot("Slot B", slotB, scanning == 2, { scanningState.value = 2 }, Modifier.weight(1f))
             }
-            PrimaryButton(text = "Scan to Compare", onClick = { scanning = 1 }, modifier = Modifier.fillMaxWidth()) { Spacer(Modifier.width(8.dp)); Text("Scan to Compare") }
+            PrimaryButton(text = "Scan to Compare", onClick = { scanningState.value = 1 }, modifier = Modifier.fillMaxWidth()) { Spacer(Modifier.width(8.dp)); Text("Scan to Compare") }
             if (slotA != null && slotB != null) {
                 Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))) {
                     Column {
@@ -134,8 +139,9 @@ private fun ScanSlotCamera(onScan: (String) -> Unit) {
     val executor = remember(context) { ContextCompat.getMainExecutor(context) }
     val analyzer = remember(onScan) { BarcodeAnalyzer(onScan) }
     val previewView = remember { PreviewView(context) }
-    var hasPerm by remember { mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) }
-    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasPerm = it }
+    val hasPermState = remember { mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) }
+    val hasPerm = hasPermState.value
+    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasPermState.value = it }
 
     DisposableEffect(lifecycleOwner, hasPerm) {
         if (!hasPerm) return@DisposableEffect onDispose {}

@@ -198,15 +198,11 @@ private fun HistoryList(
     onDelete: (ScanResult) -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-        item {
+        itemsIndexed(items) { idx, scan ->
             Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 0.5.dp) {
-                Column {
-                    itemsIndexed(items) { idx, scan ->
-                        HistoryRow(scan, onRowClick, onToggleFavorite, onDelete)
-                        if (idx < items.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
-                    }
-                }
+                HistoryRow(scan, onRowClick, onToggleFavorite, onDelete)
             }
+            Spacer(Modifier.height(2.dp))
         }
     }
 }

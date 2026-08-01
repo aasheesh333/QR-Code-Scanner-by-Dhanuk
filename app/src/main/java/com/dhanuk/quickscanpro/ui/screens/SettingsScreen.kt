@@ -38,7 +38,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -106,20 +105,20 @@ fun SettingsScreen(
                 GroupDivider()
                 SettingsRow(Icons.Filled.Palette, "Theme", trailing = themeMode.label, onClick = { showThemeDialog = true })
                 GroupDivider()
-                ToggleRow(Icons.Filled.VolumeUp, "Beep on scan", sound) { settingsVm.setSound(it) }
+                ToggleRow(Icons.Filled.VolumeUp, "Beep on scan", sound, onChange = { enabled -> settingsVm.setSound(enabled) })
                 GroupDivider()
-                ToggleRow(Icons.Filled.Vibration, "Vibrate on scan", vibrate) { settingsVm.setVibrate(it) }
+                ToggleRow(Icons.Filled.Vibration, "Vibrate on scan", vibrate, onChange = { enabled -> settingsVm.setVibrate(enabled) })
                 GroupDivider()
-                ToggleRow(Icons.Filled.Save, "Auto-save scans", autoSave) { settingsVm.setAutoCopy(it) }
+                ToggleRow(Icons.Filled.Save, "Auto-save scans", autoSave, onChange = { enabled -> settingsVm.setAutoCopy(enabled) })
             }
             SettingsGroup("Privacy & Security") {
-                ToggleRow(Icons.Filled.Fingerprint, "Lock app with biometrics", biometrics) { settingsVm.setBiometricLock(it) }
+                ToggleRow(Icons.Filled.Fingerprint, "Lock app with biometrics", biometrics, onChange = { enabled -> settingsVm.setBiometricLock(enabled) })
             }
             SettingsGroup("Data") {
                 DangerRow(Icons.Filled.DeleteForever, "Clear all history", onClick = { showClearConfirmDialog = true })
             }
             SettingsGroup("Notifications") {
-                ToggleRow(Icons.Filled.Notifications, "Push notifications", pushEnabled, subtitle = "Powered by OneSignal") { pushEnabled = it }
+                ToggleRow(Icons.Filled.Notifications, "Push notifications", pushEnabled, subtitle = "Powered by OneSignal", onChange = { enabled -> pushEnabled = enabled })
             }
             SettingsGroup("Support") {
                 SettingsRow(Icons.Filled.Info, "About", onClick = onNavigateToAbout)
