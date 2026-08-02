@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>About QuickScan Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#a8364b",
+                    "surface-bright": "#faf8fd",
+                    "error-container": "#f97386",
+                    "surface-container-high": "#e8e7ef",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "surface-container-lowest": "#ffffff",
+                    "outline-variant": "#b1b1ba",
+                    "tertiary": "#79546c",
+                    "surface-dim": "#d9d9e2",
+                    "on-secondary": "#fbf8ff",
+                    "tertiary-dim": "#6c485f",
+                    "primary-dim": "#3749ad",
+                    "on-primary-container": "#001367",
+                    "tertiary-fixed": "#ffcfec",
+                    "secondary-fixed": "#e1e0f9",
+                    "error-dim": "#6b0221",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "inverse-primary": "#8596ff",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "on-secondary-fixed": "#3d3e51",
+                    "on-error-container": "#6e0523",
+                    "surface": "#faf8fd",
+                    "secondary-dim": "#505166",
+                    "on-surface": "#303239",
+                    "on-primary-fixed": "#000000",
+                    "on-error": "#fff7f7",
+                    "on-background": "#303239",
+                    "tertiary-container": "#ffcfec",
+                    "inverse-surface": "#0d0e11",
+                    "on-tertiary": "#fff7f8",
+                    "on-primary": "#faf8ff",
+                    "secondary-container": "#e1e0f9",
+                    "on-primary-fixed-variant": "#001a80",
+                    "surface-container": "#eeedf4",
+                    "on-surface-variant": "#5d5f66",
+                    "surface-container-highest": "#e2e2eb",
+                    "primary-fixed-dim": "#7789f0",
+                    "on-tertiary-container": "#67435b",
+                    "outline": "#797a82",
+                    "on-secondary-container": "#4f5065",
+                    "surface-tint": "#4456ba",
+                    "primary-fixed": "#8596ff",
+                    "on-tertiary-fixed": "#523147",
+                    "background": "#faf8fd",
+                    "surface-variant": "#e2e2eb",
+                    "surface-container-low": "#f4f3f9",
+                    "primary": "#4456ba",
+                    "inverse-on-surface": "#9d9ca1",
+                    "primary-container": "#8596ff",
+                    "secondary": "#5c5d72",
+                    "secondary-fixed-dim": "#d3d2eb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-press:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-surface flex justify-between items-center px-4 h-16 w-full">
+<div class="flex items-center">
+<button aria-label="Go back" class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="ml-2 font-headline text-xl font-bold text-on-surface">About</h1>
+</div>
+<div class="w-12"></div> <!-- Spacer for symmetry -->
+</header>
+<main class="flex-grow px-6 py-8 space-y-6 max-w-2xl mx-auto w-full">
+<!-- Hero Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-8 flex flex-col items-center text-center shadow-sm border border-outline-variant/10">
+<div class="w-24 h-24 bg-primary-container rounded-3xl flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-on-primary-container text-5xl" style="font-variation-settings: 'wght' 600;">qr_code_scanner</span>
+</div>
+<h2 class="text-2xl font-extrabold text-on-surface tracking-tight">QuickScan Pro</h2>
+<p class="text-on-surface-variant font-medium mt-1">Version 3.0.0</p>
+<p class="text-on-surface-variant/60 text-xs mt-1 uppercase tracking-widest">Build 4</p>
+</section>
+<!-- Description Card -->
+<section class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
+<p class="text-on-surface-variant leading-relaxed">
+                The fastest and most secure QR code scanner for Android. Scan, generate, and manage QR codes with ease. Built with modern security standards to keep your data safe.
+            </p>
+</section>
+<!-- Links Card List -->
+<section class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm border border-outline-variant/10">
+<div class="flex flex-col">
+<!-- Privacy Policy -->
+<button class="flex items-center justify-between px-5 py-4 hover:bg-surface-container-high transition-colors active-press border-b border-outline-variant/5">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary mr-4">policy</span>
+<span class="text-on-surface font-medium">Privacy Policy</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Terms of Service -->
+<button class="flex items-center justify-between px-5 py-4 hover:bg-surface-container-high transition-colors active-press border-b border-outline-variant/5">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary mr-4">description</span>
+<span class="text-on-surface font-medium">Terms of Service</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Open Source Licenses -->
+<button class="flex items-center justify-between px-5 py-4 hover:bg-surface-container-high transition-colors active-press border-b border-outline-variant/5">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary mr-4">terminal</span>
+<span class="text-on-surface font-medium">Open Source Licenses</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Rate on Play Store -->
+<button class="flex items-center justify-between px-5 py-4 hover:bg-surface-container-high transition-colors active-press border-b border-outline-variant/5">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary mr-4" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-on-surface font-medium">Rate on Play Store</span>
+</div>
+<span class="material-symbols-outlined text-outline">open_in_new</span>
+</button>
+<!-- Share App -->
+<button class="flex items-center justify-between px-5 py-4 hover:bg-surface-container-high transition-colors active-press">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary mr-4">share</span>
+<span class="text-on-surface font-medium">Share App</span>
+</div>
+<span class="material-symbols-outlined text-outline">ios_share</span>
+</button>
+</div>
+</section>
+<!-- Developer Card -->
+<section class="bg-secondary-container/30 rounded-2xl p-6 flex flex-col space-y-4 border border-outline-variant/10">
+<div class="flex items-center">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-on-secondary-container text-xl">code</span>
+</div>
+<div>
+<h3 class="text-on-surface font-bold">Developed by Dhanuk Softwares</h3>
+<p class="text-on-surface-variant text-sm">Building premium utility experiences.</p>
+</div>
+</div>
+<a class="flex items-center justify-between bg-surface-container-lowest p-4 rounded-xl hover:bg-white transition-all active-press border border-outline-variant/10" href="#">
+<span class="text-primary font-medium text-sm">Visit Website</span>
+<span class="material-symbols-outlined text-primary text-sm">language</span>
+</a>
+</section>
+</main>
+<!-- Footer -->
+<footer class="py-10 flex flex-col items-center justify-center space-y-2">
+<p class="text-on-surface-variant/60 text-sm font-medium">© 2026 Dhanuk Softwares. All rights reserved.</p>
+<div class="flex space-x-2">
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for the back button
+        document.querySelector('button[aria-label="Go back"]').addEventListener('click', () => {
+            console.log('Navigating back...');
+        });
+
+        // Add subtle hover effects to cards for desktop users
+        const cards = document.querySelectorAll('section');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                if (window.innerWidth > 768) {
+                    card.style.transform = 'translateY(-2px)';
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                }
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+    </script>
+</body></html>

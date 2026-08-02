@@ -15,37 +15,29 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddBox
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.GppBad
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.viewmodel.AnalyticsViewModel
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
@@ -89,45 +81,68 @@ fun AnalyticsScreen(onOpenSettings: () -> Unit = {}) {
 
 @Composable
 private fun AnalyticsHeader(onOpenSettings: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth().statusBarsPadding(), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.QrCode, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
-            Spacer(Modifier.weight(1f))
-            Text("Analytics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.weight(1f))
-            Text("Analytics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.Filled.MoreVert, contentDescription = "Options", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp).clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) { onOpenSettings() })
-        }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp)
+            .height(64.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "Analytics",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            Icons.Filled.CalendarMonth,
+            contentDescription = "Calendar",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
 @Composable
 private fun KPIRow(totalScans: Int, generated: Int, leakChecks: Int) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        KPICard(Icons.Filled.QrCode, totalScans.toString(), "Total Scans", MaterialTheme.colorScheme.primary, Modifier.weight(1f))
-        KPICard(Icons.Filled.AddBox, generated.toString(), "Generated", MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
-        KPICard(Icons.Filled.GppBad, leakChecks.toString(), "Leak Checks", MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        KPICard(Icons.Filled.QrCode, totalScans.toString(), "Total Scans", Modifier.weight(1f))
+        KPICard(Icons.Filled.AddBox, generated.toString(), "Generated", Modifier.weight(1f))
+        KPICard(Icons.Filled.GppBad, leakChecks.toString(), "This Week", Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun KPICard(icon: ImageVector, value: String, label: String, tint: Color, modifier: Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer
+private fun KPICard(icon: ImageVector, value: String, label: String, modifier: Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(16.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.height(4.dp))
-            Text(value, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.W700, fontSize = 24.sp, letterSpacing = (-0.01).sp, lineHeight = 32.sp), color = MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.height(4.dp))
-            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.W500, lineHeight = 16.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
         }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -135,24 +150,32 @@ private fun KPICard(icon: ImageVector, value: String, label: String, tint: Color
 private fun ScanTypesCard(types: List<Pair<String, Int>>) {
     if (types.isEmpty()) return
     val total = types.sumOf { it.second }
-    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, shadowElevation = 0.5.dp) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Scan Types", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface)
-            types.take(3).forEach { (type, count) ->
-                val pct = if (total > 0) (count * 100 / total) else 0
-                val icon = when (type) {
-                    "url" -> Icons.Filled.Link; "wifi" -> Icons.Filled.Wifi; "vcard" -> Icons.Filled.Person; else -> Icons.Filled.Link
-                }
-                val tint = when (type) {
-                    "url" -> MaterialTheme.colorScheme.primary; "wifi" -> MaterialTheme.colorScheme.secondary; else -> MaterialTheme.colorScheme.tertiary
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
-                    Text(type.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                    Text("$pct%", style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                LinearProgressIndicator(progress = { pct / 100f }, color = tint, trackColor = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Scan Types", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+        types.take(4).forEach { (type, count) ->
+            val pct = if (total > 0) (count * 100 / total) else 0
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    type.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Text("$pct%", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            LinearProgressIndicator(
+                progress = { pct / 100f },
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
+            )
         }
     }
 }
@@ -171,19 +194,24 @@ private fun WeeklyActivityCard(scans: List<ScanResult>) {
         scans.count { it.timestamp in start until (start + 86_400_000L) }
     }
     val maxCount = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
-    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, shadowElevation = 0.5.dp) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Weekly Activity", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface)
-            Box(modifier = Modifier.fillMaxWidth().height(160.dp).padding(top = 16.dp, bottom = 8.dp)) {
-                Row(modifier = Modifier.fillMaxSize().align(Alignment.BottomCenter), horizontalArrangement = Arrangement.SpaceBetween) {
-                    days.forEachIndexed { idx, day ->
-                        val h = counts[idx].toFloat() / maxCount
-                        val isHighlight = idx == 6
-                        val color = if (isHighlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-                        Column(modifier = Modifier.weight(1f).align(Alignment.Bottom), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(modifier = Modifier.width(24.dp).height((h * 120).dp).clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)).background(color))
-                            Text(day, style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.W500, lineHeight = 16.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Weekly Activity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+        Box(modifier = Modifier.fillMaxWidth().height(160.dp).padding(top = 16.dp, bottom = 8.dp)) {
+            Row(modifier = Modifier.fillMaxSize().align(Alignment.BottomCenter), horizontalArrangement = Arrangement.SpaceBetween) {
+                days.forEachIndexed { idx, day ->
+                    val h = counts[idx].toFloat() / maxCount
+                    val isHighlight = idx == 6
+                    val color = if (isHighlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
+                    Column(modifier = Modifier.weight(1f).align(Alignment.Bottom), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(modifier = Modifier.width(24.dp).height((h * 120).dp.coerceAtLeast(4.dp)).clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)).background(color))
+                        Text(day, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -205,22 +233,27 @@ private fun TopSourcesCard(scans: List<ScanResult>) {
         .take(3)
     if (sources.isEmpty()) return
     val maxCount = sources.maxOf { it.value }.toFloat()
-    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, shadowElevation = 0.5.dp) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Top Sources", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface)
-            sources.forEach { (domain, count) ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(32.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.Link, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Text(domain, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.W500, fontSize = 16.sp, lineHeight = 24.sp), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                    Box(modifier = Modifier.width(64.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
-                        Box(modifier = Modifier.fillMaxWidth(count / maxCount).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.primary))
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Text(count.toString(), style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600, lineHeight = 20.sp, letterSpacing = 0.01.sp), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(32.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Top Sources", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+        sources.forEach { (domain, count) ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                 }
+                Spacer(Modifier.width(12.dp))
+                Text(domain, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                Box(modifier = Modifier.width(64.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Box(modifier = Modifier.fillMaxWidth(count / maxCount).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.primary))
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(count.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(32.dp))
             }
         }
     }

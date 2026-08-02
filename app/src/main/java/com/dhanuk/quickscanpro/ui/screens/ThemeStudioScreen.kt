@@ -67,11 +67,26 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
 
 @Composable
 private fun ThemeStudioHeader(onBack: () -> Unit, onApply: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth().statusBarsPadding(), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text("Theme Studio", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            OutlinedButton(onClick = onApply, shape = RoundedCornerShape(50)) { Text("Apply") }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 8.dp)
+            .height(64.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
+        }
+        Text(
+            "Theme Studio",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        OutlinedButton(onClick = onApply, shape = RoundedCornerShape(50), modifier = Modifier.padding(end = 8.dp)) {
+            Text("Apply")
         }
     }
 }

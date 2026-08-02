@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#f97386",
+                        "outline-variant": "#b1b1ba",
+                        "inverse-on-surface": "#9d9ca1",
+                        "primary-fixed": "#8596ff",
+                        "secondary-container": "#e1e0f9",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#e1e0f9",
+                        "on-background": "#303239",
+                        "on-surface": "#303239",
+                        "on-secondary-fixed": "#3d3e51",
+                        "tertiary-fixed": "#ffcfec",
+                        "surface-bright": "#faf8fd",
+                        "on-error": "#fff7f7",
+                        "on-primary-fixed": "#000000",
+                        "inverse-primary": "#8596ff",
+                        "on-primary-fixed-variant": "#001a80",
+                        "outline": "#797a82",
+                        "on-secondary": "#fbf8ff",
+                        "on-primary-container": "#001367",
+                        "error-dim": "#6b0221",
+                        "secondary-dim": "#505166",
+                        "secondary": "#5c5d72",
+                        "on-secondary-container": "#4f5065",
+                        "surface-container-highest": "#e2e2eb",
+                        "on-tertiary-fixed-variant": "#714d64",
+                        "primary-container": "#8596ff",
+                        "on-error-container": "#6e0523",
+                        "on-tertiary-container": "#67435b",
+                        "on-primary": "#faf8ff",
+                        "surface-container-low": "#f4f3f9",
+                        "on-secondary-fixed-variant": "#595a6f",
+                        "surface-container": "#eeedf4",
+                        "surface": "#faf8fd",
+                        "surface-tint": "#4456ba",
+                        "tertiary-container": "#ffcfec",
+                        "inverse-surface": "#0d0e11",
+                        "secondary-fixed-dim": "#d3d2eb",
+                        "tertiary": "#79546c",
+                        "on-tertiary": "#fff7f8",
+                        "background": "#faf8fd",
+                        "primary-fixed-dim": "#7789f0",
+                        "tertiary-dim": "#6c485f",
+                        "surface-container-high": "#e8e7ef",
+                        "tertiary-fixed-dim": "#f0c1de",
+                        "error": "#a8364b",
+                        "primary": "#4456ba",
+                        "surface-variant": "#e2e2eb",
+                        "primary-dim": "#3749ad",
+                        "on-tertiary-fixed": "#523147",
+                        "surface-dim": "#d9d9e2",
+                        "on-surface-variant": "#5d5f66"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .switch-checkbox:checked + .switch-label { background-color: #4456ba; }
+        .switch-checkbox:checked + .switch-label .switch-dot { transform: translateX(20px); background-color: #ffffff; }
+        
+        /* Material 3 custom slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #e2e2eb;
+            border-radius: 2px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #4456ba;
+            margin-top: -8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-low min-h-screen text-on-surface">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-6 h-16 w-full bg-surface dark:bg-surface-dim transition-colors">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 duration-100 hover:bg-surface-container-high p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline text-xl font-bold text-on-surface">Settings</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="active:scale-95 duration-100 hover:bg-surface-container-high p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+</div>
+</header>
+<main class="pb-24 pt-4 px-4 max-w-2xl mx-auto space-y-6">
+<!-- Section: General -->
+<section>
+<h2 class="px-4 mb-3 text-sm font-semibold uppercase tracking-wider text-outline">General</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<!-- Dark theme -->
+<div class="flex items-center justify-between h-[56px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">dark_mode</span>
+</div>
+<span class="text-sm font-medium">Dark theme</span>
+</div>
+<div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in">
+<input class="switch-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline appearance-none cursor-pointer focus:outline-none transition-all duration-200" id="dark_theme" name="dark_theme" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-200" for="dark_theme">
+<span class="switch-dot block w-6 h-6 rounded-full bg-white transition-transform duration-200 shadow-sm border border-outline/20"></span>
+</label>
+</div>
+</div>
+<!-- Scan sound -->
+<div class="flex items-center justify-between h-[56px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">volume_up</span>
+</div>
+<span class="text-sm font-medium">Scan sound</span>
+</div>
+<div class="relative inline-block w-11 h-6 align-middle select-none">
+<input checked="" class="switch-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline appearance-none cursor-pointer focus:outline-none" id="scan_sound" name="scan_sound" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer" for="scan_sound">
+<span class="switch-dot block w-6 h-6 rounded-full bg-white transition-transform duration-200 shadow-sm border border-outline/20"></span>
+</label>
+</div>
+</div>
+<!-- Vibration -->
+<div class="flex items-center justify-between h-[56px] px-4 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">vibration</span>
+</div>
+<span class="text-sm font-medium">Vibration</span>
+</div>
+<div class="relative inline-block w-11 h-6 align-middle select-none">
+<input checked="" class="switch-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline appearance-none cursor-pointer focus:outline-none" id="vibration" name="vibration" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer" for="vibration">
+<span class="switch-dot block w-6 h-6 rounded-full bg-white transition-transform duration-200 shadow-sm border border-outline/20"></span>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Scanner -->
+<section>
+<h2 class="px-4 mb-3 text-sm font-semibold uppercase tracking-wider text-outline">Scanner</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<!-- Auto-open links -->
+<div class="flex items-center justify-between h-[56px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">open_in_new</span>
+</div>
+<span class="text-sm font-medium">Auto-open links</span>
+</div>
+<div class="relative inline-block w-11 h-6 align-middle select-none">
+<input class="switch-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline appearance-none cursor-pointer focus:outline-none" id="auto_open" name="auto_open" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer" for="auto_open">
+<span class="switch-dot block w-6 h-6 rounded-full bg-white transition-transform duration-200 shadow-sm border border-outline/20"></span>
+</label>
+</div>
+</div>
+<!-- Beep on scan (Slider) -->
+<div class="flex flex-col justify-center min-h-[72px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4 mb-2">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">campaign</span>
+</div>
+<span class="text-sm font-medium">Beep volume</span>
+</div>
+<div class="pl-14 pr-4 pb-2">
+<input class="w-full h-1" max="100" min="0" type="range" value="70"/>
+</div>
+</div>
+<!-- Scan history -->
+<div class="flex items-center justify-between h-[56px] px-4 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">history</span>
+</div>
+<span class="text-sm font-medium">Scan history</span>
+</div>
+<div class="relative inline-block w-11 h-6 align-middle select-none">
+<input checked="" class="switch-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline appearance-none cursor-pointer focus:outline-none" id="scan_history_toggle" name="scan_history_toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer" for="scan_history_toggle">
+<span class="switch-dot block w-6 h-6 rounded-full bg-white transition-transform duration-200 shadow-sm border border-outline/20"></span>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Privacy & Security -->
+<section>
+<h2 class="px-4 mb-3 text-sm font-semibold uppercase tracking-wider text-outline">Privacy &amp; Security</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<!-- App lock -->
+<button class="w-full flex items-center justify-between h-[56px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">fingerprint</span>
+</div>
+<span class="text-sm font-medium">App lock</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Secure vault -->
+<button class="w-full flex items-center justify-between h-[56px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">lock</span>
+</div>
+<span class="text-sm font-medium">Secure vault</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Clear history -->
+<button class="w-full flex items-center justify-between h-[56px] px-4 active:bg-error-container/20 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-error-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-error">pixel_4_4xl_4a_5_5a_5g</span>
+</div>
+<span class="text-sm font-medium text-error">Clear history</span>
+</div>
+</button>
+</div>
+</section>
+<!-- Section: About -->
+<section>
+<h2 class="px-4 mb-3 text-sm font-semibold uppercase tracking-wider text-outline">About</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<!-- Privacy policy -->
+<button class="w-full flex items-center justify-between h-[56px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">description</span>
+</div>
+<span class="text-sm font-medium">Privacy policy</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Rate app -->
+<button class="w-full flex items-center justify-between h-[56px] px-4 border-b border-surface-variant/30 active:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">star</span>
+</div>
+<span class="text-sm font-medium">Rate app</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Version -->
+<div class="flex items-center justify-between h-[56px] px-4">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">info</span>
+</div>
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium">Version</span>
+<span class="text-xs text-outline">3.0.0</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container dark:bg-surface-container-low transition-all">
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-200 rounded-full">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label text-xs font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-200 rounded-full">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-label text-xs font-medium">Generate</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-200 rounded-full">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label text-xs font-medium">History</span>
+</button>
+<!-- Active Tab: Settings -->
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-dim text-on-primary-container dark:text-on-primary rounded-full px-5 py-1 active:scale-90 duration-200 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label text-xs font-medium">Settings</span>
+</button>
+</nav>
+<script>
+        // Simple micro-interaction for switches
+        document.querySelectorAll('.switch-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                // Future implementation: save state to localStorage
+                console.log(`${this.id} changed to ${this.checked}`);
+            });
+        });
+    </script>
+</body></html>

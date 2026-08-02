@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#faf8fd",
+                    "on-secondary-fixed": "#3d3e51",
+                    "error": "#a8364b",
+                    "background": "#faf8fd",
+                    "inverse-primary": "#8596ff",
+                    "primary": "#4456ba",
+                    "primary-container": "#8596ff",
+                    "on-background": "#303239",
+                    "surface-container-high": "#e8e7ef",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "surface-container-highest": "#e2e2eb",
+                    "surface-tint": "#4456ba",
+                    "secondary-fixed": "#e1e0f9",
+                    "on-secondary": "#fbf8ff",
+                    "surface-variant": "#e2e2eb",
+                    "outline-variant": "#b1b1ba",
+                    "tertiary": "#79546c",
+                    "error-dim": "#6b0221",
+                    "on-surface-variant": "#5d5f66",
+                    "on-surface": "#303239",
+                    "surface-container-low": "#f4f3f9",
+                    "on-error-container": "#6e0523",
+                    "secondary-fixed-dim": "#d3d2eb",
+                    "on-tertiary": "#fff7f8",
+                    "on-tertiary-container": "#67435b",
+                    "on-tertiary-fixed": "#523147",
+                    "secondary-container": "#e1e0f9",
+                    "secondary-dim": "#505166",
+                    "outline": "#797a82",
+                    "surface-dim": "#d9d9e2",
+                    "secondary": "#5c5d72",
+                    "primary-fixed": "#8596ff",
+                    "on-error": "#fff7f7",
+                    "inverse-surface": "#0d0e11",
+                    "on-secondary-container": "#4f5065",
+                    "tertiary-fixed": "#ffcfec",
+                    "surface-container": "#eeedf4",
+                    "on-primary": "#faf8ff",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "on-primary-container": "#001367",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#ffcfec",
+                    "primary-fixed-dim": "#7789f0",
+                    "tertiary-dim": "#6c485f",
+                    "primary-dim": "#3749ad",
+                    "on-primary-fixed": "#000000",
+                    "error-container": "#f97386",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "on-primary-fixed-variant": "#001a80",
+                    "surface": "#faf8fd",
+                    "inverse-on-surface": "#9d9ca1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pill-active {
+            width: 32px;
+            height: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dot-inactive {
+            width: 8px;
+            height: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Custom animation for the QR scanner icon */
+        @keyframes scan-move {
+            0%, 100% { transform: translateY(-10px); }
+            50% { transform: translateY(10px); }
+        }
+        .animate-scan {
+            animation: scan-move 3s ease-in-out infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface flex flex-col min-h-screen overflow-hidden">
+<!-- Top Action Bar -->
+<header class="flex justify-end items-center px-6 pt-12 pb-4">
+<button class="text-primary font-semibold text-sm tracking-wide px-4 py-2 hover:bg-primary/5 rounded-full transition-colors active:scale-95 duration-100">
+            Skip
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col items-center justify-center px-6 text-center">
+<!-- Illustration Area -->
+<div class="relative w-64 h-64 mb-12 flex items-center justify-center bg-primary-container/20 rounded-[48px] overflow-hidden group">
+<!-- Tonal background shapes for depth -->
+<div class="absolute -top-10 -left-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
+<div class="absolute -bottom-10 -right-10 w-40 h-40 bg-secondary-container/30 rounded-full blur-2xl"></div>
+<!-- Central Icon with floating effect -->
+<div class="z-10 bg-primary shadow-xl shadow-primary/20 w-32 h-32 rounded-[32px] flex items-center justify-center animate-scan">
+<span class="material-symbols-outlined text-on-primary text-6xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+<!-- Optional: Decorative Image / UI Context -->
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+<div class="w-full h-full bg-cover bg-center" data-alt="A sophisticated abstract digital background pattern featuring interlocking geometric lines and dots that resemble a circuit board or a futuristic scanning interface. The aesthetic is clean and professional, utilizing the indigo and off-white color palette of the QuickScan Pro app. Soft shadows and subtle light Mode highlights create a sense of depth and modern technology." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAZhZ7g6jcqcWtiNELmy9mrtvwSzF_T_uH30NZZXZWHODKAuP6e5JxWFKaZl75MS6N2D40futW3G0wF4QYKBk-eGptvwla1xWcyp3Wr79zYUzigar6INCPr6LSmg2EiZ55vCtIpBBy_ANvemtHMZ9rW7qWeWSgClsC3H3zb6300oRTViwhtnF_oamYaFNWjZg-BEjzf71KflDdqs14ojwnl4onRvshr3paPY1r1amS-cXpicguyISklnpg17684Ai6n7uc4TO7XX0s')"></div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="max-w-xs mx-auto mb-10">
+<h1 class="font-headline text-3xl font-extrabold text-on-surface mb-4 tracking-tight leading-tight">
+                Scan Any QR Code
+            </h1>
+<p class="font-body text-on-surface-variant leading-relaxed">
+                Instantly scan QR codes and barcodes with your camera. Fast, secure, and works offline.
+            </p>
+</div>
+<!-- Page Indicator -->
+<div class="flex items-center gap-2 mb-12">
+<div class="pill-active bg-primary rounded-full"></div>
+<div class="dot-inactive bg-outline-variant rounded-full"></div>
+<div class="dot-inactive bg-outline-variant rounded-full"></div>
+</div>
+</main>
+<!-- Bottom Action Group -->
+<footer class="px-6 pb-12 w-full flex flex-col items-center gap-4">
+<button class="w-full bg-primary text-on-primary font-semibold py-4 rounded-full text-lg shadow-lg shadow-primary/10 hover:bg-primary-dim transition-all active:scale-95 duration-200">
+            Get Started
+        </button>
+<button class="w-full text-primary font-semibold text-sm py-2 hover:bg-primary/5 rounded-full transition-colors active:scale-95 duration-100">
+            Already have an account? <span class="text-primary font-bold">Sign in</span>
+</button>
+</footer>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('button');
+            
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', () => {
+                    button.classList.add('scale-95');
+                });
+                button.addEventListener('touchend', () => {
+                    button.classList.remove('scale-95');
+                });
+            });
+
+            // Smooth parallax or entry animations could go here
+            const illustration = document.querySelector('.animate-scan');
+            if (illustration) {
+                window.addEventListener('mousemove', (e) => {
+                    const x = (e.clientX / window.innerWidth - 0.5) * 10;
+                    const y = (e.clientY / window.innerHeight - 0.5) * 10;
+                    illustration.style.transform = `translate(${x}px, ${y}px)`;
+                });
+            }
+        });
+    </script>
+</body></html>

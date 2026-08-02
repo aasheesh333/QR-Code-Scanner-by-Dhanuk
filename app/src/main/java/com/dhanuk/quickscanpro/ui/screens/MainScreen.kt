@@ -10,21 +10,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,8 +26,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -129,55 +121,38 @@ fun MainScreen() {
 @Composable
 private fun AppBottomBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val showBarRoutes = BottomNavItem.entries.map { it.route }
-
-    if (currentRoute == null) return
+    val currentRoute = navBackStackEntry?.destination?.route ?: return
     val routePrefix = currentRoute.split("/").first().substringBefore("?")
-    val showBarPrefixes = showBarRoutes.map { it.split("/").first() }
-    if (!showBarPrefixes.contains(routePrefix)) {
-        return
-    }
+    val showBarPrefixes = BottomNavItem.entries.map { it.route.split("/").first() }
+    if (!showBarPrefixes.contains(routePrefix)) return
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            .navigationBarsPadding()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        tonalElevation = 0.dp
     ) {
         BottomNavItem.entries.forEach { item ->
             val selected = currentRoute == item.route
-            Column(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                    .clickable {
-                        if (!selected) {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    if (!selected) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
                         }
                     }
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    item.icon,
-                    contentDescription = item.title,
-                    tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                icon = { Icon(item.icon, contentDescription = item.title) },
+                label = { Text(item.title) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    item.title,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            )
         }
     }
 }
@@ -227,6 +202,7 @@ private fun AppNavigation(
                 onOpenTimeline = { navController.navigate("timeline") },
                 onOpenTemplates = { navController.navigate("templates") },
                 onOpenLeakCheck = { navController.navigate("leak_check") },
+                onOpenAnalytics = { navController.navigate("analytics") },
                 onOpenSettings = {
                     navController.navigate(BottomNavItem.Settings.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -274,16 +250,13 @@ private fun AppNavigation(
                 }
             )
         }
-        composable(BottomNavItem.Analytics.route) {
-            AnalyticsScreen(onOpenSettings = {
-                navController.navigate(BottomNavItem.Settings.route) {
-                    launchSingleTop = true
-                }
-            })
+        composable("analytics") {
+            AnalyticsScreen()
         }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAbout = { navController.navigate("about") }
             )
         }
 

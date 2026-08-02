@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Leak Check</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter & Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#0d0e11",
+                    "outline-variant": "#b1b1ba",
+                    "on-error-container": "#6e0523",
+                    "on-tertiary-fixed": "#523147",
+                    "on-tertiary-container": "#67435b",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#a8364b",
+                    "on-secondary": "#fbf8ff",
+                    "surface": "#faf8fd",
+                    "tertiary-fixed": "#ffcfec",
+                    "inverse-primary": "#8596ff",
+                    "error-dim": "#6b0221",
+                    "surface-container-low": "#f4f3f9",
+                    "on-secondary-fixed": "#3d3e51",
+                    "on-background": "#303239",
+                    "surface-bright": "#faf8fd",
+                    "on-primary-fixed-variant": "#001a80",
+                    "surface-dim": "#d9d9e2",
+                    "inverse-on-surface": "#9d9ca1",
+                    "surface-container": "#eeedf4",
+                    "secondary-dim": "#505166",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "outline": "#797a82",
+                    "secondary-container": "#e1e0f9",
+                    "tertiary": "#79546c",
+                    "secondary-fixed": "#e1e0f9",
+                    "on-secondary-container": "#4f5065",
+                    "surface-container-high": "#e8e7ef",
+                    "secondary": "#5c5d72",
+                    "on-surface": "#303239",
+                    "secondary-fixed-dim": "#d3d2eb",
+                    "error-container": "#f97386",
+                    "on-primary": "#faf8ff",
+                    "primary-container": "#8596ff",
+                    "on-surface-variant": "#5d5f66",
+                    "background": "#faf8fd",
+                    "on-tertiary": "#fff7f8",
+                    "tertiary-container": "#ffcfec",
+                    "primary-fixed-dim": "#7789f0",
+                    "primary-dim": "#3749ad",
+                    "primary-fixed": "#8596ff",
+                    "on-primary-fixed": "#000000",
+                    "on-error": "#fff7f7",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "tertiary-dim": "#6c485f",
+                    "surface-tint": "#4456ba",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "on-primary-container": "#001367",
+                    "surface-container-highest": "#e2e2eb",
+                    "surface-variant": "#e2e2eb",
+                    "primary": "#4456ba"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom height for Android-style Top Bar */
+        .top-app-bar-height { height: 64px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center">
+<!-- Top App Bar -->
+<header class="w-full max-w-md sticky top-0 z-50 flex items-center justify-between px-4 bg-surface top-app-bar-height">
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-container-high active:scale-95 transition-all text-on-surface">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-xl font-headline font-bold tracking-tight">Leak Check</h1>
+</div>
+<div class="flex items-center">
+<button class="p-2 rounded-full hover:bg-surface-container-high active:scale-95 transition-all text-on-surface">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<main class="w-full max-w-md flex flex-col px-6 pb-12 gap-8 overflow-y-auto hide-scrollbar">
+<!-- Hero Section -->
+<section class="mt-4 flex flex-col items-center text-center">
+<div class="bg-surface-container-low p-8 rounded-[2rem] w-full flex flex-col items-center gap-4 border border-outline-variant/10 shadow-sm">
+<div class="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-4xl fill-icon">shield_person</span>
+</div>
+<div class="flex flex-col gap-1">
+<h2 class="text-2xl font-headline font-extrabold text-on-surface">Check Data Breaches</h2>
+<p class="text-on-surface-variant text-sm px-4">See if your email appeared in known data breaches and stay protected.</p>
+</div>
+</div>
+</section>
+<!-- Input Section -->
+<section class="flex flex-col gap-4">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">keyboard</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-4 bg-surface-container-lowest border-2 border-outline-variant/30 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium text-on-surface" placeholder="Enter email address" type="email"/>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 active:scale-95 hover:bg-primary-dim transition-all flex items-center justify-center gap-2">
+<span>Check Now</span>
+<span class="material-symbols-outlined text-sm">search</span>
+</button>
+</section>
+<!-- Success Result (Initially hidden or shown as a state) -->
+<section class="animate-in fade-in slide-in-from-bottom-4 duration-500" id="results">
+<div class="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-white fill-icon">check_circle</span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-emerald-900 font-bold text-lg">Good News!</h3>
+<p class="text-emerald-700 text-sm">No breaches found for this email in our database.</p>
+</div>
+</div>
+</section>
+<!-- Privacy Info -->
+<section class="bg-surface-container-high/40 p-4 rounded-2xl flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-xl">lock</span>
+<p class="text-xs text-on-secondary-fixed-variant leading-relaxed">
+                Your privacy matters. We never store your email or share it with third parties. All checks are encrypted and anonymous.
+            </p>
+</section>
+<!-- Recent Activity -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h3 class="text-sm font-bold text-on-surface uppercase tracking-wider">Recent checks</h3>
+<button class="text-xs font-semibold text-primary">Clear all</button>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Activity Row 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center justify-between border border-outline-variant/20 hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container text-xl">alternate_email</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">j***n@gmail.com</span>
+<span class="text-xs text-on-surface-variant">Oct 24, 2023</span>
+</div>
+</div>
+<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter">Safe</span>
+</div>
+<!-- Activity Row 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center justify-between border border-outline-variant/20 hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container text-xl">alternate_email</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">m***a@outlook.com</span>
+<span class="text-xs text-on-surface-variant">Oct 22, 2023</span>
+</div>
+</div>
+<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter">Safe</span>
+</div>
+</div>
+</section>
+<!-- Visual Decorative Backdrop (Optional subtle shader or pattern) -->
+<div class="fixed bottom-0 left-0 w-full h-1/2 pointer-events-none opacity-20 -z-10">
+<div class="w-full h-full bg-gradient-to-t from-primary/10 to-transparent"></div>
+</div>
+</main>
+<!-- Bottom Action Sheet Simulation (Visual Padding) -->
+<div class="h-8 w-full"></div>
+<script>
+        // Simple micro-interaction for the Check Now button
+        const checkButton = document.querySelector('button.bg-primary');
+        const resultsSection = document.getElementById('results');
+        
+        checkButton.addEventListener('click', () => {
+            checkButton.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Analyzing...</span>
+            `;
+            
+            setTimeout(() => {
+                checkButton.innerHTML = `<span>Check Now</span><span class="material-symbols-outlined text-sm">search</span>`;
+                resultsSection.classList.remove('hidden');
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }, 1500);
+        });
+    </script>
+</body></html>

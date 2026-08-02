@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Compare Codes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#fbf8ff",
+                    "on-secondary-fixed": "#3d3e51",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "error": "#a8364b",
+                    "on-tertiary-fixed": "#523147",
+                    "surface-container-highest": "#e2e2eb",
+                    "on-error-container": "#6e0523",
+                    "tertiary-container": "#ffcfec",
+                    "on-tertiary": "#fff7f8",
+                    "surface-container-high": "#e8e7ef",
+                    "primary-dim": "#3749ad",
+                    "surface": "#faf8fd",
+                    "surface-container-low": "#f4f3f9",
+                    "surface-container": "#eeedf4",
+                    "primary": "#4456ba",
+                    "secondary-fixed-dim": "#d3d2eb",
+                    "inverse-on-surface": "#9d9ca1",
+                    "error-dim": "#6b0221",
+                    "on-primary": "#faf8ff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#4456ba",
+                    "on-secondary-container": "#4f5065",
+                    "primary-fixed": "#8596ff",
+                    "outline-variant": "#b1b1ba",
+                    "outline": "#797a82",
+                    "secondary-container": "#e1e0f9",
+                    "on-surface": "#303239",
+                    "on-error": "#fff7f7",
+                    "on-tertiary-container": "#67435b",
+                    "surface-variant": "#e2e2eb",
+                    "inverse-surface": "#0d0e11",
+                    "background": "#faf8fd",
+                    "tertiary": "#79546c",
+                    "secondary": "#5c5d72",
+                    "on-primary-fixed": "#000000",
+                    "on-primary-fixed-variant": "#001a80",
+                    "on-primary-container": "#001367",
+                    "primary-container": "#8596ff",
+                    "surface-dim": "#d9d9e2",
+                    "tertiary-fixed": "#ffcfec",
+                    "tertiary-dim": "#6c485f",
+                    "on-background": "#303239",
+                    "inverse-primary": "#8596ff",
+                    "primary-fixed-dim": "#7789f0",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "on-surface-variant": "#5d5f66",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "secondary-dim": "#505166",
+                    "surface-bright": "#faf8fd",
+                    "error-container": "#f97386",
+                    "secondary-fixed": "#e1e0f9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for a cleaner feel */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e2eb; border-radius: 10px; }
+        
+        /* Animation for entrance */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center px-6 h-16 w-full sticky top-0 z-50 bg-surface">
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold font-headline text-on-surface">Compare Codes</h1>
+</div>
+<div class="flex items-center">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-primary">more_vert</span>
+</button>
+</div>
+</header>
+<main class="flex-1 px-6 py-4 overflow-y-auto space-y-6 max-w-2xl mx-auto w-full">
+<!-- Comparison Cards Row -->
+<section class="grid grid-cols-2 gap-4">
+<!-- Code 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col items-center animate-fade-in" style="animation-delay: 0.1s;">
+<span class="text-on-surface-variant font-label text-xs font-semibold mb-3 self-start">Code 1</span>
+<div class="w-24 h-24 bg-surface-container rounded-lg p-2 flex items-center justify-center mb-3">
+<img class="w-full h-full object-contain" data-alt="A clean, minimalist QR code graphic with deep indigo lines on a crisp white background. The QR code is perfectly square, professional, and centrally framed. It sits within a modern tech-focused interface context with soft studio lighting and an airy, high-end feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoc69SJ5oRD3WW1_NvzT5BdALY4lAONBu85T0uisBG4bdmCb-NYwzT87Cm9v6fFL_8NW_aLXH3Oe-MvYFZfRF7d2fKPkxRzhfuGlmgSZ4p4v74WGSEvo63SCNcJ1Si5RZ_oQAC-JHbCL9suq-tY_yysLWOXrSIBmXgDF5uWAuiv-NkWv5OI69eI34O8pKva6xKnIE7ZscZhhatRr8XGesdFlpGBDUKTfXZPd8ma2xgm1h-uaI4KZcJrIHCZHj2g-tRipQLu4d91Xw"/>
+</div>
+<div class="w-full">
+<p class="text-sm font-medium text-on-surface truncate mb-1">site-a.com</p>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[10px] font-bold">URL</span>
+</div>
+</div>
+<!-- Code 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col items-center animate-fade-in" style="animation-delay: 0.2s;">
+<span class="text-on-surface-variant font-label text-xs font-semibold mb-3 self-start">Code 2</span>
+<div class="w-24 h-24 bg-surface-container rounded-lg p-2 flex items-center justify-center mb-3">
+<img class="w-full h-full object-contain" data-alt="A distinct second QR code pattern with slightly different internal geometric blocks, rendered in a professional indigo and white style. The image is bright and clean, emphasizing a secure and verified digital scanning environment. The lighting is balanced and neutral, fitting a premium software application aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0jfUIZUcozGVl9IASijEs2Q9Z0m0CbatGh18hKnp9kxFVX0dPXIsz8KFZMM2TeECYc8Gs-DVz_yWi-r36jry_jUX_GzTsULJYL5ELgElwZYb7J_9qRsOgs9Zxe-W8zXiLJzw0uh276apbeMfC79MBD4IzDeXqK8fXt9T5jcpIjkK2riQNKP_vHwbHiUkJNWH0DR_DpcOBgbZBbC0ZF6UHDY-O_DeZs-Ci0ESrdkFk-rYNbZgyhFjLM3bRYENsJE7QzONzQKd3kLI"/>
+</div>
+<div class="w-full">
+<p class="text-sm font-medium text-on-surface truncate mb-1">site-b.com</p>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[10px] font-bold">URL</span>
+</div>
+</div>
+</section>
+<!-- Comparison Status Card -->
+<div class="bg-primary-container/10 border-l-4 border-primary rounded-xl p-4 flex gap-4 items-start animate-fade-in" style="animation-delay: 0.3s;">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-container">info</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-on-surface">Different Content</h3>
+<p class="text-sm text-on-surface-variant">These codes point to different destinations. Ensure you are scanning the correct merchant or link.</p>
+</div>
+</div>
+<!-- Detailed Comparison List -->
+<section class="space-y-4 animate-fade-in" style="animation-delay: 0.4s;">
+<h2 class="text-sm font-bold text-on-surface-variant uppercase tracking-wider px-1">Details</h2>
+<div class="bg-surface-container-low rounded-2xl overflow-hidden divide-y divide-outline-variant/30">
+<!-- Type Row -->
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">category</span>
+<span class="text-sm font-medium text-on-surface-variant">Type</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-sm text-on-surface font-semibold">URL</span>
+<span class="text-xs text-outline">vs</span>
+<span class="text-sm text-on-surface font-semibold">URL</span>
+</div>
+</div>
+<!-- Safety Row -->
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error">verified_user</span>
+<span class="text-sm font-medium text-on-surface-variant">Safety</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-sm text-on-surface font-semibold">Safe</span>
+</div>
+<span class="text-xs text-outline">vs</span>
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-sm text-on-surface font-semibold">Safe</span>
+</div>
+</div>
+</div>
+<!-- Date Row -->
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">calendar_today</span>
+<span class="text-sm font-medium text-on-surface-variant">Scanned</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-sm text-on-surface font-semibold">Today</span>
+<span class="text-xs text-outline">vs</span>
+<span class="text-sm text-on-surface font-semibold">Yesterday</span>
+</div>
+</div>
+<!-- Destination Row (Extra for clarity) -->
+<div class="p-4 space-y-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">link</span>
+<span class="text-sm font-medium text-on-surface-variant">Destination</span>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-1">
+<div class="bg-surface-container rounded-lg p-2 text-[11px] font-mono break-all text-on-surface-variant">
+                            https://site-a.com/promo/ref?id=492
+                        </div>
+<div class="bg-surface-container rounded-lg p-2 text-[11px] font-mono break-all text-on-surface-variant">
+                            https://site-b.com/app/login?v=2
+                        </div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Action Buttons -->
+<footer class="p-6 bg-surface border-t border-surface-container-high sticky bottom-0 animate-fade-in" style="animation-delay: 0.5s;">
+<div class="flex flex-col gap-3 max-w-2xl mx-auto w-full">
+<button class="w-full h-12 flex items-center justify-center rounded-xl border-2 border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-all active:scale-[0.98]">
+                Scan Another
+            </button>
+<button class="w-full h-14 flex items-center justify-center rounded-xl bg-primary text-on-primary font-bold text-base shadow-sm hover:bg-primary-dim transition-all active:scale-[0.98]">
+                Done
+            </button>
+</div>
+</footer>
+<script>
+        // Micro-interactions for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // Potential ripple or logic here
+                console.log('Button clicked:', this.innerText || 'Icon');
+            });
+        });
+
+        // Simple scroll shadow logic for top bar
+        const main = document.querySelector('main');
+        const header = document.querySelector('header');
+        main.addEventListener('scroll', () => {
+            if (main.scrollTop > 10) {
+                header.classList.add('shadow-md');
+                header.classList.add('bg-surface-bright');
+            } else {
+                header.classList.remove('shadow-md');
+                header.classList.remove('bg-surface-bright');
+            }
+        });
+    </script>
+</body></html>

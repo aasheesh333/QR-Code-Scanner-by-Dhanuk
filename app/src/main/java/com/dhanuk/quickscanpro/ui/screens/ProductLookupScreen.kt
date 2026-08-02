@@ -54,7 +54,7 @@ fun ProductLookupScreen(barcode: String, onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Product", fontWeight = FontWeight.Bold) },
+                title = { Text("Product Lookup", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

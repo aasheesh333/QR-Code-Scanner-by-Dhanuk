@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Create QR Code</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#b1b1ba",
+                    "error-dim": "#6b0221",
+                    "on-surface": "#303239",
+                    "surface-container-high": "#e8e7ef",
+                    "secondary": "#5c5d72",
+                    "outline": "#797a82",
+                    "on-secondary-fixed": "#3d3e51",
+                    "inverse-surface": "#0d0e11",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed": "#000000",
+                    "tertiary": "#79546c",
+                    "tertiary-fixed": "#ffcfec",
+                    "on-tertiary": "#fff7f8",
+                    "on-error": "#fff7f7",
+                    "surface-container-highest": "#e2e2eb",
+                    "secondary-dim": "#505166",
+                    "primary-fixed-dim": "#7789f0",
+                    "on-surface-variant": "#5d5f66",
+                    "on-primary-fixed-variant": "#001a80",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "secondary-fixed-dim": "#d3d2eb",
+                    "surface-tint": "#4456ba",
+                    "surface-container": "#eeedf4",
+                    "on-error-container": "#6e0523",
+                    "on-tertiary-fixed": "#523147",
+                    "tertiary-dim": "#6c485f",
+                    "secondary-container": "#e1e0f9",
+                    "primary-dim": "#3749ad",
+                    "error": "#a8364b",
+                    "tertiary-container": "#ffcfec",
+                    "surface-container-low": "#f4f3f9",
+                    "inverse-primary": "#8596ff",
+                    "secondary-fixed": "#e1e0f9",
+                    "background": "#faf8fd",
+                    "on-primary": "#faf8ff",
+                    "primary-container": "#8596ff",
+                    "surface-dim": "#d9d9e2",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "on-primary-container": "#001367",
+                    "primary": "#4456ba",
+                    "surface-variant": "#e2e2eb",
+                    "surface": "#faf8fd",
+                    "on-background": "#303239",
+                    "surface-bright": "#faf8fd",
+                    "inverse-on-surface": "#9d9ca1",
+                    "error-container": "#f97386",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "primary-fixed": "#8596ff",
+                    "on-tertiary-container": "#67435b",
+                    "on-secondary": "#fbf8ff",
+                    "on-secondary-container": "#4f5065"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-6 h-16 w-full bg-surface dark:bg-surface-dim transition-colors">
+<div class="flex items-center gap-4">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline text-xl font-bold text-on-surface dark:text-on-surface">Create QR Code</h1>
+</div>
+<!-- No trailing actions as per prompt -->
+</header>
+<main class="px-6 py-4 max-w-2xl mx-auto space-y-6">
+<!-- QR Type Selection -->
+<section class="space-y-3">
+<h2 class="text-sm font-medium text-on-surface-variant px-1 uppercase tracking-wider">Type</h2>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+<!-- URL (Selected) -->
+<button class="flex-none px-5 py-2 rounded-full bg-primary-container text-on-primary-container font-medium border border-transparent shadow-sm whitespace-nowrap active:scale-95 transition-all">
+                    URL
+                </button>
+<button class="flex-none px-5 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant font-medium border border-outline-variant/30 whitespace-nowrap active:scale-95 transition-all">
+                    Text
+                </button>
+<button class="flex-none px-5 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant font-medium border border-outline-variant/30 whitespace-nowrap active:scale-95 transition-all">
+                    WiFi
+                </button>
+<button class="flex-none px-5 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant font-medium border border-outline-variant/30 whitespace-nowrap active:scale-95 transition-all">
+                    Contact
+                </button>
+<button class="flex-none px-5 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant font-medium border border-outline-variant/30 whitespace-nowrap active:scale-95 transition-all">
+                    Phone
+                </button>
+<button class="flex-none px-5 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant font-medium border border-outline-variant/30 whitespace-nowrap active:scale-95 transition-all">
+                    Email
+                </button>
+</div>
+</section>
+<!-- Input Section -->
+<section class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/20 shadow-sm space-y-4">
+<div class="space-y-1.5">
+<label class="text-sm font-medium text-on-surface-variant px-1">Enter URL</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">link</span>
+<input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant/50 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-outline/60" placeholder="https://example.com" type="text"/>
+</div>
+</div>
+</section>
+<!-- QR Preview Section -->
+<section class="flex flex-col items-center justify-center py-8">
+<div class="relative w-64 h-64 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/10 flex items-center justify-center group overflow-hidden">
+<!-- QR Code Placeholder -->
+<div class="w-48 h-48 bg-primary/10 rounded-xl flex items-center justify-center p-4">
+<div class="w-full h-full relative" id="qr-placeholder">
+<svg class="w-full h-full text-primary" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M3 3H9V9H3V3ZM3 15H9V21H3V15ZM15 3H21V9H15V3ZM15 15H17V17H15V15ZM17 17H19V19H17V17ZM19 19H21V21H19V19ZM21 15H19V17H21V15ZM17 19H15V21H17V19ZM15 11H17V13H15V11ZM17 9H19V11H17V9ZM19 7H21V9H19V7ZM21 3V5H19V7H17V5H15V3H21Z" fill="currentColor" fill-rule="evenodd"></path>
+<rect fill="currentColor" height="2" width="2" x="5" y="5"></rect>
+<rect fill="currentColor" height="2" width="2" x="17" y="5"></rect>
+<rect fill="currentColor" height="2" width="2" x="5" y="17"></rect>
+</svg>
+</div>
+</div>
+<!-- Status Overlay (Simulated) -->
+<div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="bg-primary text-on-primary px-3 py-1.5 rounded-full text-xs font-medium shadow-md">Preview</span>
+</div>
+</div>
+<p class="mt-4 text-sm text-on-surface-variant font-medium">Scan to test before saving</p>
+</section>
+<!-- Action Buttons -->
+<section class="space-y-4">
+<button class="w-full bg-primary text-on-primary py-4 rounded-xl font-bold text-lg shadow-md hover:bg-primary-dim active:scale-[0.98] transition-all duration-200">
+                Generate QR Code
+            </button>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-2 py-3.5 border border-outline text-primary rounded-xl font-semibold hover:bg-primary/5 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                    Save Image
+                </button>
+<button class="flex items-center justify-center gap-2 py-3.5 border border-outline text-primary rounded-xl font-semibold hover:bg-primary/5 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">share</span>
+                    Share
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container dark:bg-surface-container-low shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<!-- Home -->
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-secondary-dim transition-all active:scale-90 duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label text-xs font-medium mt-1">Home</span>
+</button>
+<!-- Generate (Active) -->
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-dim text-on-primary-container dark:text-on-primary rounded-full px-5 py-1 active:scale-90 duration-200 transition-all">
+<span class="material-symbols-outlined" data-icon="add_box" style="font-variation-settings: 'FILL' 1;">add_box</span>
+<span class="font-label text-xs font-medium mt-1">Generate</span>
+</button>
+<!-- History -->
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-secondary-dim transition-all active:scale-90 duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label text-xs font-medium mt-1">History</span>
+</button>
+<!-- Settings -->
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-secondary-dim transition-all active:scale-90 duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label text-xs font-medium mt-1">Settings</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction for input focus
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.parentElement.classList.add('ring-2', 'ring-primary/20');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.parentElement.classList.remove('ring-2', 'ring-primary/20');
+            });
+        });
+
+        // Simple button active state visual feedback handler (built-in via Tailwind but script for extra logic)
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Future logic for generation could go here
+            });
+        });
+    </script>
+</body></html>

@@ -92,13 +92,15 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     if (pagerState.currentPage < pages.lastIndex) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                     else onFinished()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 shape = RoundedCornerShape(50)
             ) {
-                Text(if (pagerState.currentPage < pages.lastIndex) "Next" else "Get Started", style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600, letterSpacing = 0.01.sp, lineHeight = 20.sp))
-                Spacer(Modifier.width(8.dp))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(
+                    if (pagerState.currentPage < pages.lastIndex) "Next" else "Get Started",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -106,19 +108,41 @@ fun OnboardingScreen(onFinished: () -> Unit) {
 
 @Composable
 private fun OnboardingPageView(page: OnboardingPage) {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Box(modifier = Modifier.size(280.dp), contentAlignment = Alignment.Center) {
-            Box(modifier = Modifier.fillMaxSize().clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)))
-            Box(
-                modifier = Modifier.size(192.dp).clip(RoundedCornerShape(32.dp)).background(MaterialTheme.colorScheme.surfaceContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(page.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(80.dp))
-            }
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Tonal rounded square illustration (Stitch v3 style)
+        Box(
+            modifier = Modifier
+                .size(240.dp)
+                .clip(RoundedCornerShape(48.dp))
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                page.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(96.dp)
+            )
         }
-        Spacer(Modifier.height(24.dp))
-        Text(page.title, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.W700, fontSize = 24.sp, letterSpacing = (-0.01).sp, lineHeight = 32.sp), color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(8.dp))
-        Text(page.body, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.W400, fontSize = 18.sp, lineHeight = 26.sp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
+        Spacer(Modifier.height(40.dp))
+        Text(
+            page.title,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            page.body,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
     }
 }

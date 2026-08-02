@@ -14,35 +14,40 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesomeMotion
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Contacts
-import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -63,37 +68,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathFillType
-
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
-import com.dhanuk.quickscanpro.database.ScanResult
-import com.dhanuk.quickscanpro.ui.composables.ScanFrame
 import com.dhanuk.quickscanpro.util.ScanFeedback
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 private const val TAG = "HomeScreen"
 
@@ -107,16 +97,14 @@ fun HomeScreen(
     onOpenTimeline: () -> Unit = {},
     onOpenTemplates: () -> Unit,
     onOpenLeakCheck: () -> Unit,
+    onOpenAnalytics: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenGenerate: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val historyVm: HistoryViewModel = viewModel()
     val settingsVm: SettingsViewModel = viewModel()
-    val recent by historyVm.history.collectAsState()
     val soundEnabled by settingsVm.soundEnabled.collectAsState()
     val vibrateEnabled by settingsVm.vibrateEnabled.collectAsState()
-    val recent1 = recent.firstOrNull()
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -162,108 +150,224 @@ fun HomeScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        CameraViewfinder(
-            hasCameraPermission = hasCameraPermission,
-            showRationale = showRationale,
-            onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
-            onOpenAppSettings = {
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
-                }
-                context.startActivity(intent)
-            },
-            onScan = onScanWithFeedback,
-            onBatch = onOpenBatch,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        StitchBottomSheet(
-            recent = recent1,
-            onGenerate = onOpenGenerate,
-            onHistory = onViewAllHistory,
-            onTemplates = onOpenTemplates,
-            onLeak = onOpenLeakCheck,
-            onRecentClick = onViewAllHistory,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
-
-        QuickScanHeader(
-            onOpenSettings = onOpenSettings,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
-    }
-}
-
-@Composable
-private fun QuickScanHeader(
-    onOpenSettings: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+        // ── Top app bar ──
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp)
+                .height(64.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 Icons.Filled.QrCodeScanner,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(26.dp)
             )
+            Spacer(Modifier.width(12.dp))
             Text(
-                text = "QuickScan Pro",
-                style = MaterialTheme.typography.titleMedium,
+                "QuickScan Pro",
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
             )
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    Icons.Filled.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
-        IconButton(onClick = onOpenSettings) {
-            Icon(
-                Icons.Filled.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.height(8.dp))
+
+            // ── Camera viewfinder card with floating scan pill ──
+            Box {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(3f / 4f)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(MaterialTheme.colorScheme.inverseSurface)
+                ) {
+                    if (hasCameraPermission) {
+                        CameraPreview(
+                            onScan = onScanWithFeedback,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        ScanFrameOverlay(Modifier.fillMaxSize())
+                        // Center hint pill
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 24.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color.Black.copy(alpha = 0.4f))
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                "Center QR code in frame",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White
+                            )
+                        }
+                    } else {
+                        PermissionPlaceholder(
+                            showRationale = showRationale,
+                            onRequestPermission = { permLauncher.launch(Manifest.permission.CAMERA) },
+                            onOpenAppSettings = {
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", context.packageName, null)
+                                }
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
+                }
+
+                // Floating "Tap to Scan" pill overlapping bottom of viewfinder
+                Button(
+                    onClick = { if (!hasCameraPermission) permLauncher.launch(Manifest.permission.CAMERA) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .offset(y = 28.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                ) {
+                    Icon(Icons.Filled.CenterFocusStrong, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Tap to Scan", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                }
+            }
+
+            Spacer(Modifier.height(56.dp))
+
+            // ── Quick actions row: Flash / Gallery / History ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                QuickAction(icon = Icons.Filled.FlashOn, label = "Flash", onClick = onOpenBatch)
+                QuickAction(icon = Icons.Filled.Image, label = "Gallery", onClick = onOpenTemplates)
+                QuickAction(icon = Icons.Filled.History, label = "History", onClick = onViewAllHistory)
+            }
+
+            Spacer(Modifier.height(28.dp))
+
+            // ── Pro Tip card ──
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Filled.Lightbulb,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(Modifier.width(16.dp))
+                Column {
+                    Text(
+                        "Pro Tip",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "Ensure enough light is on the code for faster scanning.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-private fun CameraViewfinder(
-    hasCameraPermission: Boolean,
-    showRationale: Boolean,
-    onRequestPermission: () -> Unit,
-    onOpenAppSettings: () -> Unit,
+private fun QuickAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun CameraPreview(
     onScan: (String) -> Unit,
-    onBatch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor = remember(context) { ContextCompat.getMainExecutor(context) }
     val analyzer = remember(onScan) { BarcodeAnalyzer(onScan) }
-    var flashEnabled by rememberSaveable { mutableStateOf(false) }
-    var camera by remember { mutableStateOf<Camera?>(null) }
-    val previewView = remember { PreviewView(context).apply {
-        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-        scaleType = PreviewView.ScaleType.FILL_CENTER
-    } }
-
-    DisposableEffect(lifecycleOwner, hasCameraPermission) {
-        if (!hasCameraPermission) {
-            return@DisposableEffect onDispose {}
+    val previewView = remember {
+        PreviewView(context).apply {
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            scaleType = PreviewView.ScaleType.FILL_CENTER
         }
+    }
+
+    DisposableEffect(lifecycleOwner) {
         val future = ProcessCameraProvider.getInstance(context)
         val listener = Runnable {
             val provider = try { future.get() } catch (e: Exception) {
@@ -279,12 +383,11 @@ private fun CameraViewfinder(
                 .also { it.setAnalyzer(executor, analyzer) }
             try {
                 provider.unbindAll()
-                camera = provider.bindToLifecycle(
+                provider.bindToLifecycle(
                     lifecycleOwner,
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     preview, analysis
                 )
-                camera?.cameraControl?.enableTorch(flashEnabled)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to bind camera lifecycle", e)
             }
@@ -294,7 +397,6 @@ private fun CameraViewfinder(
         onDispose {
             try {
                 analyzer.close()
-                camera?.cameraControl?.enableTorch(false)
                 val provider = try { future.get() } catch (_: Exception) { null }
                 provider?.unbindAll()
             } catch (e: Exception) {
@@ -303,360 +405,116 @@ private fun CameraViewfinder(
         }
     }
 
-    Box(
-        modifier = modifier.background(Color.Black)
-    ) {
-        if (hasCameraPermission) {
-            AndroidView(
-                factory = { previewView },
-                modifier = Modifier.fillMaxSize()
-            )
-
-            ScanOverlayWithCutout(modifier = Modifier.fillMaxSize())
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 40.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                ScanFrame(
-                    modifier = Modifier.fillMaxWidth(),
-                    aspectRatio = 1f
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(top = 64.dp, end = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                GlassCircleButton(
-                    onClick = {
-                        flashEnabled = !flashEnabled
-                        camera?.cameraControl?.enableTorch(flashEnabled)
-                    },
-                    icon = Icons.Filled.FlashOn,
-                    contentDescription = "Flash"
-                )
-                GlassCircleButton(
-                    onClick = onBatch,
-                    icon = Icons.Filled.AutoAwesomeMotion,
-                    contentDescription = "Batch scan"
-                )
-            }
-
-            Button(
-                onClick = { if (!hasCameraPermission) onRequestPermission() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 40.dp),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Icon(Icons.Filled.QrCode, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Scan Now", style = MaterialTheme.typography.labelLarge)
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Filled.Security,
-                        contentDescription = "Camera",
-                        tint = Color.Black,
-                        modifier = Modifier.padding(14.dp)
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = if (showRationale)
-                        "Camera access needed"
-                    else "Grant camera permission",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = if (showRationale)
-                        "QuickScan needs your camera to scan QR codes and barcodes."
-                    else "Allow camera access to start scanning.",
-                    color = Color.White.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(20.dp))
-                Button(
-                    onClick = onRequestPermission,
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("Grant permission", style = MaterialTheme.typography.labelLarge)
-                }
-                if (!showRationale) {
-                    Spacer(Modifier.height(8.dp))
-                    TextButton(onClick = onOpenAppSettings) {
-                        Text(
-                            "Open app settings",
-                            color = Color.White.copy(alpha = 0.8f),
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                }
-            }
-        }
-    }
+    AndroidView(factory = { previewView }, modifier = modifier)
 }
 
 @Composable
-private fun ScanOverlayWithCutout(modifier: Modifier = Modifier) {
-    val density = LocalDensity.current
-    val cornerRadius = with(density) { 20.dp.toPx() }
-    Canvas(modifier = modifier) {
-        val canvasWidth = size.width
-        val canvasHeight = size.height
-        val scanSize = minOf(canvasWidth * 0.7f, with(density) { 300.dp.toPx() })
-        val left = (canvasWidth - scanSize) / 2f
-        val top = (canvasHeight - scanSize) / 2f
-        val scanRect = Rect(left, top, left + scanSize, top + scanSize)
-
-        val path = Path().apply {
-            addRect(Rect(Offset.Zero, size))
-            addRoundRect(RoundRect(scanRect, CornerRadius(cornerRadius, cornerRadius)))
-            fillType = PathFillType.EvenOdd
-        }
-        drawPath(path, Color.Black.copy(alpha = 0.8f))
-    }
-}
-
-@Composable
-private fun GlassCircleButton(
-    onClick: () -> Unit,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    contentDescription: String?
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.2f))
-            .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            icon,
-            contentDescription = contentDescription,
-            tint = Color.White,
-            modifier = Modifier.size(24.dp)
-        )
-    }
-}
-
-@Composable
-private fun StitchBottomSheet(
-    recent: ScanResult?,
-    onGenerate: () -> Unit,
-    onHistory: () -> Unit,
-    onTemplates: () -> Unit,
-    onLeak: () -> Unit,
-    onRecentClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .shadow(8.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 20.dp)
-            .padding(top = 8.dp, bottom = 12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .width(48.dp)
-                .height(4.dp)
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                .align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        QuickTilesRow(
-            onGenerate = onGenerate,
-            onHistory = onHistory,
-            onTemplates = onTemplates,
-            onLeak = onLeak
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        RecentScanSnippet(recent, onRecentClick)
-    }
-}
-
-@Composable
-private fun QuickTilesRow(
-    onGenerate: () -> Unit,
-    onHistory: () -> Unit,
-    onTemplates: () -> Unit,
-    onLeak: () -> Unit
-) {
-    val tiles = listOf(
-        Triple("Generate QR", Icons.Filled.QrCode, onGenerate),
-        Triple("History", Icons.Filled.History, onHistory),
-        Triple("Templates", Icons.Filled.Dashboard, onTemplates),
-        Triple("Leak Check", Icons.Filled.Security, onLeak)
+private fun ScanFrameOverlay(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "scanline")
+    val lineProgress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scanline"
     )
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        tiles.forEach { (title, icon, onClick) ->
-            QuickTile(title, icon, onClick, Modifier.weight(1f))
+
+    Box(modifier = modifier.padding(40.dp)) {
+        // Corner brackets
+        val bracketColor = MaterialTheme.colorScheme.primary
+        val bracketLength = 40.dp
+        val bracketStroke = 4.dp
+
+        // Top-left
+        Box(Modifier.align(Alignment.TopStart)) {
+            Box(Modifier.width(bracketLength).height(bracketStroke).clip(RoundedCornerShape(2.dp)).background(bracketColor))
+            Box(Modifier.width(bracketStroke).height(bracketLength).clip(RoundedCornerShape(2.dp)).background(bracketColor))
         }
+        // Top-right
+        Box(Modifier.align(Alignment.TopEnd)) {
+            Box(Modifier.align(Alignment.TopEnd).width(bracketLength).height(bracketStroke).clip(RoundedCornerShape(2.dp)).background(bracketColor))
+            Box(Modifier.align(Alignment.TopEnd).width(bracketStroke).height(bracketLength).clip(RoundedCornerShape(2.dp)).background(bracketColor))
+        }
+        // Bottom-left
+        Box(Modifier.align(Alignment.BottomStart)) {
+            Box(Modifier.align(Alignment.BottomStart).width(bracketLength).height(bracketStroke).clip(RoundedCornerShape(2.dp)).background(bracketColor))
+            Box(Modifier.align(Alignment.BottomStart).width(bracketStroke).height(bracketLength).clip(RoundedCornerShape(2.dp)).background(bracketColor))
+        }
+        // Bottom-right
+        Box(Modifier.align(Alignment.BottomEnd)) {
+            Box(Modifier.align(Alignment.BottomEnd).width(bracketLength).height(bracketStroke).clip(RoundedCornerShape(2.dp)).background(bracketColor))
+            Box(Modifier.align(Alignment.BottomEnd).width(bracketStroke).height(bracketLength).clip(RoundedCornerShape(2.dp)).background(bracketColor))
+        }
+
+        // Animated scan line
+        BoxWithConstraintsScope(lineProgress)
     }
 }
 
 @Composable
-private fun QuickTile(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(12.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Text(
-            title,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-private fun RecentScanSnippet(scan: ScanResult?, onClick: () -> Unit) {
-    if (scan == null) {
+private fun BoxWithConstraintsScope(progress: Float) {
+    androidx.compose.foundation.layout.BoxWithConstraints {
+        val travel = maxHeight - 8.dp
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                .padding(12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "No scans yet - point your camera at a QR code",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-        return
-    }
-    val ts = remember(scan.id) {
-        SimpleDateFormat("MMM d, HH:mm", Locale.getDefault()).format(Date(scan.timestamp))
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Filled.Contacts,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = scan.content.take(50),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "Scanned $ts",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Icon(
-            Icons.Filled.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline
+                .height(4.dp)
+                .offset(y = travel * progress)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
         )
+    }
+}
+
+@Composable
+private fun PermissionPlaceholder(
+    showRationale: Boolean,
+    onRequestPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Filled.QrCodeScanner,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = if (showRationale) "Camera access needed" else "Grant camera permission",
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "QuickScan needs your camera to scan QR codes and barcodes.",
+            color = Color.White.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(20.dp))
+        Button(
+            onClick = onRequestPermission,
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text("Grant permission")
+        }
+        if (!showRationale) {
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = onOpenAppSettings) {
+                Text("Open app settings", color = Color.White.copy(alpha = 0.8f))
+            }
+        }
     }
 }

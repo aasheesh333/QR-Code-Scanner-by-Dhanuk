@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#a8364b",
+                    "surface-tint": "#4456ba",
+                    "secondary-container": "#e1e0f9",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "tertiary-container": "#ffcfec",
+                    "on-secondary": "#fbf8ff",
+                    "primary": "#4456ba",
+                    "secondary-fixed-dim": "#d3d2eb",
+                    "inverse-on-surface": "#9d9ca1",
+                    "on-secondary-container": "#4f5065",
+                    "on-secondary-fixed": "#3d3e51",
+                    "on-tertiary-fixed": "#523147",
+                    "on-tertiary": "#fff7f8",
+                    "primary-fixed": "#8596ff",
+                    "on-surface": "#303239",
+                    "primary-fixed-dim": "#7789f0",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#001a80",
+                    "on-primary-fixed": "#000000",
+                    "background": "#faf8fd",
+                    "on-error": "#fff7f7",
+                    "surface-variant": "#e2e2eb",
+                    "secondary-fixed": "#e1e0f9",
+                    "primary-container": "#8596ff",
+                    "surface-bright": "#faf8fd",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "tertiary": "#79546c",
+                    "secondary-dim": "#505166",
+                    "tertiary-fixed": "#ffcfec",
+                    "surface-container-high": "#e8e7ef",
+                    "inverse-primary": "#8596ff",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "surface-dim": "#d9d9e2",
+                    "primary-dim": "#3749ad",
+                    "outline": "#797a82",
+                    "on-error-container": "#6e0523",
+                    "tertiary-dim": "#6c485f",
+                    "outline-variant": "#b1b1ba",
+                    "error-dim": "#6b0221",
+                    "surface-container-low": "#f4f3f9",
+                    "inverse-surface": "#0d0e11",
+                    "surface": "#faf8fd",
+                    "surface-container": "#eeedf4",
+                    "on-primary": "#faf8ff",
+                    "surface-container-highest": "#e2e2eb",
+                    "error-container": "#f97386",
+                    "on-background": "#303239",
+                    "secondary": "#5c5d72",
+                    "on-tertiary-container": "#67435b",
+                    "on-surface-variant": "#5d5f66",
+                    "on-primary-container": "#001367"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface sticky top-0 z-40 w-full flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-2xl">analytics</span>
+<h1 class="text-xl font-bold tracking-tight text-on-surface font-headline">Analytics</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">calendar_today</span>
+</button>
+</header>
+<main class="px-6 py-4 space-y-6 max-w-2xl mx-auto">
+<!-- KPI Section -->
+<section class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-6 px-6">
+<!-- Total Scans -->
+<div class="min-w-[160px] flex-1 bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-container">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-on-primary-container text-xl">qr_code</span>
+</div>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider">Total Scans</p>
+<h3 class="text-2xl font-bold text-on-surface mt-1">1,248</h3>
+</div>
+<!-- Generated -->
+<div class="min-w-[160px] flex-1 bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-container">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-on-secondary-container text-xl">add_box</span>
+</div>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider">Generated</p>
+<h3 class="text-2xl font-bold text-on-surface mt-1">356</h3>
+</div>
+<!-- This Week -->
+<div class="min-w-[160px] flex-1 bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-container">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-on-tertiary-container text-xl">trending_up</span>
+</div>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider">This Week</p>
+<h3 class="text-2xl font-bold text-on-surface mt-1">89</h3>
+</div>
+</section>
+<!-- Weekly Activity Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-surface-container">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-base font-bold text-on-surface">Weekly Activity</h2>
+<span class="text-xs font-medium text-primary bg-primary-container/20 px-2 py-1 rounded-full">+12% vs last week</span>
+</div>
+<div class="flex items-end justify-between h-40 gap-2">
+<!-- Mon -->
+<div class="flex flex-col items-center flex-1 gap-2 group">
+<div class="w-full bg-surface-container rounded-t-lg transition-all duration-300 group-hover:bg-primary/40" style="height: 40%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Mon</span>
+</div>
+<!-- Tue -->
+<div class="flex flex-col items-center flex-1 gap-2 group">
+<div class="w-full bg-surface-container rounded-t-lg transition-all duration-300 group-hover:bg-primary/40" style="height: 65%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Tue</span>
+</div>
+<!-- Wed (HIGHLIGHTED) -->
+<div class="flex flex-col items-center flex-1 gap-2 group">
+<div class="w-full bg-primary rounded-t-lg shadow-md transition-all duration-300" style="height: 90%"></div>
+<span class="text-[10px] font-bold text-primary uppercase">Wed</span>
+</div>
+<!-- Thu -->
+<div class="flex flex-col items-center flex-1 gap-2 group">
+<div class="w-full bg-surface-container rounded-t-lg transition-all duration-300 group-hover:bg-primary/40" style="height: 55%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Thu</span>
+</div>
+<!-- Fri -->
+<div class="flex flex-col items-center flex-1 gap-2 group">
+<div class="w-full bg-surface-container rounded-t-lg transition-all duration-300 group-hover:bg-primary/40" style="height: 75%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Fri</span>
+</div>
+<!-- Sat -->
+<div class="flex flex-col items-center flex-1 gap-2 group">
+<div class="w-full bg-surface-container rounded-t-lg transition-all duration-300 group-hover:bg-primary/40" style="height: 30%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Sat</span>
+</div>
+<!-- Sun -->
+<div class="flex flex-col items-center flex-1 gap-2 group">
+<div class="w-full bg-surface-container rounded-t-lg transition-all duration-300 group-hover:bg-primary/40" style="height: 45%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Sun</span>
+</div>
+</div>
+</section>
+<!-- Breakdown & Activity Grid (Asymmetric) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Scan Types Breakdown Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-surface-container">
+<h2 class="text-base font-bold text-on-surface mb-6">Scan Types</h2>
+<div class="space-y-5">
+<div>
+<div class="flex justify-between text-xs font-bold text-on-surface-variant mb-2">
+<span>URL</span>
+<span>45%</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-700" style="width: 45%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold text-on-surface-variant mb-2">
+<span>WiFi</span>
+<span>25%</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full transition-all duration-700" style="width: 25%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold text-on-surface-variant mb-2">
+<span>Text</span>
+<span>20%</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed rounded-full transition-all duration-700" style="width: 20%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold text-on-surface-variant mb-2">
+<span>Contact</span>
+<span>10%</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline-variant rounded-full transition-all duration-700" style="width: 10%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Activity Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-surface-container">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-base font-bold text-on-surface">Recent Activity</h2>
+<button class="text-xs font-bold text-primary px-2 py-1 hover:bg-primary/5 rounded-lg transition-colors">View All</button>
+</div>
+<div class="space-y-1">
+<!-- Row 1 -->
+<div class="flex items-center gap-4 py-3 border-b border-surface-container last:border-0 hover:bg-surface-container-low/50 px-2 -mx-2 rounded-xl transition-colors">
+<div class="w-10 h-10 rounded-xl bg-primary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">link</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">https://google.com</p>
+<p class="text-xs text-on-surface-variant">2 hours ago</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-sm">chevron_right</span>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center gap-4 py-3 border-b border-surface-container last:border-0 hover:bg-surface-container-low/50 px-2 -mx-2 rounded-xl transition-colors">
+<div class="w-10 h-10 rounded-xl bg-secondary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-xl">wifi</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Home_Office_5G</p>
+<p class="text-xs text-on-surface-variant">Yesterday</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-sm">chevron_right</span>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center gap-4 py-3 border-b border-surface-container last:border-0 hover:bg-surface-container-low/50 px-2 -mx-2 rounded-xl transition-colors">
+<div class="w-10 h-10 rounded-xl bg-tertiary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-xl">description</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Meeting notes</p>
+<p class="text-xs text-on-surface-variant">3 days ago</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-sm">chevron_right</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Atmospheric Visual Element (Light-mode gradient/shape) -->
+<div class="relative h-32 rounded-3xl overflow-hidden bg-primary-container/20 border border-primary/10 flex items-center px-8">
+<div class="z-10">
+<p class="text-primary font-bold text-lg leading-tight">Export your monthly<br/>performance report.</p>
+<button class="mt-2 text-xs font-bold text-white bg-primary px-4 py-2 rounded-full shadow-lg shadow-primary/20 active:scale-90 transition-transform">Download CSV</button>
+</div>
+<div class="absolute right-0 top-0 bottom-0 w-1/2 opacity-30 flex items-center justify-center pointer-events-none">
+<span class="material-symbols-outlined text-8xl text-primary" style="font-variation-settings: 'wght' 200">monitoring</span>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label text-xs font-medium">Home</span>
+</a>
+<!-- Generate -->
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-label text-xs font-medium">Generate</span>
+</a>
+<!-- History (Active Context for History/Analytics) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-5 py-1 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">history</span>
+<span class="font-label text-xs font-medium">History</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label text-xs font-medium">Settings</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for bar chart entry animation
+        document.addEventListener('DOMContentLoaded', () => {
+            const bars = document.querySelectorAll('.bg-surface-container.rounded-t-lg, .bg-primary.rounded-t-lg');
+            bars.forEach(bar => {
+                const finalHeight = bar.style.height;
+                bar.style.height = '0%';
+                setTimeout(() => {
+                    bar.style.height = finalHeight;
+                }, 200);
+            });
+        });
+    </script>
+</body></html>

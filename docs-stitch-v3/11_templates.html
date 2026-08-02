@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QR Templates - QuickScan Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#d3d2eb",
+                        "secondary": "#5c5d72",
+                        "on-secondary-container": "#4f5065",
+                        "on-tertiary": "#fff7f8",
+                        "error-container": "#f97386",
+                        "on-surface": "#303239",
+                        "background": "#faf8fd",
+                        "on-surface-variant": "#5d5f66",
+                        "primary-fixed": "#8596ff",
+                        "error-dim": "#6b0221",
+                        "on-tertiary-container": "#67435b",
+                        "surface": "#faf8fd",
+                        "inverse-primary": "#8596ff",
+                        "error": "#a8364b",
+                        "tertiary-container": "#ffcfec",
+                        "surface-container": "#eeedf4",
+                        "primary-container": "#8596ff",
+                        "surface-tint": "#4456ba",
+                        "surface-container-high": "#e8e7ef",
+                        "on-primary": "#faf8ff",
+                        "secondary-container": "#e1e0f9",
+                        "on-error": "#fff7f7",
+                        "tertiary-fixed": "#ffcfec",
+                        "on-background": "#303239",
+                        "outline-variant": "#b1b1ba",
+                        "tertiary": "#79546c",
+                        "inverse-surface": "#0d0e11",
+                        "on-primary-fixed-variant": "#001a80",
+                        "primary": "#4456ba",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#3d3e51",
+                        "tertiary-dim": "#6c485f",
+                        "surface-bright": "#faf8fd",
+                        "surface-variant": "#e2e2eb",
+                        "on-primary-fixed": "#000000",
+                        "primary-fixed-dim": "#7789f0",
+                        "on-error-container": "#6e0523",
+                        "surface-dim": "#d9d9e2",
+                        "on-primary-container": "#001367",
+                        "inverse-on-surface": "#9d9ca1",
+                        "primary-dim": "#3749ad",
+                        "on-secondary-fixed-variant": "#595a6f",
+                        "surface-container-highest": "#e2e2eb",
+                        "tertiary-fixed-dim": "#f0c1de",
+                        "on-tertiary-fixed": "#523147",
+                        "surface-container-low": "#f4f3f9",
+                        "on-tertiary-fixed-variant": "#714d64",
+                        "secondary-dim": "#505166",
+                        "on-secondary": "#fbf8ff",
+                        "secondary-fixed": "#e1e0f9",
+                        "outline": "#797a82"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .template-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .template-card:active { transform: scale(0.96); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- Top App Bar (Shared Component Strategy: Transactional Mode) -->
+<header class="bg-surface sticky top-0 z-10 flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-container-high transition-colors active:scale-90 duration-100">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline text-xl font-bold text-on-surface">QR Templates</h1>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface">help_outline</span>
+</button>
+</header>
+<main class="flex-1 px-6 pt-4 pb-32">
+<!-- Subtitle -->
+<p class="text-on-surface-variant font-body mb-8">Choose a style for your QR code</p>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Template 1: Classic (Selected) -->
+<div class="template-card relative flex flex-col items-center bg-surface-container-lowest p-4 rounded-2xl border-2 border-primary shadow-sm">
+<div class="absolute top-2 right-2">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="aspect-square w-full mb-3 flex items-center justify-center p-2">
+<img class="w-full h-full object-contain" data-alt="A clean, minimalist black and white QR code design presented on a crisp white square background. The aesthetic is professional and functional, utilizing the high-contrast light mode design system of QuickScan Pro. Soft lighting highlights the precision of the modules in a high-key digital studio environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHiAMpGUoRbg1JRLHdte_crZs9avU9IGoq4hge5Y3nxVbwQgGXynkhs0KKmRRGLQ3rW0EeRLN1xsGikTrg4SSIYjuNjMoSXau98c3Yr7exropqKXnHvbGhDVBN5ca5_SFrCGtTf3VJlJOshMzBTcBUh0Xid8wPpKdCJ9wi6s_YqNKW9ATsapSqyxXipAmA9dzXIymU1THvsrUdjax8DMyFA34nbdwR4mJGShRmXAVKc3jUIro64WYQrgMMNUCNZUDD_W-hB6MjJ1c"/>
+</div>
+<span class="font-label text-sm font-semibold text-on-surface">Classic</span>
+</div>
+<!-- Template 2: Indigo -->
+<div class="template-card flex flex-col items-center bg-surface-container-lowest p-4 rounded-2xl border-2 border-transparent hover:border-outline-variant">
+<div class="aspect-square w-full mb-3 flex items-center justify-center p-2">
+<img class="w-full h-full object-contain" data-alt="A sophisticated QR code where the modules are rendered in a vibrant Indigo primary color instead of standard black. The design is set against a pristine white background, maintaining a premium Material 3 aesthetic. The lighting is even and soft, emphasizing the rich blue tones and the clean, modern feel of the interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQk8OwZvDVBVAhkG0e7gA853l09iK5yZxF5LnQi7WdKBYk1I3nO07feS9uQCYacCvzfxtKcXBmhx4LGpzHXvK_TNybjKm7C7vSl6BzgulGVNGrf7C73LE3dv_jxLFI5BpcRkQwDdPGpLHuHe2NVrBNMuTI9ft9FIzg4Bj0h3UbnbmGVR3E-DACDEE_1U6VGMYzUxjygDvYKvGR0qbApJTNwnFc1SzxEWUrPhFGn153FedKIlIq0OFDwH1N5FpwX-oSNFRFeMOnjUU"/>
+</div>
+<span class="font-label text-sm font-medium text-on-surface-variant">Indigo</span>
+</div>
+<!-- Template 3: Rounded -->
+<div class="template-card flex flex-col items-center bg-surface-container-lowest p-4 rounded-2xl border-2 border-transparent hover:border-outline-variant">
+<div class="aspect-square w-full mb-3 flex items-center justify-center p-2">
+<img class="w-full h-full object-contain" data-alt="A modern QR code design where each individual square module has soft, rounded corners, creating a friendly and contemporary look. The palette uses deep indigo on a soft white background. The overall style is minimal and high-tech, fitting within a professional mobile app interface focused on user accessibility." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2R6-0w-afOzKZeeqYgoyErQz_cdMktyySb9QVEQuRC7Bu6fJqiOg8IW2k0z0h6SrDmHKtADICJj2f7IIbfSlcB9eUptT-36C0EA5Q8B-7osfTHMsEqxiL7Vc-5iKsnzpkYDUS0W2Rff9sH1mwTk_FyiaxGqEwr0UoA4btSphGPltvYSjMyJyO6O47FVZKFcsg9t40HkUH1QGtiBTU3gNLi1equdr4dXQLWIAgYHjOrK2j1gQ9uarVpLY4MFB2vjbZQV4J3TDW9yI"/>
+</div>
+<span class="font-label text-sm font-medium text-on-surface-variant">Rounded</span>
+</div>
+<!-- Template 4: Dots -->
+<div class="template-card flex flex-col items-center bg-surface-container-lowest p-4 rounded-2xl border-2 border-transparent hover:border-outline-variant">
+<div class="aspect-square w-full mb-3 flex items-center justify-center p-2">
+<img class="w-full h-full object-contain" data-alt="An artistic QR code variation where the standard square grid is replaced with perfectly circular dots in a deep indigo hue. The pattern is set on a light gray-white surface, illuminated by diffused digital lighting. The aesthetic is clean, dot-matrix inspired, and fits a high-end technical scanner application's visual language." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBFqdU1EhiHlLbmSxxEMjPbB1ZRJh0O2KtFeXzsVS76kjTwicqOOBzmVRpqXUyLVOvDehxPd8cHlGgHEykoZMcJnNZ9Jn0wGT5nNiZoj1RPODsyMWF-bqlX4AIGRMQh7YpMDBTquhGhdDC80RPA7jMWIusDFROlDRxa0ndnpuAvgckW72RQzMs901Sw-wlYxau6m_-GrtVLpryDXgIIx4-wIs7CM_9DjhxAXUineuLGHfnVBwIR_psrK8qWzQ06EGaJcYvyoVZmTU"/>
+</div>
+<span class="font-label text-sm font-medium text-on-surface-variant">Dots</span>
+</div>
+<!-- Template 5: With Logo -->
+<div class="template-card flex flex-col items-center bg-surface-container-lowest p-4 rounded-2xl border-2 border-transparent hover:border-outline-variant">
+<div class="aspect-square w-full mb-3 flex items-center justify-center p-2 relative">
+<img class="w-full h-full object-contain" data-alt="A professional QR code design featuring a clear central cutout containing a minimalist geometric logo icon. The QR modules are sharp black on a white background. The composition is centered and balanced, suggesting security and brand identity within a modern digital workspace. High-resolution rendering with sharp edges." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAl-_ugbn52l6TRcjb68oC8uQLF4MhjK96rdZAUxcGnL_Dg68cJYav_HLv7INrLDdimYI0cgTxv0rJnHKdyWTmImEwbFCeunP8GsWaa0fcDo5FH3Vz67C7FJu3WEk3cftrChrUWNrbJ9ncJwcIrcK8euS-lOke6NuoU9bWFLmCkonjRCsMu1nqXVIOI6VpxsJwDMqbEscGct7Ma8bg7_yUTMtvsLOEXyJCiILjsrVZn8BwexxFSaUs3mfcVUd_Y8iHDpu5v83Kanvk"/>
+</div>
+<span class="font-label text-sm font-medium text-on-surface-variant">With Logo</span>
+</div>
+<!-- Template 6: Gradient Frame -->
+<div class="template-card flex flex-col items-center bg-surface-container-lowest p-4 rounded-2xl border-2 border-transparent hover:border-outline-variant">
+<div class="aspect-square w-full mb-3 flex items-center justify-center p-2 relative group">
+<div class="absolute inset-0 rounded-lg border-2 border-primary-fixed opacity-30"></div>
+<img class="w-full h-full object-contain p-1" data-alt="A QR code styled with a subtle, thin gradient border frame encircling the code. The frame transitions from a soft indigo to a light violet. The inner QR code remains crisp black and white. The overall look is elegant and modern, designed for premium user experiences in a light-themed professional application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6c9XDz1tcQF8iISn1ZMZ1YT7w4rh1Yd8v-oqupScC_1vQgDWDZttY2yv7Eo26B4C0BXyfnlSJHgVc9sLr402pZnF0-j7cMDbR4ovjLTDDhuM7eTt0LlOk6WUbbLIr3329Go0PyaIezYDlntzbssfzDksSE4gfUq1pRnSdrZ7GfHDe4dfM243wmbAHEMstuxQOj0ssbGNX1iSv7kp1oo34OgnXZkAasrJMZw7MPCdULi4Dca7euWENgmgDsWFDNzgaNgawYptH53A"/>
+</div>
+<span class="font-label text-sm font-medium text-on-surface-variant">Gradient Frame</span>
+</div>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/80 backdrop-blur-md p-6">
+<button class="w-full bg-primary text-on-primary font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-transform duration-100">
+            Apply Template
+            <span class="material-symbols-outlined text-lg">check</span>
+</button>
+</div>
+<script>
+        // Micro-interaction: Selection logic
+        const cards = document.querySelectorAll('.template-card');
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected state from all
+                cards.forEach(c => {
+                    c.classList.remove('border-primary', 'shadow-sm');
+                    c.classList.add('border-transparent');
+                    const icon = c.querySelector('.material-symbols-outlined.text-primary');
+                    if (icon) icon.parentElement.remove();
+                    const label = c.querySelector('span:last-child');
+                    label.classList.remove('text-on-surface', 'font-semibold');
+                    label.classList.add('text-on-surface-variant', 'font-medium');
+                });
+
+                // Add to clicked
+                card.classList.remove('border-transparent');
+                card.classList.add('border-primary', 'shadow-sm');
+                
+                const checkIconDiv = document.createElement('div');
+                checkIconDiv.className = 'absolute top-2 right-2';
+                checkIconDiv.innerHTML = '<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: \'FILL\' 1;">check_circle</span>';
+                card.appendChild(checkIconDiv);
+
+                const label = card.querySelector('span:last-child');
+                label.classList.remove('text-on-surface-variant', 'font-medium');
+                label.classList.add('text-on-surface', 'font-semibold');
+            });
+        });
+    </script>
+</body></html>

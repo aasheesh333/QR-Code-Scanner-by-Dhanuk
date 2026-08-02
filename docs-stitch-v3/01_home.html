@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuickScan Pro - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffcfec",
+                    "secondary-dim": "#505166",
+                    "inverse-primary": "#8596ff",
+                    "on-background": "#303239",
+                    "on-primary-fixed": "#000000",
+                    "on-secondary-fixed": "#3d3e51",
+                    "on-surface": "#303239",
+                    "error-dim": "#6b0221",
+                    "primary-dim": "#3749ad",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "tertiary-dim": "#6c485f",
+                    "inverse-on-surface": "#9d9ca1",
+                    "inverse-surface": "#0d0e11",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "secondary-fixed": "#e1e0f9",
+                    "surface-bright": "#faf8fd",
+                    "tertiary": "#79546c",
+                    "primary-container": "#8596ff",
+                    "secondary-container": "#e1e0f9",
+                    "error": "#a8364b",
+                    "primary-fixed-dim": "#7789f0",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#ffcfec",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "surface-dim": "#d9d9e2",
+                    "on-error": "#fff7f7",
+                    "surface-container": "#eeedf4",
+                    "on-tertiary-fixed": "#523147",
+                    "on-secondary": "#fbf8ff",
+                    "surface": "#faf8fd",
+                    "surface-container-high": "#e8e7ef",
+                    "outline-variant": "#b1b1ba",
+                    "on-error-container": "#6e0523",
+                    "background": "#faf8fd",
+                    "on-primary-fixed-variant": "#001a80",
+                    "surface-container-low": "#f4f3f9",
+                    "secondary-fixed-dim": "#d3d2eb",
+                    "surface-tint": "#4456ba",
+                    "on-secondary-container": "#4f5065",
+                    "on-primary-container": "#001367",
+                    "primary-fixed": "#8596ff",
+                    "on-primary": "#faf8ff",
+                    "on-tertiary-container": "#67435b",
+                    "error-container": "#f97386",
+                    "surface-container-highest": "#e2e2eb",
+                    "on-surface-variant": "#5d5f66",
+                    "on-tertiary": "#fff7f8",
+                    "outline": "#797a82",
+                    "surface-variant": "#e2e2eb",
+                    "primary": "#4456ba",
+                    "secondary": "#5c5d72"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Scanning Line Animation */
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .scan-line {
+            animation: scan 2.5s ease-in-out infinite;
+        }
+
+        /* Pulse effect for camera brackets */
+        @keyframes pulse-bracket {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .animate-bracket {
+            animation: pulse-bracket 2s infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim w-full top-0 sticky z-50">
+<div class="flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="qr_code_scanner">qr_code_scanner</span>
+<h1 class="font-headline text-on-surface dark:text-on-surface text-xl font-bold">QuickScan Pro</h1>
+</div>
+<button class="hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors p-2 rounded-full active:scale-95 duration-100">
+<span class="material-symbols-outlined text-on-surface-variant dark:text-on-surface-variant" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 px-6 pt-4 pb-32 flex flex-col items-center justify-center max-w-lg mx-auto w-full">
+<!-- Camera Viewfinder Container -->
+<div class="relative w-full aspect-[3/4] bg-inverse-surface rounded-[32px] overflow-hidden shadow-sm flex items-center justify-center">
+<!-- Mock Camera Feed Background -->
+<div class="absolute inset-0 grayscale-[0.5] opacity-80" data-alt="A high-resolution, slightly out-of-focus background representing a real-world environment like a modern office desk with scattered documents and a laptop. The lighting is soft and natural, emphasizing a professional and clean workspace atmosphere. The color palette is neutral with soft greys and whites, creating a realistic camera viewfinder appearance for a QR scanning application." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAaRbDrL2zp6jggM7h7J8DXmHNPioLs5ILhCY9MLwDk9umqXlIQxl_F9Lh-JvwOHMzfIZmxRqonJMxZQ5ivYHBK6xk_zXxUI0YA9eeAKvhZg2V92tKufTiMZzYEFyN9W1Q-T6qEu1w7Lw8he-dyEN04PAkk1DOnhxubeFVLZIzlB7KLzkDwEtG7VBCUUvmlrKrZzEVrljGhVUhFefuA30K5DJNF3qoAMVbIt9KJqRWAf9zgxkiAG4kJlmtO5kjIOwUpBW6GlMNKk8g')"></div>
+<!-- Scanning Line -->
+<div class="scan-line absolute left-4 right-4 h-1 bg-primary-container/80 shadow-[0_0_15px_rgba(133,150,255,0.8)] z-20 rounded-full"></div>
+<!-- Corner Brackets Overlay -->
+<div class="absolute inset-0 p-12 pointer-events-none">
+<div class="relative w-full h-full">
+<!-- Top Left -->
+<div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-2xl animate-bracket"></div>
+<!-- Top Right -->
+<div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-2xl animate-bracket"></div>
+<!-- Bottom Left -->
+<div class="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-2xl animate-bracket"></div>
+<!-- Bottom Right -->
+<div class="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-2xl animate-bracket"></div>
+</div>
+</div>
+<!-- Center Hint -->
+<div class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-on-background/40 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-medium tracking-wide">
+                Center QR code in frame
+            </div>
+</div>
+<!-- Floating Button Override (Tap to Scan) -->
+<div class="relative -mt-8 z-30">
+<button class="bg-primary text-on-primary px-8 py-4 rounded-full shadow-lg flex items-center gap-3 font-semibold hover:bg-primary-dim active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="center_focus_strong">center_focus_strong</span>
+<span>Tap to Scan</span>
+</button>
+</div>
+<!-- Quick Actions Row -->
+<div class="w-full mt-12 grid grid-cols-3 gap-4">
+<div class="flex flex-col items-center gap-2 group">
+<button class="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:bg-secondary-container group-hover:text-primary transition-all duration-200 active:scale-90">
+<span class="material-symbols-outlined" data-icon="flash_on">flash_on</span>
+</button>
+<span class="text-xs font-medium font-label text-on-surface-variant">Flash</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<button class="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:bg-secondary-container group-hover:text-primary transition-all duration-200 active:scale-90">
+<span class="material-symbols-outlined" data-icon="image">image</span>
+</button>
+<span class="text-xs font-medium font-label text-on-surface-variant">Gallery</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<button class="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:bg-secondary-container group-hover:text-primary transition-all duration-200 active:scale-90">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<span class="text-xs font-medium font-label text-on-surface-variant">History</span>
+</div>
+</div>
+<!-- Info Card (Asymmetric Bento Element) -->
+<div class="w-full mt-10 bg-surface-container-lowest border border-outline-variant/20 p-6 rounded-[24px] flex items-center gap-5">
+<div class="w-12 h-12 bg-tertiary-container rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-container" data-icon="lightbulb">lightbulb</span>
+</div>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-on-surface">Pro Tip</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">Ensure enough light is on the code for faster scanning.</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container dark:bg-surface-container-low shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-dim text-on-primary-container dark:text-on-primary rounded-full px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-secondary-dim transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label text-xs font-medium">Home</span>
+</a>
+<!-- Generate -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-secondary-dim transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="add_box">add_box</span>
+<span class="font-label text-xs font-medium">Generate</span>
+</a>
+<!-- History -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-secondary-dim transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label text-xs font-medium">History</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant px-5 py-1 hover:bg-surface-container-highest dark:hover:bg-secondary-dim transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label text-xs font-medium">Settings</span>
+</a>
+</nav>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('button, a');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Provide haptic-like visual feedback
+                    btn.classList.add('scale-95');
+                    setTimeout(() => btn.classList.remove('scale-95'), 150);
+                });
+            });
+        });
+    </script>
+</body></html>

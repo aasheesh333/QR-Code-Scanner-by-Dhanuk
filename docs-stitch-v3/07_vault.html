@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Secure Vault - QuickScan Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#7789f0",
+                    "primary-fixed": "#8596ff",
+                    "secondary-container": "#e1e0f9",
+                    "on-surface": "#303239",
+                    "tertiary-container": "#ffcfec",
+                    "surface-tint": "#4456ba",
+                    "on-primary": "#faf8ff",
+                    "on-background": "#303239",
+                    "surface-container-highest": "#e2e2eb",
+                    "primary": "#4456ba",
+                    "on-secondary": "#fbf8ff",
+                    "on-secondary-container": "#4f5065",
+                    "background": "#faf8fd",
+                    "error": "#a8364b",
+                    "surface-bright": "#faf8fd",
+                    "on-secondary-fixed-variant": "#595a6f",
+                    "surface-variant": "#e2e2eb",
+                    "error-dim": "#6b0221",
+                    "inverse-on-surface": "#9d9ca1",
+                    "outline-variant": "#b1b1ba",
+                    "tertiary": "#79546c",
+                    "error-container": "#f97386",
+                    "on-tertiary-fixed": "#523147",
+                    "tertiary-fixed": "#ffcfec",
+                    "on-tertiary-fixed-variant": "#714d64",
+                    "surface-container": "#eeedf4",
+                    "on-primary-fixed": "#000000",
+                    "on-tertiary": "#fff7f8",
+                    "on-primary-fixed-variant": "#001a80",
+                    "on-secondary-fixed": "#3d3e51",
+                    "outline": "#797a82",
+                    "surface-dim": "#d9d9e2",
+                    "surface-container-low": "#f4f3f9",
+                    "surface-container-high": "#e8e7ef",
+                    "secondary-fixed": "#e1e0f9",
+                    "tertiary-dim": "#6c485f",
+                    "secondary-fixed-dim": "#d3d2eb",
+                    "on-tertiary-container": "#67435b",
+                    "inverse-surface": "#0d0e11",
+                    "secondary": "#5c5d72",
+                    "on-surface-variant": "#5d5f66",
+                    "surface": "#faf8fd",
+                    "primary-dim": "#3749ad",
+                    "on-error": "#fff7f7",
+                    "on-error-container": "#6e0523",
+                    "inverse-primary": "#8596ff",
+                    "tertiary-fixed-dim": "#f0c1de",
+                    "on-primary-container": "#001367",
+                    "secondary-dim": "#505166",
+                    "primary-container": "#8596ff",
+                    "surface-container-lowest": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .biometric-ripple {
+            animation: ripple 2s infinite ease-out;
+        }
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim flex justify-between items-center px-6 h-16 w-full sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<button class="hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-100">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline text-on-surface text-lg font-bold tracking-tight">Secure Vault</h1>
+</div>
+<button class="hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-100">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">lock</span>
+</button>
+</header>
+<main class="flex-1 px-6 pt-4 pb-32 space-y-6 max-w-2xl mx-auto w-full">
+<!-- Security Status Card -->
+<section class="bg-surface-container-lowest rounded-xl p-8 flex flex-col items-center text-center shadow-sm border border-surface-container">
+<div class="relative mb-4">
+<div class="absolute inset-0 bg-primary-container opacity-20 rounded-full biometric-ripple"></div>
+<div class="w-20 h-20 bg-secondary-container rounded-full flex items-center justify-center relative z-10">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+</div>
+</div>
+<h2 class="text-on-surface text-xl font-bold mb-1">Vault Protected</h2>
+<p class="text-on-surface-variant text-sm flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-xs">fingerprint</span>
+                Fingerprint authentication enabled
+            </p>
+</section>
+<!-- Unlock Prompt Card -->
+<div class="bg-primary-container/10 border border-primary-fixed-dim/30 rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-primary-container/20 transition-all active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container">fingerprint</span>
+</div>
+<div>
+<p class="text-on-primary-container font-semibold text-sm">Tap to Unlock More Items</p>
+<p class="text-primary text-xs">Biometric verification required</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary">chevron_right</span>
+</div>
+<!-- Saved Items List -->
+<section class="space-y-3">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-on-surface-variant font-bold text-xs uppercase tracking-widest">Recent Items</h3>
+<span class="text-primary text-xs font-semibold">4 Items</span>
+</div>
+<!-- List Rows -->
+<div class="space-y-2">
+<!-- Row 1 -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-4 rounded-xl border border-surface-container hover:shadow-md transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">qr_code_2</span>
+</div>
+<div>
+<h4 class="text-on-surface font-semibold text-sm">Banking QR</h4>
+<p class="text-on-surface-variant text-xs">Added 2 hours ago</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">lock</span>
+<button class="p-1 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined text-on-surface-variant">more_vert</span></button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-4 rounded-xl border border-surface-container hover:shadow-md transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">wifi</span>
+</div>
+<div>
+<h4 class="text-on-surface font-semibold text-sm">WiFi Password</h4>
+<p class="text-on-surface-variant text-xs">Updated yesterday</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">lock</span>
+<button class="p-1 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined text-on-surface-variant">more_vert</span></button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-4 rounded-xl border border-surface-container hover:shadow-md transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">note_stack</span>
+</div>
+<div>
+<h4 class="text-on-surface font-semibold text-sm">Private Note</h4>
+<p class="text-on-surface-variant text-xs">Oct 24, 2023</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">lock</span>
+<button class="p-1 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined text-on-surface-variant">more_vert</span></button>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-4 rounded-xl border border-surface-container hover:shadow-md transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">badge</span>
+</div>
+<div>
+<h4 class="text-on-surface font-semibold text-sm">ID Card Scan</h4>
+<p class="text-on-surface-variant text-xs">Sep 12, 2023</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">lock</span>
+<button class="p-1 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined text-on-surface-variant">more_vert</span></button>
+</div>
+</div>
+</div>
+</section>
+<!-- Decorative Info -->
+<div class="p-4 bg-surface-container-low rounded-xl border border-surface-container border-dashed">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-outline text-sm">info</span>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                    All vault items are encrypted using AES-256 standards. Your data never leaves this device and is secured behind your system's hardware-backed keystore.
+                </p>
+</div>
+</div>
+</main>
+<!-- Bottom Area Action -->
+<footer class="fixed bottom-0 left-0 w-full p-6 bg-gradient-to-t from-background via-background/95 to-transparent flex justify-center z-20">
+<button class="w-full max-w-md bg-primary text-on-primary py-4 rounded-full font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:bg-primary-dim transition-all active:scale-95 duration-100">
+<span class="material-symbols-outlined">add</span>
+            Add New Item
+        </button>
+</footer>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('touchstart', function() {
+                this.classList.add('opacity-80');
+            });
+            btn.addEventListener('touchend', function() {
+                this.classList.remove('opacity-80');
+            });
+        });
+    </script>
+</body></html>

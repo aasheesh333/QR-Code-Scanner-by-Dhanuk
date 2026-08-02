@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -127,28 +128,36 @@ fun ResultScreen(
 
 @Composable
 private fun StitchResultHeader(type: String, onNavigateBack: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
-        shadowElevation = 0.dp
+    val context = LocalContext.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 8.dp)
+            .height(64.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onNavigateBack, modifier = Modifier.size(48.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
-            }
-            Row(
-                modifier = Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(typeIcon(type), contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(4.dp))
-                Text(typeLabel(type), style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600, letterSpacing = 0.01.sp, lineHeight = 20.sp), color = MaterialTheme.colorScheme.primary)
-            }
-            Spacer(Modifier.width(48.dp))
+        IconButton(onClick = onNavigateBack) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Text(
+            "Scan Result",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        IconButton(onClick = { }) {
+            Icon(
+                Icons.Filled.Share,
+                contentDescription = "Share",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -226,84 +235,267 @@ private fun UrlVariant(
 ) {
     val context = LocalContext.current
     val safety = remember(data) { LinkSafetyChecker.analyze(data) }
-    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)), shadowElevation = 2.dp) {
-        Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Public, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(32.dp)) }
-            Spacer(Modifier.height(16.dp))
-            Text(data, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(8.dp))
-            Text("Scanned just now", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+    // ── Hero card ──
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                typeIcon(type),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
         }
+        Spacer(Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        ) {
+            Text(
+                typeLabel(type),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            data,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
     }
-    Spacer(Modifier.height(16.dp))
+
+    // ── Safety status card ──
     if (safety.level != LinkSafetyChecker.Level.NOT_A_LINK) {
-        SafetyCard(safety)
         Spacer(Modifier.height(16.dp))
+        SafetyStatusCard(safety)
     }
-    FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        PillChip("Copy", Icons.Filled.ContentCopy) { copyToClipboard(context, data) }
-        PillChip("Share", Icons.Filled.Share) { shareText(context, data) }
-        if (type == BarcodeTypeDetector.TYPE_URL) { PillChip("Open", Icons.Filled.OpenInNew) { openUrl(context, data) } }
-        if (type == BarcodeTypeDetector.TYPE_PRODUCT) { PillChip("Look up", Icons.Filled.Public) { onOpenProductLookup(data) } }
-        PillChip(if (isVault) "Remove vault" else "Add to vault", if (isVault) Icons.Outlined.LockOpen else Icons.Filled.Lock, onToggleVault)
-    }
-    Spacer(Modifier.height(24.dp))
-    PrimaryButton(
-        text = when (type) {
-            BarcodeTypeDetector.TYPE_URL -> "Open Link"
-            BarcodeTypeDetector.TYPE_PRODUCT -> "Look Up Product"
-            else -> "Done"
-        },
-        onClick = {
+
+    // ── 2x2 Action grid ──
+    Spacer(Modifier.height(16.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        ActionGridButton(
+            label = if (type == BarcodeTypeDetector.TYPE_PRODUCT) "Look Up" else "Open Link",
+            icon = Icons.Filled.OpenInNew,
+            style = ActionStyle.FILLED,
+            modifier = Modifier.weight(1f)
+        ) {
             when (type) {
                 BarcodeTypeDetector.TYPE_URL -> openUrl(context, data)
                 BarcodeTypeDetector.TYPE_PRODUCT -> onOpenProductLookup(data)
-                else -> onNavigateBack()
+                else -> openUrl(context, data)
             }
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Icon(Icons.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(
-            when (type) {
-                BarcodeTypeDetector.TYPE_URL -> "Open Link"
-                BarcodeTypeDetector.TYPE_PRODUCT -> "Look Up Product"
-                else -> "Done"
-            }
+        }
+        ActionGridButton(
+            label = "Copy",
+            icon = Icons.Filled.ContentCopy,
+            style = ActionStyle.TONAL,
+            modifier = Modifier.weight(1f)
+        ) { copyToClipboard(context, data) }
+    }
+    Spacer(Modifier.height(12.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        ActionGridButton(
+            label = "Share",
+            icon = Icons.Filled.Share,
+            style = ActionStyle.TONAL,
+            modifier = Modifier.weight(1f)
+        ) { shareText(context, data) }
+        ActionGridButton(
+            label = if (isVault) "In Vault" else "Save to Vault",
+            icon = if (isVault) Icons.Outlined.LockOpen else Icons.Filled.Lock,
+            style = ActionStyle.OUTLINED,
+            modifier = Modifier.weight(1f),
+            onClick = onToggleVault
         )
     }
-    Spacer(Modifier.height(8.dp))
+
+    // ── Metadata card ──
+    Spacer(Modifier.height(16.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(20.dp)
+    ) {
+        Text(
+            "Metadata",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(12.dp))
+        MetadataRow("Type", typeLabel(type))
+        MetadataRow("Scanned", "Just now")
+        MetadataRow("Source", "Camera")
+    }
+
+    // ── Additional actions card ──
+    Spacer(Modifier.height(16.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+    ) {
+        if (type == BarcodeTypeDetector.TYPE_PRODUCT) {
+            AdditionalActionRow(
+                icon = Icons.Filled.Public,
+                label = "Product lookup",
+                onClick = { onOpenProductLookup(data) }
+            )
+        }
+        AdditionalActionRow(
+            icon = Icons.Filled.GppGood,
+            label = "Safety score ${safety.score}/100",
+            onClick = {}
+        )
+    }
+
+    Spacer(Modifier.height(16.dp))
     SecondaryButton(text = "Done", onClick = onNavigateBack, modifier = Modifier.fillMaxWidth())
+    Spacer(Modifier.height(16.dp))
+}
+
+private enum class ActionStyle { FILLED, TONAL, OUTLINED }
+
+@Composable
+private fun ActionGridButton(
+    label: String,
+    icon: ImageVector,
+    style: ActionStyle,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val bg = when (style) {
+        ActionStyle.FILLED -> MaterialTheme.colorScheme.primary
+        ActionStyle.TONAL -> MaterialTheme.colorScheme.secondaryContainer
+        ActionStyle.OUTLINED -> Color.Transparent
+    }
+    val fg = when (style) {
+        ActionStyle.FILLED -> MaterialTheme.colorScheme.onPrimary
+        ActionStyle.TONAL -> MaterialTheme.colorScheme.primary
+        ActionStyle.OUTLINED -> MaterialTheme.colorScheme.primary
+    }
+    Row(
+        modifier = modifier
+            .height(52.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(bg)
+            .then(
+                if (style == ActionStyle.OUTLINED)
+                    Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                else Modifier
+            )
+            .clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = fg)
+    }
 }
 
 @Composable
-private fun SafetyCard(report: LinkSafetyChecker.Report) {
-    val (label, color) = when (report.level) {
-        LinkSafetyChecker.Level.SAFE -> "No warning signs detected" to MaterialTheme.colorScheme.secondary
-        LinkSafetyChecker.Level.CAUTION -> "Review this link before opening" to MaterialTheme.colorScheme.tertiary
-        LinkSafetyChecker.Level.RISKY -> "Potentially risky link" to MaterialTheme.colorScheme.error
+private fun MetadataRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+private fun AdditionalActionRow(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(16.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            Icons.Filled.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline
+        )
+    }
+}
+
+@Composable
+private fun SafetyStatusCard(report: LinkSafetyChecker.Report) {
+    val (title, subtitle, color, icon) = when (report.level) {
+        LinkSafetyChecker.Level.SAFE -> Tuple4("Safe Link", "No threats detected by security check", com.dhanuk.quickscanpro.ui.theme.SemanticSafe, Icons.Filled.GppGood)
+        LinkSafetyChecker.Level.CAUTION -> Tuple4("Review Link", "Check this link before opening", com.dhanuk.quickscanpro.ui.theme.SemanticWarn, Icons.Filled.GppGood)
+        LinkSafetyChecker.Level.RISKY -> Tuple4("Risky Link", "This link may be dangerous", MaterialTheme.colorScheme.error, Icons.Filled.GppGood)
         LinkSafetyChecker.Level.NOT_A_LINK -> return
     }
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = color.copy(alpha = 0.12f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.3f))
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.GppGood, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Safety score ${report.score}/100", style = MaterialTheme.typography.labelLarge, color = color)
-            }
-            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-            report.signals.take(2).forEach { signal ->
-                Text(signal, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(26.dp))
+        }
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
+
+private data class Tuple4<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
 
 @Composable private fun VCardFieldRow(label: String, value: String, icon: ImageVector) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {

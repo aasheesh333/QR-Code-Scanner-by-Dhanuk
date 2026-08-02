@@ -2,7 +2,6 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,8 +25,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
@@ -35,27 +41,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.BuildConfig
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
@@ -63,7 +65,8 @@ import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToAbout: () -> Unit = {}
 ) {
     val settingsVm: SettingsViewModel = viewModel()
     val historyVm: HistoryViewModel = viewModel()
@@ -76,36 +79,93 @@ fun SettingsScreen(
     var showClearConfirmDialog by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        SettingsHeader(onNavigateBack)
-        Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // ── Top app bar ──
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 8.dp)
+                .height(64.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.height(8.dp))
-            SettingsGroup("General") {
-                SettingsRow(Icons.Filled.RocketLaunch, "Default action after scan", trailing = defaultActionLabel(defaultAction), onClick = { showDefaultActionDialog = true })
-                GroupDivider()
-                ToggleRow(Icons.Filled.VolumeUp, "Beep on scan", sound, onChange = { enabled -> settingsVm.setSound(enabled) })
-                GroupDivider()
-                ToggleRow(Icons.Filled.Vibration, "Vibrate on scan", vibrate, onChange = { enabled -> settingsVm.setVibrate(enabled) })
-                GroupDivider()
-                ToggleRow(Icons.Filled.Save, "Auto-save scans", autoSave, onChange = { enabled -> settingsVm.setAutoCopy(enabled) })
-            }
-            SettingsGroup("Privacy & Security") {
-                ToggleRow(Icons.Filled.Fingerprint, "Lock app with biometrics", biometrics, onChange = { enabled -> settingsVm.setBiometricLock(enabled) })
-            }
-            SettingsGroup("Data") {
-                DangerRow(Icons.Filled.DeleteForever, "Clear all history", onClick = { showClearConfirmDialog = true })
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             }
             Text(
-                text = "Version ${BuildConfig.VERSION_NAME}",
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.W500, lineHeight = 16.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                textAlign = TextAlign.Center
+                "Settings",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(Modifier.height(16.dp))
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Spacer(Modifier.height(0.dp))
+
+            // ── General ──
+            SettingsGroup("General") {
+                NavRow(Icons.Filled.RocketLaunch, "Default action after scan", subtitle = defaultActionLabel(defaultAction)) { showDefaultActionDialog = true }
+                GroupDivider()
+                ToggleRow(Icons.Filled.VolumeUp, "Scan sound", sound) { settingsVm.setSound(it) }
+                GroupDivider()
+                ToggleRow(Icons.Filled.Vibration, "Vibration", vibrate) { settingsVm.setVibrate(it) }
+            }
+
+            // ── Scanner ──
+            SettingsGroup("Scanner") {
+                ToggleRow(Icons.Filled.Save, "Auto-copy scans", autoSave) { settingsVm.setAutoCopy(it) }
+                GroupDivider()
+                ToggleRow(Icons.Filled.History, "Scan history", true) { }
+            }
+
+            // ── Privacy & Security ──
+            SettingsGroup("Privacy & Security") {
+                ToggleRow(Icons.Filled.Fingerprint, "App lock", biometrics) { settingsVm.setBiometricLock(it) }
+                GroupDivider()
+                NavRow(Icons.Filled.Lock, "Secure vault") { }
+                GroupDivider()
+                DangerRow(Icons.Filled.DeleteForever, "Clear history") { showClearConfirmDialog = true }
+            }
+
+            // ── About ──
+            SettingsGroup("About") {
+                NavRow(Icons.Filled.Policy, "Privacy policy") {
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://dhanuk.page.gd/QuickScan-Pro/privacy-policy.html")))
+                    }
+                }
+                GroupDivider()
+                NavRow(Icons.Filled.Star, "Rate app") { }
+                GroupDivider()
+                NavRow(Icons.Filled.Info, "About QuickScan Pro", onClick = onNavigateToAbout)
+                GroupDivider()
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TonalIcon(Icons.Filled.Notifications)
+                    Spacer(Modifier.width(14.dp))
+                    Text("Version", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                    Text(BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
         }
     }
 
@@ -122,72 +182,153 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsHeader(onNavigateBack: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth().statusBarsPadding(), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.primary) }
-            Text("Settings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(24.dp))
-        }
-    }
-}
-
-@Composable
 private fun SettingsGroup(label: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600, letterSpacing = 0.01.sp), color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 16.dp))
-        Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) { Column { content() } }
-    }
-}
-
-@Composable
-private fun GroupDivider() { HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.surfaceContainer) }
-
-@Composable
-private fun ToggleRow(icon: ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit, subtitle: String? = null) {
-    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.W500, fontSize = 16.sp, lineHeight = 24.sp), color = MaterialTheme.colorScheme.onSurface)
-            if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.W500, lineHeight = 16.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+        ) {
+            content()
         }
-        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 
 @Composable
-private fun SettingsRow(icon: ImageVector, title: String, trailing: String? = null, onClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(12.dp))
-        Text(title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.W500, fontSize = 16.sp, lineHeight = 24.sp), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-        if (trailing != null) { Text(trailing, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp, lineHeight = 24.sp), color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.width(8.dp)) }
-        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+private fun GroupDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 70.dp),
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+    )
+}
+
+@Composable
+private fun TonalIcon(icon: ImageVector) {
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.secondaryContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun ToggleRow(icon: ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TonalIcon(icon)
+        Spacer(Modifier.width(14.dp))
+        Text(
+            title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onChange,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+            )
+        )
+    }
+}
+
+@Composable
+private fun NavRow(icon: ImageVector, title: String, subtitle: String? = null, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TonalIcon(icon)
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
     }
 }
 
 @Composable
 private fun DangerRow(icon: ImageVector, title: String, onClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)).padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(12.dp))
-        Text(title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.W500, fontSize = 16.sp, lineHeight = 24.sp), color = MaterialTheme.colorScheme.error)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error)
     }
 }
 
 private fun defaultActionLabel(action: String) = when (action) {
-    "show_result" -> "Show result only"; "open_url" -> "Open URL"; "copy_clipboard" -> "Copy"; "share" -> "Share"
+    "show_result" -> "Show result only"
+    "open_url" -> "Open URL"
+    "copy_clipboard" -> "Copy"
+    "share" -> "Share"
     else -> "Show result only"
 }
 
 @Composable
 private fun DefaultActionDialog(current: String, onSelect: (String) -> Unit, onDismiss: () -> Unit) {
-    val options = listOf("show_result" to "Show result only", "open_url" to "Open URL", "copy_clipboard" to "Copy", "share" to "Share")
+    val options = listOf(
+        "show_result" to "Show result only",
+        "open_url" to "Open URL",
+        "copy_clipboard" to "Copy",
+        "share" to "Share"
+    )
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Default action") },
-        text = { Column { options.forEach { (key, label) -> Row(modifier = Modifier.fillMaxWidth().clickable { onSelect(key); onDismiss() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) { RadioButton(current == key, { onSelect(key); onDismiss() }); Spacer(Modifier.width(12.dp)); Text(label, style = MaterialTheme.typography.bodyMedium) } } } },
+        text = {
+            Column {
+                options.forEach { (key, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(key); onDismiss() }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(current == key, { onSelect(key); onDismiss() })
+                        Spacer(Modifier.width(12.dp))
+                        Text(label, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
