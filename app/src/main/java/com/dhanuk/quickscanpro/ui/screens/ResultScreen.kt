@@ -102,7 +102,7 @@ fun ResultScreen(
     val scanForContent = historyVm.history.value.firstOrNull { it.content == data }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        StitchResultHeader(type, onNavigateBack)
+        StitchResultHeader(type, data, onNavigateBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -127,7 +127,7 @@ fun ResultScreen(
 }
 
 @Composable
-private fun StitchResultHeader(type: String, onNavigateBack: () -> Unit) {
+private fun StitchResultHeader(type: String, data: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     Row(
         modifier = Modifier
@@ -152,11 +152,11 @@ private fun StitchResultHeader(type: String, onNavigateBack: () -> Unit) {
             modifier = Modifier.weight(1f),
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
-        IconButton(onClick = { }) {
+        IconButton(onClick = { shareText(context, data) }) {
             Icon(
                 Icons.Filled.Share,
                 contentDescription = "Share",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -235,6 +235,7 @@ private fun UrlVariant(
 ) {
     val context = LocalContext.current
     val safety = remember(data) { LinkSafetyChecker.analyze(data) }
+    var showSafetyDialog by remember { mutableStateOf(false) }
 
     // ── Hero card ──
     Column(
@@ -369,7 +370,31 @@ private fun UrlVariant(
         AdditionalActionRow(
             icon = Icons.Filled.GppGood,
             label = "Safety score ${safety.score}/100",
-            onClick = {}
+            onClick = { showSafetyDialog = true }
+        )
+    }
+
+    if (showSafetyDialog) {
+        AlertDialog(
+            onDismissRequest = { showSafetyDialog = false },
+            icon = { Icon(Icons.Filled.GppGood, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Safety Report") },
+            text = {
+                Column {
+                    Text("Score: ${safety.score}/100", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+                    if (safety.signals.isEmpty()) {
+                        Text("No suspicious signals detected.")
+                    } else {
+                        Text("Findings:", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(4.dp))
+                        safety.signals.forEach { signal ->
+                            Text("• $signal", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showSafetyDialog = false }) { Text("OK") } }
         )
     }
 

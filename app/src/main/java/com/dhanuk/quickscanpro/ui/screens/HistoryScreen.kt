@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
@@ -39,6 +40,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -76,16 +78,21 @@ fun HistoryScreen(
 ) {
     val vm: HistoryViewModel = viewModel()
     val items by vm.filteredHistory.collectAsState()
+    val vaultItems by vm.vaultScans.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var selectedFilter by rememberSaveable { mutableStateOf("All") }
+    var showSearch by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
-    val filtered = remember(items, selectedFilter) {
-        when (selectedFilter) {
+    val filtered = remember(items, vaultItems, selectedFilter) {
+        val base = when (selectedFilter) {
             "Favorites" -> items.filter { it.isFavorite }
-            "Vault" -> items.filter { it.isVault }
+            "Vault" -> vaultItems
             else -> items
         }
+        if (searchQuery.isBlank()) base
+        else base.filter { it.content.contains(searchQuery, ignoreCase = true) }
     }
 
     Scaffold(
@@ -113,12 +120,34 @@ fun HistoryScreen(
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { vm.setSearchQuery("") }) {
-                    Icon(Icons.Filled.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                IconButton(onClick = {
+                    showSearch = !showSearch
+                    if (!showSearch) searchQuery = ""
+                }) {
+                    Icon(
+                        if (showSearch) Icons.Filled.Close else Icons.Filled.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 IconButton(onClick = onOpenVault) {
                     Icon(Icons.Filled.FilterList, contentDescription = "Filter", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+
+            // ── Search bar (when active) ──
+            if (showSearch) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search history...") },
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 4.dp),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
             }
 
             // ── Filter chips ──

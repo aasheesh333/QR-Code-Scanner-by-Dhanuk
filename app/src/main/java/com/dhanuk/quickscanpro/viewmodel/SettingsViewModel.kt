@@ -22,6 +22,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val autoCopyKey = booleanPreferencesKey("auto_copy_on_scan")
     private val onboardingCompletedKey = booleanPreferencesKey("onboarding_completed")
     private val biometricLockKey = booleanPreferencesKey("biometric_lock_enabled")
+    private val scanHistoryKey = booleanPreferencesKey("scan_history_enabled")
     private val defaultActionKey = stringPreferencesKey("default_scan_action")
     private val themePrimaryIdxKey = intPreferencesKey("theme_primary_index")
     private val themeSecondaryIdxKey = intPreferencesKey("theme_secondary_index")
@@ -50,6 +51,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val biometricLock = dataStore.data
         .map { it[biometricLockKey] ?: false }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    val scanHistory = dataStore.data
+        .map { it[scanHistoryKey] ?: true }
+        .stateIn(viewModelScope, SharingStarted.Lazily, true)
 
     val defaultAction = dataStore.data
         .map { it[defaultActionKey] ?: "show_result" }
@@ -89,6 +94,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setBiometricLock(enabled: Boolean) {
         viewModelScope.launch { dataStore.edit { it[biometricLockKey] = enabled } }
+    }
+
+    fun setScanHistory(enabled: Boolean) {
+        viewModelScope.launch { dataStore.edit { it[scanHistoryKey] = enabled } }
     }
 
     fun setDefaultAction(action: String) {

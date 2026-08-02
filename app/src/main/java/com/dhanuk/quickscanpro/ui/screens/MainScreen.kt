@@ -256,7 +256,8 @@ private fun AppNavigation(
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToAbout = { navController.navigate("about") }
+                onNavigateToAbout = { navController.navigate("about") },
+                onNavigateToVault = { navController.navigate("vault") }
             )
         }
 

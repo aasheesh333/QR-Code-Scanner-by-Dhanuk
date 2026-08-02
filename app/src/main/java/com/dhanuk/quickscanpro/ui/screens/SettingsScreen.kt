@@ -66,7 +66,8 @@ import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToAbout: () -> Unit = {}
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToVault: () -> Unit = {}
 ) {
     val settingsVm: SettingsViewModel = viewModel()
     val historyVm: HistoryViewModel = viewModel()
@@ -75,6 +76,7 @@ fun SettingsScreen(
     val autoSave by settingsVm.autoCopyOnScan.collectAsState()
     val biometrics by settingsVm.biometricLock.collectAsState()
     val defaultAction by settingsVm.defaultAction.collectAsState()
+    val scanHistory by settingsVm.scanHistory.collectAsState()
     var showDefaultActionDialog by rememberSaveable { mutableStateOf(false) }
     var showClearConfirmDialog by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
@@ -130,14 +132,14 @@ fun SettingsScreen(
             SettingsGroup("Scanner") {
                 ToggleRow(Icons.Filled.Save, "Auto-copy scans", autoSave) { settingsVm.setAutoCopy(it) }
                 GroupDivider()
-                ToggleRow(Icons.Filled.History, "Scan history", true) { }
+                ToggleRow(Icons.Filled.History, "Scan history", scanHistory) { settingsVm.setScanHistory(it) }
             }
 
             // ── Privacy & Security ──
             SettingsGroup("Privacy & Security") {
                 ToggleRow(Icons.Filled.Fingerprint, "App lock", biometrics) { settingsVm.setBiometricLock(it) }
                 GroupDivider()
-                NavRow(Icons.Filled.Lock, "Secure vault") { }
+                NavRow(Icons.Filled.Lock, "Secure vault") { onNavigateToVault() }
                 GroupDivider()
                 DangerRow(Icons.Filled.DeleteForever, "Clear history") { showClearConfirmDialog = true }
             }
@@ -150,7 +152,13 @@ fun SettingsScreen(
                     }
                 }
                 GroupDivider()
-                NavRow(Icons.Filled.Star, "Rate app") { }
+                NavRow(Icons.Filled.Star, "Rate app") {
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")))
+                    }.onFailure {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=${context.packageName}")))
+                    }
+                }
                 GroupDivider()
                 NavRow(Icons.Filled.Info, "About QuickScan Pro", onClick = onNavigateToAbout)
                 GroupDivider()
