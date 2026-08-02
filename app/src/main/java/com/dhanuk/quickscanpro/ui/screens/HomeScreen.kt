@@ -1,12 +1,17 @@
 package com.dhanuk.quickscanpro.ui.screens
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -41,6 +46,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
@@ -63,6 +69,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -84,6 +91,11 @@ import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 import com.dhanuk.quickscanpro.util.ScanFeedback
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "HomeScreen"
 
@@ -132,8 +144,11 @@ fun HomeScreen(
     }
 
     val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
     val lastScanContent = remember { mutableStateOf<String?>(null) }
     val lastScanTime = remember { mutableLongStateOf(0L) }
+    var camera by remember { mutableStateOf<Camera?>(null) }
+    var torchOn by rememberSaveable { mutableStateOf(false) }
 
     val onScanWithFeedback: (String) -> Unit = { result ->
         val now = System.currentTimeMillis()
@@ -147,6 +162,22 @@ fun HomeScreen(
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
             onScan(result)
+            com.dhanuk.quickscanpro.ads.InterstitialAdManager.recordScan(context)
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                val decoded = withContext(Dispatchers.IO) { decodeQrFromUri(context, uri) }
+                if (decoded != null) {
+                    onScanWithFeedback(decoded)
+                } else {
+                    Toast.makeText(context, "No QR code found in the image", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -208,6 +239,7 @@ fun HomeScreen(
                     if (hasCameraPermission) {
                         CameraPreview(
                             onScan = onScanWithFeedback,
+                            onCameraReady = { camera = it },
                             modifier = Modifier.fillMaxSize()
                         )
                         ScanFrameOverlay(Modifier.fillMaxSize())
@@ -267,8 +299,23 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                QuickAction(icon = Icons.Filled.FlashOn, label = "Flash", onClick = onOpenBatch)
-                QuickAction(icon = Icons.Filled.Image, label = "Gallery", onClick = onOpenTemplates)
+                QuickAction(
+                    icon = if (torchOn) Icons.Filled.FlashOff else Icons.Filled.FlashOn,
+                    label = if (torchOn) "Flash Off" else "Flash",
+                    onClick = {
+                        torchOn = !torchOn
+                        camera?.cameraControl?.enableTorch(torchOn)
+                    }
+                )
+                QuickAction(
+                    icon = Icons.Filled.Image,
+                    label = "Gallery",
+                    onClick = {
+                        galleryLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
                 QuickAction(icon = Icons.Filled.History, label = "History", onClick = onViewAllHistory)
             }
 
@@ -313,6 +360,14 @@ fun HomeScreen(
                 }
             }
 
+            Spacer(Modifier.height(20.dp))
+
+            // ── Banner Ad ──
+            com.dhanuk.quickscanpro.ui.composables.BannerAd(
+                adUnitId = com.dhanuk.quickscanpro.BuildConfig.BANNER_AD_ID,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -354,6 +409,7 @@ private fun QuickAction(
 @Composable
 private fun CameraPreview(
     onScan: (String) -> Unit,
+    onCameraReady: (Camera) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -383,11 +439,12 @@ private fun CameraPreview(
                 .also { it.setAnalyzer(executor, analyzer) }
             try {
                 provider.unbindAll()
-                provider.bindToLifecycle(
+                val camera = provider.bindToLifecycle(
                     lifecycleOwner,
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     preview, analysis
                 )
+                onCameraReady(camera)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to bind camera lifecycle", e)
             }
@@ -515,6 +572,40 @@ private fun PermissionPlaceholder(
             TextButton(onClick = onOpenAppSettings) {
                 Text("Open app settings", color = Color.White.copy(alpha = 0.8f))
             }
+        }
+    }
+}
+
+private suspend fun decodeQrFromUri(context: Context, uri: Uri): String? {
+    return kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+        try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            if (inputStream == null) {
+                cont.resume(null, onCancellation = null)
+                return@suspendCancellableCoroutine
+            }
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
+            if (bitmap == null) {
+                cont.resume(null, onCancellation = null)
+                return@suspendCancellableCoroutine
+            }
+
+            val image = InputImage.fromBitmap(bitmap, 0)
+            val scanner = BarcodeScanning.getClient()
+            scanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    scanner.close()
+                    cont.resume(barcodes.firstOrNull()?.rawValue, onCancellation = null)
+                }
+                .addOnFailureListener { e ->
+                    scanner.close()
+                    Log.e(TAG, "Failed to decode QR from gallery image", e)
+                    cont.resume(null, onCancellation = null)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to decode QR from gallery image", e)
+            cont.resume(null, onCancellation = null)
         }
     }
 }
