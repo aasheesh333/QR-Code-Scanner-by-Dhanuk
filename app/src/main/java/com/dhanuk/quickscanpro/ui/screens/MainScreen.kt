@@ -128,7 +128,7 @@ private fun AppBottomBar(navController: NavHostController) {
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        tonalElevation = 0.dp
+        tonalElevation = 3.dp
     ) {
         BottomNavItem.entries.forEach { item ->
             val selected = currentRoute == item.route
@@ -146,8 +146,8 @@ private fun AppBottomBar(navController: NavHostController) {
                 icon = { Icon(item.icon, contentDescription = item.title) },
                 label = { Text(item.title) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
                     indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant

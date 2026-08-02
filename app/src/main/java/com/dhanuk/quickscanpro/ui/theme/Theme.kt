@@ -110,7 +110,7 @@ enum class ThemeMode(val label: String) {
 
 @Composable
 fun QuickScanProTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeMode: ThemeMode = ThemeMode.SYSTEM, // default ignored when ThemeViewModel provides value; app ships LIGHT
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
