@@ -1,19 +1,30 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +32,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -31,19 +44,54 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.dhanuk.quickscanpro.config.AppConfig
-import com.dhanuk.quickscanpro.ui.composables.BannerAd
 import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
+import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
+import com.dhanuk.quickscanpro.database.ScanResult
+import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+
+private fun handleDefaultScanAction(context: Context, content: String, action: String) {
+    when (action) {
+        "copy_clipboard" -> {
+            (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                .setPrimaryClip(ClipData.newPlainText("scan", content))
+            Toast.makeText(context, "Scan copied", Toast.LENGTH_SHORT).show()
+        }
+        "share" -> {
+            context.startActivity(Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, content)
+                },
+                "Share scan"
+            ))
+        }
+        "open_url" -> {
+            if (BarcodeTypeDetector.detectType(content) == BarcodeTypeDetector.TYPE_URL) {
+                runCatching {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(content)))
+                }.onFailure {
+                    Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(context, "Saved to history", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
 
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    val context = LocalContext.current
     val settingsViewModel: SettingsViewModel = viewModel()
+    val historyViewModel: HistoryViewModel = viewModel()
     val onboardingCompleted by settingsViewModel.onboardingCompleted.collectAsState()
+    val defaultAction by settingsViewModel.defaultAction.collectAsState()
+    val autoSave by settingsViewModel.autoCopyOnScan.collectAsState()
 
     when {
         onboardingCompleted == null -> {
@@ -62,15 +110,16 @@ fun MainScreen() {
         else -> {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
-                bottomBar = {
-                    Column {
-                        BannerAd(adUnitId = AppConfig.AdMob.BANNER_AD_UNIT_ID_HOME)
-                        AppBottomBar(navController)
-                    }
-                }
+                bottomBar = { AppBottomBar(navController) }
             ) { innerPadding ->
                 Box(modifier = Modifier.padding(innerPadding)) {
-                    AppNavigation(navController)
+                    AppNavigation(
+                        navController = navController,
+                        context = context,
+                        defaultAction = defaultAction,
+                        autoCopy = autoSave,
+                        historyViewModel = historyViewModel
+                    )
                 }
             }
         }
@@ -81,8 +130,7 @@ fun MainScreen() {
 private fun AppBottomBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBarRoutes = BottomNavItem.entries.map { it.route } +
-        listOf("result/{data}")
+    val showBarRoutes = BottomNavItem.entries.map { it.route }
 
     if (currentRoute == null) return
     val routePrefix = currentRoute.split("/").first().substringBefore("?")
@@ -91,39 +139,57 @@ private fun AppBottomBar(navController: NavHostController) {
         return
     }
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            .navigationBarsPadding()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         BottomNavItem.entries.forEach { item ->
             val selected = currentRoute == item.route
-            NavigationBarItem(
-                selected = selected,
-                onClick = {
-                    if (!selected) {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                    .clickable {
+                        if (!selected) {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     }
-                },
-                icon = { Icon(item.icon, contentDescription = item.title) },
-                label = { Text(item.title) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    item.icon,
+                    contentDescription = item.title,
+                    tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            )
+                Text(
+                    item.title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun AppNavigation(navController: NavHostController) {
+private fun AppNavigation(
+    navController: NavHostController,
+    context: Context,
+    defaultAction: String,
+    autoCopy: Boolean,
+    historyViewModel: HistoryViewModel
+) {
     NavHost(
         navController = navController,
         startDestination = BottomNavItem.Home.route,
@@ -135,8 +201,18 @@ private fun AppNavigation(navController: NavHostController) {
         composable(BottomNavItem.Home.route) {
             HomeScreen(
                 onScan = { result ->
-                    val encoded = URLEncoder.encode(result, StandardCharsets.UTF_8.toString())
-                    navController.navigate("result/$encoded")
+                    if (autoCopy) {
+                        (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                            .setPrimaryClip(ClipData.newPlainText("scan", result))
+                        Toast.makeText(context, "Scan copied", Toast.LENGTH_SHORT).show()
+                    }
+                    if (defaultAction == "show_result") {
+                        val encoded = URLEncoder.encode(result, StandardCharsets.UTF_8.toString())
+                        navController.navigate("result/$encoded")
+                    } else {
+                        historyViewModel.addScanResult(ScanResult(content = result))
+                        handleDefaultScanAction(context, result, defaultAction)
+                    }
                 },
                 onViewAllHistory = {
                     navController.navigate(BottomNavItem.History.route) {
@@ -167,7 +243,13 @@ private fun AppNavigation(navController: NavHostController) {
                 }
             )
         }
-        composable(BottomNavItem.Generate.route) { QRGeneratorScreen() }
+        composable(BottomNavItem.Generate.route) {
+            QRGeneratorScreen(onOpenSettings = {
+                navController.navigate(BottomNavItem.Settings.route) {
+                    launchSingleTop = true
+                }
+            })
+        }
         composable(BottomNavItem.History.route) {
             HistoryScreen(
                 onOpenVault = { navController.navigate("vault") },
@@ -192,12 +274,16 @@ private fun AppNavigation(navController: NavHostController) {
                 }
             )
         }
-        composable(BottomNavItem.Analytics.route) { AnalyticsScreen() }
+        composable(BottomNavItem.Analytics.route) {
+            AnalyticsScreen(onOpenSettings = {
+                navController.navigate(BottomNavItem.Settings.route) {
+                    launchSingleTop = true
+                }
+            })
+        }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToAbout = { navController.navigate("about") { launchSingleTop = true } },
-                onNavigateToThemeStudio = { navController.navigate("theme_studio") { launchSingleTop = true } }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -208,7 +294,11 @@ private fun AppNavigation(navController: NavHostController) {
             val data = backStackEntry.arguments?.getString("data") ?: ""
             ResultScreen(
                 data = data,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onOpenProductLookup = { barcode ->
+                    val encoded = URLEncoder.encode(barcode, StandardCharsets.UTF_8.toString())
+                    navController.navigate("product_lookup/$encoded")
+                }
             )
         }
 

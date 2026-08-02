@@ -90,6 +90,7 @@ import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.composables.ScanFrame
 import com.dhanuk.quickscanpro.util.ScanFeedback
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
+import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -111,7 +112,10 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val historyVm: HistoryViewModel = viewModel()
+    val settingsVm: SettingsViewModel = viewModel()
     val recent by historyVm.history.collectAsState()
+    val soundEnabled by settingsVm.soundEnabled.collectAsState()
+    val vibrateEnabled by settingsVm.vibrateEnabled.collectAsState()
     val recent1 = recent.firstOrNull()
 
     var hasCameraPermission by remember {
@@ -149,9 +153,11 @@ fun HomeScreen(
         if (!isDup) {
             lastScanContent.value = result
             lastScanTime.longValue = now
-            ScanFeedback.playBeep()
-            ScanFeedback.vibrate(context)
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            if (soundEnabled) ScanFeedback.playBeep()
+            if (vibrateEnabled) {
+                ScanFeedback.vibrate(context)
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
             onScan(result)
         }
     }
@@ -340,6 +346,22 @@ private fun CameraViewfinder(
                     icon = Icons.Filled.AutoAwesomeMotion,
                     contentDescription = "Batch scan"
                 )
+            }
+
+            Button(
+                onClick = { if (!hasCameraPermission) onRequestPermission() },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 40.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(Icons.Filled.QrCode, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Scan Now", style = MaterialTheme.typography.labelLarge)
             }
         } else {
             Column(

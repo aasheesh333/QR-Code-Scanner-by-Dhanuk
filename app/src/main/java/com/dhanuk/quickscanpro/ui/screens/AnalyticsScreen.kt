@@ -43,15 +43,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.viewmodel.AnalyticsViewModel
+import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
+import com.dhanuk.quickscanpro.database.ScanResult
+import java.net.URI
+import java.util.Calendar
 
 @Composable
-fun AnalyticsScreen() {
+fun AnalyticsScreen(onOpenSettings: () -> Unit = {}) {
     val vm: AnalyticsViewModel = viewModel()
+    val historyVm: HistoryViewModel = viewModel()
     val stats by vm.stats.collectAsState()
+    val scans by historyVm.history.collectAsState()
+    val leakChecks by historyVm.leakChecks.collectAsState()
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            AnalyticsHeader()
+            AnalyticsHeader(onOpenSettings)
             Column(
                 modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -59,12 +66,12 @@ fun AnalyticsScreen() {
                 KPIRow(
                     totalScans = stats.totalScans,
                     generated = stats.totalGeneratedQRs,
-                    leakChecks = 0
+                    leakChecks = leakChecks.size
                 )
                 if (stats.totalScans > 0) {
                     ScanTypesCard(stats.topTypes)
-                    WeeklyActivityCard()
-                    TopSourcesCard(stats.topTypes)
+                    WeeklyActivityCard(scans)
+                    TopSourcesCard(scans)
                 } else {
                     Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
                         Text("No scans yet. Start scanning to see analytics.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -76,14 +83,16 @@ fun AnalyticsScreen() {
 }
 
 @Composable
-private fun AnalyticsHeader() {
+private fun AnalyticsHeader(onOpenSettings: () -> Unit) {
     Surface(modifier = Modifier.fillMaxWidth().statusBarsPadding(), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.QrCode, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
             Spacer(Modifier.weight(1f))
             Text("Analytics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.weight(1f))
-            Spacer(Modifier.width(24.dp))
+            androidx.compose.material3.IconButton(onClick = onOpenSettings) {
+                Icon(androidx.compose.material.icons.Icons.Filled.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+            }
         }
     }
 }
@@ -141,17 +150,27 @@ private fun ScanTypesCard(types: List<Pair<String, Int>>) {
 }
 
 @Composable
-private fun WeeklyActivityCard() {
+private fun WeeklyActivityCard(scans: List<ScanResult>) {
     val days = listOf("M", "T", "W", "T", "F", "S", "S")
-    val heights = listOf(0.30, 0.60, 0.45, 0.20, 0.80, 1.0, 0.50)
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    val todayStart = calendar.timeInMillis
+    val counts = (6 downTo 0).map { daysAgo ->
+        val start = todayStart - daysAgo * 86_400_000L
+        scans.count { it.timestamp in start until (start + 86_400_000L) }
+    }
+    val maxCount = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, shadowElevation = 0.5.dp) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Weekly Activity", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface)
             Box(modifier = Modifier.fillMaxWidth().height(160.dp).padding(top = 16.dp, bottom = 8.dp)) {
                 Row(modifier = Modifier.fillMaxSize().align(Alignment.BottomCenter), horizontalArrangement = Arrangement.SpaceBetween) {
                     days.forEachIndexed { idx, day ->
-                        val h = heights[idx]
-                        val isHighlight = idx == 1
+                        val h = counts[idx].toFloat() / maxCount
+                        val isHighlight = idx == 6
                         val color = if (isHighlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
                         Column(modifier = Modifier.weight(1f).align(Alignment.Bottom), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(modifier = Modifier.width(24.dp).height((h * 120).dp).clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)).background(color))
@@ -165,13 +184,23 @@ private fun WeeklyActivityCard() {
 }
 
 @Composable
-private fun TopSourcesCard(types: List<Pair<String, Int>>) {
-    val urlType = types.firstOrNull { it.first == "url" }
-    if (urlType == null) return
+private fun TopSourcesCard(scans: List<ScanResult>) {
+    val sources = scans.filter { it.type == "url" }
+        .mapNotNull { scan ->
+            runCatching { URI(scan.content).host?.removePrefix("www.") }.getOrNull()
+        }
+        .filter { it.isNotBlank() }
+        .groupingBy { it }
+        .eachCount()
+        .entries
+        .sortedByDescending { it.value }
+        .take(3)
+    if (sources.isEmpty()) return
+    val maxCount = sources.maxOf { it.value }.toFloat()
     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, shadowElevation = 0.5.dp) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Top Sources", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface)
-            listOf("google.com" to 45, "example.com" to 22, "github.com" to 14).forEach { (domain, count) ->
+            sources.forEach { (domain, count) ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(32.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
                         Icon(Icons.Filled.Link, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
@@ -179,7 +208,7 @@ private fun TopSourcesCard(types: List<Pair<String, Int>>) {
                     Spacer(Modifier.width(12.dp))
                     Text(domain, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.W500, fontSize = 16.sp, lineHeight = 24.sp), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                     Box(modifier = Modifier.width(64.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
-                        Box(modifier = Modifier.fillMaxWidth(((count / 45f))).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.primary))
+                        Box(modifier = Modifier.fillMaxWidth(count / maxCount).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.primary))
                     }
                     Spacer(Modifier.width(8.dp))
                     Text(count.toString(), style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600, lineHeight = 20.sp, letterSpacing = 0.01.sp), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(32.dp))

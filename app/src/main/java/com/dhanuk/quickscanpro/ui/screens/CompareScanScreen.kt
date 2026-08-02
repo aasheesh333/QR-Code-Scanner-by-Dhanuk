@@ -73,8 +73,14 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
         CompareHeader(onNavigateBack)
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                ScanSlot("Slot A", slotA, scanning == 1, { scanningState.value = 1 }, Modifier.weight(1f))
-                ScanSlot("Slot B", slotB, scanning == 2, { scanningState.value = 2 }, Modifier.weight(1f))
+                ScanSlot("Slot A", slotA, scanning == 1, { scanningState.value = 1 }, { scanned ->
+                    slotAState.value = scanned
+                    scanningState.value = null
+                }, Modifier.weight(1f))
+                ScanSlot("Slot B", slotB, scanning == 2, { scanningState.value = 2 }, { scanned ->
+                    slotBState.value = scanned
+                    scanningState.value = null
+                }, Modifier.weight(1f))
             }
             PrimaryButton(text = "Scan to Compare", onClick = { scanningState.value = 1 }, modifier = Modifier.fillMaxWidth()) { Spacer(Modifier.width(8.dp)); Text("Scan to Compare") }
             if (slotA != null && slotB != null) {
@@ -109,7 +115,14 @@ private fun CompareHeader(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun ScanSlot(label: String, value: String?, scanning: Boolean, onStartScan: () -> Unit, modifier: Modifier) {
+private fun ScanSlot(
+    label: String,
+    value: String?,
+    scanning: Boolean,
+    onStartScan: () -> Unit,
+    onScan: (String) -> Unit,
+    modifier: Modifier
+) {
     val accentColor = if (label == "Slot A") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
     Surface(modifier = modifier, shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -122,7 +135,7 @@ private fun ScanSlot(label: String, value: String?, scanning: Boolean, onStartSc
                     Text(value, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.W600), color = MaterialTheme.colorScheme.onSurface, maxLines = 2)
                 } else {
                     if (scanning) {
-                        ScanSlotCamera { scanned -> onStartScan() /* handled by parent */ }
+                        ScanSlotCamera(onScan)
                     } else {
                         Spacer(Modifier.height(60.dp))
                     }

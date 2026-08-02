@@ -26,7 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddBox
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -40,9 +40,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.TextSnippet
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,18 +47,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -76,7 +66,7 @@ import com.dhanuk.quickscanpro.ui.composables.SecondaryButton
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 
 @Composable
-fun QRGeneratorScreen() {
+fun QRGeneratorScreen(onOpenSettings: () -> Unit = {}) {
     val vm: QRGeneratorViewModel = viewModel()
     val context = LocalContext.current
     val selectedType by vm.selectedType.collectAsState()
@@ -85,11 +75,8 @@ fun QRGeneratorScreen() {
     val f2 by vm.f2.collectAsState()
     val f3 by vm.f3.collectAsState()
     val f4 by vm.f4.collectAsState()
-    val fgColor by vm.foregroundColor.collectAsState()
-    val bgColor by vm.backgroundColor.collectAsState()
-
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        GenerateHeader(vm, fgColor, bgColor)
+        GenerateHeader(onOpenSettings)
         Column(
             modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -106,6 +93,7 @@ fun QRGeneratorScreen() {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SecondaryButton(text = "Save", onClick = {
                         val saved = QRCodeGenerator.saveToGallery(context, bitmap!!, "qr_${System.currentTimeMillis()}")
+                        if (saved) vm.saveCurrentQR(f1)
                         Toast.makeText(context, if (saved) "Saved to gallery" else "Save failed", Toast.LENGTH_SHORT).show()
                     }, modifier = Modifier.weight(1f)) { Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Save") }
                     SecondaryButton(text = "Share", onClick = { QRCodeGenerator.shareQrBitmap(context, bitmap!!) }, modifier = Modifier.weight(1f)) { Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Share") }
@@ -116,35 +104,14 @@ fun QRGeneratorScreen() {
 }
 
 @Composable
-private fun GenerateHeader(vm: QRGeneratorViewModel, fgColor: Int, bgColor: Int) {
-    var showSettings by rememberSaveable { mutableStateOf(false) }
+private fun GenerateHeader(onOpenSettings: () -> Unit) {
     Surface(modifier = Modifier.fillMaxWidth().statusBarsPadding(), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
             Text("Generate QR", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Box {
-                IconButton(onClick = { showSettings = true }) { Icon(Icons.Filled.Settings, contentDescription = "QR Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                DropdownMenu(expanded = showSettings, onDismissRequest = { showSettings = false }) {
-                    Text("QR Appearance", style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-                    HorizontalDivider()
-                    ColorMenuItem("Foreground", Color(fgColor)) { vm.setForeground(nextColor(fgColor)); showSettings = false }
-                    ColorMenuItem("Background", Color(bgColor)) { vm.setBackground(nextColor(bgColor)); showSettings = false }
-                    HorizontalDivider()
-                    DropdownMenuItem(text = { Text("Reset Colors") }, onClick = { vm.setForeground(0xFF000000.toInt()); vm.setBackground(0xFFFFFFFF.toInt()); showSettings = false }, leadingIcon = { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp)) })
-                }
-            }
+            IconButton(onClick = onOpenSettings) { Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
-}
-
-@Composable
-private fun ColorMenuItem(label: String, color: Color, onClick: () -> Unit) {
-    DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Box(modifier = Modifier.size(24.dp).clip(RoundedCornerShape(4.dp)).background(color).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))); Spacer(Modifier.width(12.dp)); Text(label) } }, onClick = onClick)
-}
-
-private fun nextColor(current: Int): Int {
-    val palette = listOf(0xFF000000.toInt(), 0xFF004AC6.toInt(), 0xFF006C49.toInt(), 0xFF943700.toInt(), 0xFF7C3AED.toInt(), 0xFFDC2626.toInt())
-    return palette[(palette.indexOf(current) + 1) % palette.size]
 }
 
 private data class QRChip(val type: QRContentBuilder.QRType, val label: String, val icon: ImageVector)
@@ -157,6 +124,7 @@ private val CHIPS = listOf(
     QRChip(QRContentBuilder.QRType.EMAIL, "Email", Icons.Filled.Mail),
     QRChip(QRContentBuilder.QRType.WIFI, "Wi-Fi", Icons.Filled.Wifi),
     QRChip(QRContentBuilder.QRType.VCARD, "vCard", Icons.Filled.ContactPage)
+    , QRChip(QRContentBuilder.QRType.CALENDAR, "Event", Icons.Filled.CalendarMonth)
 )
 
 @Composable
@@ -193,7 +161,12 @@ private fun DynamicInputForm(
             QRContentBuilder.QRType.EMAIL -> { QRField(f1, setF1, "To", leadingIcon = Icons.Filled.Mail); QRField(f2, setF2, "Subject"); QRField(f3, setF3, "Body", singleLine = false) }
             QRContentBuilder.QRType.WIFI -> { QRField(f1, setF1, "SSID", leadingIcon = Icons.Filled.Wifi); QRField(f2, setF2, "Password"); QRField(f3, setF3, "Encryption (WPA/WEP/NOPASS)") }
             QRContentBuilder.QRType.VCARD -> { QRField(f1, setF1, "Full name", leadingIcon = Icons.Filled.ContactPage); QRField(f2, setF2, "Phone"); QRField(f3, setF3, "Email"); QRField(f4, setF4, "Organization") }
-            QRContentBuilder.QRType.CALENDAR -> Text("Pick another type — calendar is available via the Calendar Import screen", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            QRContentBuilder.QRType.CALENDAR -> {
+                QRField(f1, setF1, "Event title", leadingIcon = Icons.Filled.CalendarMonth)
+                QRField(f2, setF2, "Location (optional)")
+                QRField(f3, setF3, "Start (YYYYMMDDTHHMMSS)")
+                QRField(f4, setF4, "End (YYYYMMDDTHHMMSS)")
+            }
         }
     }
 }

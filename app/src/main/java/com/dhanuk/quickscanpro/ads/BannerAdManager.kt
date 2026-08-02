@@ -66,6 +66,14 @@ object BannerAdManager {
         return newAdView
     }
 
+    fun pause() {
+        adView?.pause()
+    }
+
+    fun resume() {
+        adView?.resume()
+    }
+
     fun destroy() {
         adView?.destroy()
         adView = null

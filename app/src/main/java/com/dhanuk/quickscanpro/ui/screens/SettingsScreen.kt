@@ -23,18 +23,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
@@ -66,31 +58,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.BuildConfig
-import com.dhanuk.quickscanpro.config.AppConfig
-import com.dhanuk.quickscanpro.ui.theme.ThemeMode
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
-import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit,
-    onNavigateToAbout: () -> Unit,
-    onNavigateToThemeStudio: () -> Unit
+    onNavigateBack: () -> Unit
 ) {
     val settingsVm: SettingsViewModel = viewModel()
     val historyVm: HistoryViewModel = viewModel()
-    val themeVm: ThemeViewModel = viewModel()
     val sound by settingsVm.soundEnabled.collectAsState()
     val vibrate by settingsVm.vibrateEnabled.collectAsState()
     val autoSave by settingsVm.autoCopyOnScan.collectAsState()
     val biometrics by settingsVm.biometricLock.collectAsState()
-    val themeMode by themeVm.themeMode.collectAsState()
     val defaultAction by settingsVm.defaultAction.collectAsState()
-    var pushEnabled by rememberSaveable { mutableStateOf(false) }
     var showDefaultActionDialog by rememberSaveable { mutableStateOf(false) }
     var showClearConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -103,8 +86,6 @@ fun SettingsScreen(
             SettingsGroup("General") {
                 SettingsRow(Icons.Filled.RocketLaunch, "Default action after scan", trailing = defaultActionLabel(defaultAction), onClick = { showDefaultActionDialog = true })
                 GroupDivider()
-                SettingsRow(Icons.Filled.Palette, "Theme", trailing = themeMode.label, onClick = { showThemeDialog = true })
-                GroupDivider()
                 ToggleRow(Icons.Filled.VolumeUp, "Beep on scan", sound, onChange = { enabled -> settingsVm.setSound(enabled) })
                 GroupDivider()
                 ToggleRow(Icons.Filled.Vibration, "Vibrate on scan", vibrate, onChange = { enabled -> settingsVm.setVibrate(enabled) })
@@ -116,34 +97,6 @@ fun SettingsScreen(
             }
             SettingsGroup("Data") {
                 DangerRow(Icons.Filled.DeleteForever, "Clear all history", onClick = { showClearConfirmDialog = true })
-            }
-            SettingsGroup("Notifications") {
-                ToggleRow(Icons.Filled.Notifications, "Push notifications", pushEnabled, subtitle = "Powered by OneSignal", onChange = { enabled -> pushEnabled = enabled })
-            }
-            SettingsGroup("Support") {
-                SettingsRow(Icons.Filled.Info, "About", onClick = onNavigateToAbout)
-                GroupDivider()
-                SettingsRow(Icons.Filled.Palette, "Theme Studio", onClick = onNavigateToThemeStudio)
-                GroupDivider()
-                SettingsRow(Icons.Filled.Star, "Rate App", onClick = {
-                    try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.PLAY_STORE_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { Toast.makeText(context, "No app to open Play Store", Toast.LENGTH_SHORT).show() }
-                })
-                GroupDivider()
-                SettingsRow(Icons.Filled.Share, "Share App", onClick = {
-                    try { val i = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Check out QuickScan Pro: ${AppConfig.PLAY_STORE_URL}") }; context.startActivity(Intent.createChooser(i, "Share via")) } catch (_: Exception) { Toast.makeText(context, "No app to share", Toast.LENGTH_SHORT).show() }
-                })
-                GroupDivider()
-                SettingsRow(Icons.Filled.Shield, "Privacy Policy", onClick = {
-                    try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.PRIVACY_POLICY)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { Toast.makeText(context, "No browser", Toast.LENGTH_SHORT).show() }
-                })
-                GroupDivider()
-                SettingsRow(Icons.Filled.Description, "Terms of Use", onClick = {
-                    try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.TERMS)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { Toast.makeText(context, "No browser", Toast.LENGTH_SHORT).show() }
-                })
-                GroupDivider()
-                SettingsRow(Icons.Filled.ContactPage, "Contact Us", onClick = {
-                    try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.Legal.CONTACT_US)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { Toast.makeText(context, "No browser", Toast.LENGTH_SHORT).show() }
-                })
             }
             Text(
                 text = "Version ${BuildConfig.VERSION_NAME}",
@@ -166,7 +119,6 @@ fun SettingsScreen(
             dismissButton = { TextButton(onClick = { showClearConfirmDialog = false }) { Text("Cancel") } }
         )
     }
-    if (showThemeDialog) ThemeModeDialog(themeMode, { themeVm.setThemeMode(it); showThemeDialog = false }, { showThemeDialog = false })
 }
 
 @Composable
@@ -236,16 +188,6 @@ private fun DefaultActionDialog(current: String, onSelect: (String) -> Unit, onD
         onDismissRequest = onDismiss,
         title = { Text("Default action") },
         text = { Column { options.forEach { (key, label) -> Row(modifier = Modifier.fillMaxWidth().clickable { onSelect(key); onDismiss() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) { RadioButton(current == key, { onSelect(key); onDismiss() }); Spacer(Modifier.width(12.dp)); Text(label, style = MaterialTheme.typography.bodyMedium) } } } },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
-}
-
-@Composable
-private fun ThemeModeDialog(current: ThemeMode, onSelect: (ThemeMode) -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Theme") },
-        text = { Column { ThemeMode.entries.forEach { mode -> Row(modifier = Modifier.fillMaxWidth().clickable { onSelect(mode) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) { RadioButton(current == mode, { onSelect(mode) }); Spacer(Modifier.width(12.dp)); Text(mode.label, style = MaterialTheme.typography.bodyMedium) } } } },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

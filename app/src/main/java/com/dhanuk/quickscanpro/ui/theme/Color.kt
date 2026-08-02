@@ -38,12 +38,12 @@ val InkOnTertiaryContainer = Color(0xFF475569)
 
 // Surfaces — clean white / light gray
 val SurfaceLowest = Color(0xFFFFFFFF)         // white
-val SurfaceLow = Color(0xFFF8FAFC)            // very light gray
-val SurfaceMid = Color(0xFFF1F5F9)            // light gray
-val SurfaceHigh = Color(0xFFE2E8F0)           // surfaceContainerHigh
-val SurfaceHighest = Color(0xFFCBD5E1)        // surfaceContainerHighest
-val SurfaceBright = Color(0xFFFFFFFF)         // surface/background = white
-val SurfaceDim = Color(0xFFD1D5DB)
+val SurfaceLow = Color(0xFFF1F3FF)            // surfaceContainerLow
+val SurfaceMid = Color(0xFFE9EDFF)            // surfaceContainer
+val SurfaceHigh = Color(0xFFE1E8FD)           // surfaceContainerHigh
+val SurfaceHighest = Color(0xFFDCE2F7)        // surfaceContainerHighest
+val SurfaceBright = Color(0xFFF9F9FF)         // Stitch background/surface
+val SurfaceDim = Color(0xFFD3DAEF)
 
 // Camera / dark surfaces
 val CameraBg = Color(0xFF000000)
@@ -52,9 +52,9 @@ val CameraFrame = Color(0xFFFFFFFF)
 val CameraButtonShadow = Color(0x33000000)
 
 // Outlines & dividers
-val OutlineStrong = Color(0xFF9CA3AF)
-val OutlineFaint = Color(0xFFE2E8F0)
-val Divider = Color(0xFFE2E8F0)
+val OutlineStrong = Color(0xFF737686)
+val OutlineFaint = Color(0xFFC3C6D7)
+val Divider = Color(0xFFC3C6D7)
 
 // Dark theme (kept neutral)
 val DarkBg = Color(0xFF0F0F0F)

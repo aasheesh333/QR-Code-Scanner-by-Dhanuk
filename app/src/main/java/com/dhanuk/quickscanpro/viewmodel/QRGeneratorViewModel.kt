@@ -62,7 +62,8 @@ class QRGeneratorViewModel(application: Application) : AndroidViewModel(applicat
         input4: String = ""
     ) {
         val content = when (_selectedType.value) {
-            QRContentBuilder.QRType.TEXT, QRContentBuilder.QRType.URL -> input1
+            QRContentBuilder.QRType.TEXT -> input1
+            QRContentBuilder.QRType.URL -> QRContentBuilder.buildUrl(input1)
             QRContentBuilder.QRType.WIFI -> QRContentBuilder.buildWifi(input1, input2, input3.ifBlank { "WPA" })
             QRContentBuilder.QRType.VCARD -> QRContentBuilder.buildVCARD(input1, input2, input3, input4)
             QRContentBuilder.QRType.EMAIL -> QRContentBuilder.buildEmail(input1, input2, input3)

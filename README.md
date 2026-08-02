@@ -31,7 +31,7 @@ This is a complete Android application for scanning QR codes and barcodes. It's 
     ```
     sdk.dir=/path/to/your/android/sdk
     ```
-3.  **Build the project:** Click on "Build" > "Make Project" or run `./gradlew assembleDebug` in the terminal.
+3.  **Build the project:** Push changes to GitHub and use the repository's GitHub Actions workflow. Android APK/AAB artifacts are not built locally.
 
 ## How to Change App Name, Package Name, and AdMob IDs
 
@@ -53,29 +53,6 @@ This is a complete Android application for scanning QR codes and barcodes. It's 
 2.  Replace the placeholder ad unit IDs in the `AdMob` object with your own.
 3.  Open `app/src/main/AndroidManifest.xml` and replace the placeholder AdMob App ID with your own.
 
-## Build Release APK and AAB
+## Build APK and AAB
 
-1.  **Generate a signing key:** If you don't have one, you can generate a new one using the following command:
-    ```
-    keytool -genkey -v -keystore your_keystore_name.keystore -alias your_alias_name -keyalg RSA -keysize 2048 -validity 10000
-    ```
-2.  **Configure signing in `build.gradle`:** Open `app/build.gradle` and add your signing configuration to the `android` block. For example:
-    ```gradle
-    signingConfigs {
-        release {
-            storeFile file("your_keystore_name.keystore")
-            storePassword "your_keystore_password"
-            keyAlias "your_alias_name"
-            keyPassword "your_key_password"
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            // ...
-        }
-    }
-    ```
-3.  **Build the release artifacts:** Run the following commands in the terminal:
-    -   `./gradlew assembleRelease` to generate the APK.
-    -   `./gradlew bundleRelease` to generate the AAB.
+Use the repository's GitHub Actions workflow for debug and release artifacts. Configure signing and production secrets in GitHub Actions secrets; do not generate APK or AAB files locally.

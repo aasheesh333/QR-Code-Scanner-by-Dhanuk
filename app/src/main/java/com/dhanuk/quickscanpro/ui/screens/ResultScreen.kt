@@ -45,16 +45,14 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,11 +76,15 @@ import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.composables.PrimaryButton
 import com.dhanuk.quickscanpro.ui.composables.SecondaryButton
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
+import com.dhanuk.quickscanpro.util.LinkSafetyChecker
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
+fun ResultScreen(
+    data: String,
+    onNavigateBack: () -> Unit,
+    onOpenProductLookup: (String) -> Unit = {}
+) {
     val context = LocalContext.current
     val historyVm: HistoryViewModel = viewModel()
     var savedId by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -96,30 +98,57 @@ fun ResultScreen(data: String, onNavigateBack: () -> Unit) {
     }
 
     val type = remember(data) { BarcodeTypeDetector.detectType(data) }
+    val scanForContent = historyVm.history.value.firstOrNull { it.content == data }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 12.dp, vertical = 6.dp)) {
-                        Icon(typeIcon(type), contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(6.dp))
-                        Text(typeLabel(type), style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600, letterSpacing = 0.01.sp, lineHeight = 20.sp), color = MaterialTheme.colorScheme.primary)
-                    }
-                },
-                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        StitchResultHeader(type, onNavigateBack)
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(Modifier.height(8.dp))
             when (type) {
                 BarcodeTypeDetector.TYPE_WIFI -> WifiVariant(data, onNavigateBack)
                 BarcodeTypeDetector.TYPE_VCARD -> VCardVariant(data, onNavigateBack)
-                else -> UrlVariant(data, type, onNavigateBack)
+                else -> UrlVariant(
+                    data = data,
+                    type = type,
+                    isVault = scanForContent?.isVault == true,
+                    onToggleVault = {
+                        scanForContent?.let { historyVm.setVault(it, !it.isVault, context) }
+                    },
+                    onNavigateBack = onNavigateBack,
+                    onOpenProductLookup = onOpenProductLookup
+                )
             }
-            Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun StitchResultHeader(type: String, onNavigateBack: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
+        shadowElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onNavigateBack, modifier = Modifier.size(48.dp)) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
+            }
+            Row(
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 12.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(typeIcon(type), contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(4.dp))
+                Text(typeLabel(type), style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.W600, letterSpacing = 0.01.sp, lineHeight = 20.sp), color = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(Modifier.width(48.dp))
         }
     }
 }
@@ -130,7 +159,7 @@ private fun WifiVariant(data: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val parts = remember(data) { parseWifi(data) }
     var showPass by rememberSaveable { mutableStateOf(false) }
-    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))) {
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)), shadowElevation = 2.dp) {
         Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Wifi, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp)) }
             Spacer(Modifier.height(16.dp))
@@ -148,7 +177,6 @@ private fun WifiVariant(data: String, onNavigateBack: () -> Unit) {
             }
         }
     }
-    Spacer(Modifier.height(24.dp))
     PrimaryButton(text = "Connect to Network", onClick = { connectToWifi(context, parts.first, parts.second, parseWifiInfo(data).first) }, modifier = Modifier.fillMaxWidth())
     Spacer(Modifier.height(8.dp))
     SecondaryButton(text = "Done", onClick = onNavigateBack, modifier = Modifier.fillMaxWidth())
@@ -160,9 +188,9 @@ private fun VCardVariant(data: String, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val fields = remember(data) { parseVCard(data) }
     val initials = remember(fields) { val n = fields["N"] ?: fields["FN"]; n?.split(" ")?.take(2)?.joinToString("") { it.firstOrNull()?.uppercase() ?: "" }?.ifEmpty { "VC" } ?: "VC" }
-    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))) {
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceBright, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)), shadowElevation = 2.dp) {
         Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(modifier = Modifier.size(96.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) { Text(initials, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary) }
+            Box(modifier = Modifier.size(96.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) { Text(initials, style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary) }
             Spacer(Modifier.height(16.dp))
             Text(fields["FN"] ?: fields["N"] ?: "Contact", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(4.dp))
@@ -180,7 +208,7 @@ private fun VCardVariant(data: String, onNavigateBack: () -> Unit) {
         VCardActionChip("Copy", Icons.Filled.ContentCopy) { copyToClipboard(context, data) }
         VCardActionChip("Share", Icons.Filled.Share) { shareText(context, data) }
     }
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(16.dp))
     PrimaryButton(text = "Save Contact", onClick = { saveVCardContact(context, fields, data) }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Save Contact") }
     Spacer(Modifier.height(8.dp))
     SecondaryButton(text = "Done", onClick = onNavigateBack, modifier = Modifier.fillMaxWidth())
@@ -188,9 +216,17 @@ private fun VCardVariant(data: String, onNavigateBack: () -> Unit) {
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun UrlVariant(data: String, type: String, onNavigateBack: () -> Unit) {
+private fun UrlVariant(
+    data: String,
+    type: String,
+    isVault: Boolean,
+    onToggleVault: () -> Unit,
+    onNavigateBack: () -> Unit,
+    onOpenProductLookup: (String) -> Unit
+) {
     val context = LocalContext.current
-    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))) {
+    val safety = remember(data) { LinkSafetyChecker.analyze(data) }
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)), shadowElevation = 2.dp) {
         Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Public, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(32.dp)) }
             Spacer(Modifier.height(16.dp))
@@ -200,15 +236,73 @@ private fun UrlVariant(data: String, type: String, onNavigateBack: () -> Unit) {
         }
     }
     Spacer(Modifier.height(16.dp))
+    if (safety.level != LinkSafetyChecker.Level.NOT_A_LINK) {
+        SafetyCard(safety)
+        Spacer(Modifier.height(16.dp))
+    }
     FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         PillChip("Copy", Icons.Filled.ContentCopy) { copyToClipboard(context, data) }
         PillChip("Share", Icons.Filled.Share) { shareText(context, data) }
         if (type == BarcodeTypeDetector.TYPE_URL) { PillChip("Open", Icons.Filled.OpenInNew) { openUrl(context, data) } }
+        if (type == BarcodeTypeDetector.TYPE_PRODUCT) { PillChip("Look up", Icons.Filled.Public) { onOpenProductLookup(data) } }
+        PillChip(if (isVault) "Remove vault" else "Add to vault", if (isVault) Icons.Outlined.LockOpen else Icons.Filled.Lock, onToggleVault)
     }
     Spacer(Modifier.height(24.dp))
-    PrimaryButton(text = if (type == BarcodeTypeDetector.TYPE_URL) "Open Link" else "Done", onClick = { if (type == BarcodeTypeDetector.TYPE_URL) openUrl(context, data) else onNavigateBack() }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text(if (type == BarcodeTypeDetector.TYPE_URL) "Open Link" else "Done") }
+    PrimaryButton(
+        text = when (type) {
+            BarcodeTypeDetector.TYPE_URL -> "Open Link"
+            BarcodeTypeDetector.TYPE_PRODUCT -> "Look Up Product"
+            else -> "Done"
+        },
+        onClick = {
+            when (type) {
+                BarcodeTypeDetector.TYPE_URL -> openUrl(context, data)
+                BarcodeTypeDetector.TYPE_PRODUCT -> onOpenProductLookup(data)
+                else -> onNavigateBack()
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(Icons.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            when (type) {
+                BarcodeTypeDetector.TYPE_URL -> "Open Link"
+                BarcodeTypeDetector.TYPE_PRODUCT -> "Look Up Product"
+                else -> "Done"
+            }
+        )
+    }
     Spacer(Modifier.height(8.dp))
     SecondaryButton(text = "Done", onClick = onNavigateBack, modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun SafetyCard(report: LinkSafetyChecker.Report) {
+    val (label, color) = when (report.level) {
+        LinkSafetyChecker.Level.SAFE -> "No warning signs detected" to MaterialTheme.colorScheme.secondary
+        LinkSafetyChecker.Level.CAUTION -> "Review this link before opening" to MaterialTheme.colorScheme.tertiary
+        LinkSafetyChecker.Level.RISKY -> "Potentially risky link" to MaterialTheme.colorScheme.error
+        LinkSafetyChecker.Level.NOT_A_LINK -> return
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = color.copy(alpha = 0.12f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.3f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.GppGood, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Safety score ${report.score}/100", style = MaterialTheme.typography.labelLarge, color = color)
+            }
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+            report.signals.take(2).forEach { signal ->
+                Text(signal, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
 }
 
 @Composable private fun VCardFieldRow(label: String, value: String, icon: ImageVector) {
@@ -221,14 +315,14 @@ private fun UrlVariant(data: String, type: String, onNavigateBack: () -> Unit) {
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable private fun FlowRowScope.VCardActionChip(label: String, icon: ImageVector, onClick: () -> Unit) {
-    Column(modifier = Modifier.width(80.dp).height(80.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerLowest).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(16.dp)).clickable(onClick = onClick), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier = Modifier.width(80.dp).height(80.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceBright).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(16.dp)).clickable(onClick = onClick), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp)); Spacer(Modifier.height(4.dp)); Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable private fun FlowRowScope.PillChip(label: String, icon: ImageVector, onClick: () -> Unit) {
-    Row(modifier = Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(50)).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceContainer).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(50)).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
     }
 }
