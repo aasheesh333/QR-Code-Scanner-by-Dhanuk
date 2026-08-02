@@ -8,10 +8,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.dhanuk.quickscanpro.ads.ConsentManager
 import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.ui.screens.MainScreen
 import com.dhanuk.quickscanpro.ui.theme.QuickScanProTheme
 import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
+import com.google.android.gms.ads.MobileAds
+import com.google.firebase.analytics.FirebaseAnalytics
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,7 +24,18 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        InterstitialAdManager.loadAd(this)
+
+        // Gate ads + analytics behind UMP/GDPR consent
+        ConsentManager.requestConsent(this) { canShowAds ->
+            if (canShowAds) {
+                try { MobileAds.initialize(this) } catch (_: Exception) {}
+                InterstitialAdManager.loadAd(this)
+            }
+            runCatching {
+                FirebaseAnalytics.getInstance(this).setAnalyticsCollectionEnabled(canShowAds)
+            }
+        }
+
         setContent {
             val themeMode by themeViewModel.themeMode.collectAsState()
             QuickScanProTheme(themeMode = themeMode) {

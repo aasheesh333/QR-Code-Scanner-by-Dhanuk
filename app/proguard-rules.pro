@@ -55,3 +55,7 @@
 -dontwarn javax.annotation.**
 -dontwarn org.jetbrains.annotations.**
 
+# Google UMP (User Messaging Platform) — GDPR consent
+-keep class com.google.android.ump.** { *; }
+-dontwarn com.google.android.ump.**
+

@@ -2,7 +2,6 @@ package com.dhanuk.quickscanpro
 
 import android.app.Application
 import com.dhanuk.quickscanpro.BuildConfig
-import com.google.android.gms.ads.MobileAds
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.onesignal.OneSignal
 import com.onesignal.debug.LogLevel
@@ -34,11 +33,8 @@ class QuickScanProApplication : Application() {
     }
 
     private fun initAds() {
-        try {
-            MobileAds.initialize(this)
-        } catch (e: Exception) {
-            // Ad SDK init failure — don't crash
-        }
+        // Ad initialization is now gated by UMP consent — see MainActivity
+        // MobileAds.initialize() is called after ConsentManager grants permission
     }
 
     private fun initOneSignal() {

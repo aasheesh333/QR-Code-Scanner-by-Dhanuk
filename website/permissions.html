@@ -51,20 +51,42 @@ h1{color:#0575E6}h2{color:#045AB8;margin-top:30px}
 <div class="perm">
 <h2>6. WiFi State</h2>
 <p><strong>Permission:</strong> android.permission.ACCESS_WIFI_STATE, android.permission.CHANGE_WIFI_STATE</p>
-<p><strong>Purpose:</strong> Used for WiFi QR code actions - joining WiFi networks from scanned WiFi QR codes.</p>
+<p><strong>Purpose:</strong> Used for WiFi QR code actions - reading the current WiFi network name for WiFi QR generation, and joining WiFi networks from scanned WiFi QR codes.</p>
+</div>
+
+<div class="perm">
+<h2>7. Location (for WiFi SSID)</h2>
+<p><strong>Permission:</strong> android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION</p>
+<p><strong>Purpose:</strong> Required by Android 10+ (API 29) to read your current WiFi network name (SSID) when generating WiFi QR codes.</p>
+<p><strong>Data Usage:</strong> We do NOT track your GPS location. This permission is only used to read the WiFi network you are currently connected to.</p>
+</div>
+
+<div class="perm">
+<h2>8. Calendar</h2>
+<p><strong>Permission:</strong> android.permission.READ_CALENDAR, android.permission.WRITE_CALENDAR</p>
+<p><strong>Purpose:</strong> Used to save calendar events (VEVENT) directly from scanned QR codes into your default calendar app.</p>
+<p><strong>Data Usage:</strong> Calendar access is only triggered when you scan a calendar-type QR code and explicitly choose to save the event.</p>
+</div>
+
+<div class="perm">
+<h2>9. Biometrics</h2>
+<p><strong>Permission:</strong> android.permission.USE_BIOMETRIC</p>
+<p><strong>Purpose:</strong> Used to unlock the Secure Vault feature and protect sensitive scans with fingerprint or face authentication.</p>
 </div>
 
 <h2>Permissions We Do NOT Use</h2>
 <ul>
-<li>We do not access your contacts</li>
-<li>We do not access your location</li>
 <li>We do not access your microphone</li>
-<li>We do not read your SMS or call logs</li>
+<li>We do not read your SMS, phone state, or call logs</li>
 <li>We do not upload your personal data to our servers</li>
 </ul>
 
+<h2>Advertising &amp; Analytics</h2>
+<p>QuickScan Pro uses Google AdMob which may access the device advertising identifier for ad personalization (subject to your consent). Firebase Analytics collects anonymous usage data such as screen views and sessions to improve the app. Firebase Crashlytics collects crash traces. OneSignal collects push device tokens to deliver notifications.</p>
+<p>All ad and analytics behavior is gated behind Google's User Messaging Platform (UMP) consent flow for users in the European Economic Area.</p>
+
 <h2>Data Stays On Your Device</h2>
-<p>All scan history, generated QR codes, and app settings are stored locally on your device. Uninstalling the app removes all data.</p>
+<p>All scan history, generated QR codes, vaulted items, and app settings are stored locally on your device. Uninstalling the app removes all data. Cloud backups can be disabled in your device settings.</p>
 
 <div class="footer">
 <p>QuickScan Pro - Developed by Dhanuk Softwares</p>
