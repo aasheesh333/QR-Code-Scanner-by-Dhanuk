@@ -39,7 +39,8 @@ jobs:
             echo "$FIREBASE_JSON" | base64 -d > app/google-services.json
             echo "Using Firebase config from secret"
           else
-            echo "FIREBASE_GOOGLE_SERVICES_JSON secret not set — using committed google-services.json"
+            echo "ERROR: FIREBASE_GOOGLE_SERVICES_JSON secret is not set. google-services.json is not committed to the repo."
+            exit 1
           fi
 
       - name: Build Debug APK
