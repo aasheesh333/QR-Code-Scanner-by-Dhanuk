@@ -23,6 +23,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -132,14 +135,44 @@ fun WifiShareScreen(
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         )
+                        var securityMenuOpen by remember { mutableStateOf(false) }
+                        val securityLabel = when (security) {
+                            "WEP" -> "WEP"
+                            "NOPASS" -> "None (open)"
+                            else -> "WPA/WPA2/WPA3"
+                        }
                         OutlinedTextField(
-                            value = security,
-                            onValueChange = { security = it },
-                            label = { Text("Security (WPA / WEP / NOPASS)") },
-                            singleLine = true,
+                            value = securityLabel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Security") },
                             shape = RoundedCornerShape(14.dp),
+                            trailingIcon = {
+                                IconButton(onClick = { securityMenuOpen = true }) {
+                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Choose security type")
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
+                        DropdownMenu(
+                            expanded = securityMenuOpen,
+                            onDismissRequest = { securityMenuOpen = false }
+                        ) {
+                            listOf("WPA/WPA2/WPA3", "WEP", "None (open)").forEach { label ->
+                                val value = when (label) {
+                                    "WEP" -> "WEP"
+                                    "None (open)" -> "NOPASS"
+                                    else -> "WPA"
+                                }
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        security = value
+                                        securityMenuOpen = false
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -42,10 +42,15 @@ import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
-import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-private fun encode(data: String) = URLEncoder.encode(data, StandardCharsets.UTF_8.toString())
+private fun encode(data: String) = android.net.Uri.encode(data)
+
+private fun decode(data: String): String = try {
+    java.net.URLDecoder.decode(data, StandardCharsets.UTF_8.toString())
+} catch (_: Exception) {
+    data
+}
 
 private fun handleDefaultScanAction(context: Context, content: String, action: String) {
     when (action) {
@@ -226,7 +231,7 @@ private fun AppNavigation(
             route = "result/{data}",
             arguments = listOf(navArgument("data") { type = NavType.StringType })
         ) { entry ->
-            val data = entry.arguments?.getString("data") ?: ""
+            val data = entry.arguments?.getString("data")?.let(::decode) ?: ""
             ResultScreen(
                 data = data,
                 onNavigateBack = { navController.popBackStack() },
@@ -285,8 +290,9 @@ private fun AppNavigation(
             route = "product_lookup/{barcode}",
             arguments = listOf(navArgument("barcode") { type = NavType.StringType })
         ) { entry ->
+            val raw = entry.arguments?.getString("barcode") ?: ""
             ProductLookupScreen(
-                barcode = entry.arguments?.getString("barcode") ?: "",
+                barcode = decode(raw),
                 onNavigateBack = { navController.popBackStack() }
             )
         }

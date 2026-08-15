@@ -26,7 +26,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -48,11 +50,12 @@ fun CameraPreviewBox(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor = remember(context) { ContextCompat.getMainExecutor(context) }
-    val analyzer = remember(onScan, textMode) {
+    val currentOnScan by rememberUpdatedState(onScan)
+    val analyzer = remember(textMode) {
         if (textMode) {
-            com.dhanuk.quickscanpro.analyzer.TextAnalyzer(onScan)
+            com.dhanuk.quickscanpro.analyzer.TextAnalyzer { currentOnScan(it) }
         } else {
-            BarcodeAnalyzer(onScan)
+            BarcodeAnalyzer { currentOnScan(it) }
         }
     }
     val previewView = remember {
