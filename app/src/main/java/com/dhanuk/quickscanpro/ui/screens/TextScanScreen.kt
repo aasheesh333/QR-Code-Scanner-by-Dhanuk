@@ -54,6 +54,7 @@ import androidx.core.content.ContextCompat
 import com.dhanuk.quickscanpro.ui.design.CameraPreviewBox
 import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
+import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -68,10 +69,14 @@ fun TextScanScreen(
     onTextExtracted: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val hasPerm = remember {
-        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    var hasPerm by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
     }
-    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> hasPerm = granted }
     LaunchedEffect(Unit) { if (!hasPerm) permLauncher.launch(Manifest.permission.CAMERA) }
 
     var captured by rememberSaveable { mutableStateOf("") }
@@ -126,14 +131,35 @@ fun TextScanScreen(
             if (captured.isBlank()) {
                 Column {
                     SectionLabel("Live camera")
-                    CameraPreviewBox(
-                        textMode = true,
-                        onCameraReady = {},
-                        onScan = { text ->
-                            if (captured.isBlank() && text.length > 2) captured = text
-                        },
-                        modifier = Modifier.fillMaxWidth().height(260.dp)
-                    )
+                    if (hasPerm) {
+                        CameraPreviewBox(
+                            textMode = true,
+                            onCameraReady = {},
+                            onScan = { text ->
+                                if (captured.isBlank() && text.length > 2) captured = text
+                            },
+                            modifier = Modifier.fillMaxWidth().height(260.dp)
+                        )
+                    } else {
+                        QsCard {
+                            Text(
+                                "Camera permission is needed for live text scanning.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            QsOutlinedButton(
+                                text = "Grant camera access",
+                                onClick = { permLauncher.launch(Manifest.permission.CAMERA) }
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Or pick a photo below — no camera needed.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             } else {
                 SectionLabel("Extracted text")
