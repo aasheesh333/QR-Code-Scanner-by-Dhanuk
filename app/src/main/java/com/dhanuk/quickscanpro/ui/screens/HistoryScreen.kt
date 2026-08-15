@@ -1,9 +1,8 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,38 +12,36 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -58,13 +55,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
+import com.dhanuk.quickscanpro.ui.design.IconBadge
+import com.dhanuk.quickscanpro.ui.design.PillChip
+import com.dhanuk.quickscanpro.ui.design.QsCard
+import com.dhanuk.quickscanpro.ui.design.QsEmptyState
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
+import com.dhanuk.quickscanpro.util.HistoryExporter
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -75,61 +77,67 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     onOpenVault: () -> Unit,
-    onOpenCompare: () -> Unit,
+    onOpenTimeline: () -> Unit,
     onNavigateToScanner: () -> Unit,
-    onNavigateToSettings: () -> Unit,
     onRowClick: (ScanResult) -> Unit
 ) {
     val vm: HistoryViewModel = viewModel()
-    val items by vm.filteredHistory.collectAsState()
-    val vaultItems by vm.vaultScans.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var selectedFilter by rememberSaveable { mutableStateOf("All") }
-    var showSearch by rememberSaveable { mutableStateOf(false) }
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val items by vm.filteredHistory.collectAsState()
+    val all by vm.history.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
 
-    val filtered = remember(items, vaultItems, selectedFilter) {
-        val base = when (selectedFilter) {
+    var search by rememberSaveable { mutableStateOf("") }
+    var filter by rememberSaveable { mutableStateOf("All") }
+
+    val filters = listOf("All", "Favorites", "Link", "Wi-Fi", "Contact", "Product")
+    val visible = remember(items, filter) {
+        when (filter) {
             "Favorites" -> items.filter { it.isFavorite }
-            "Vault" -> vaultItems
+            "Link" -> items.filter { it.type == BarcodeTypeDetector.TYPE_URL }
+            "Wi-Fi" -> items.filter { it.type == BarcodeTypeDetector.TYPE_WIFI }
+            "Contact" -> items.filter {
+                it.type == BarcodeTypeDetector.TYPE_VCARD || it.type == BarcodeTypeDetector.TYPE_PHONE ||
+                    it.type == BarcodeTypeDetector.TYPE_EMAIL || it.type == BarcodeTypeDetector.TYPE_SMS
+            }
+            "Product" -> items.filter { it.type == BarcodeTypeDetector.TYPE_PRODUCT }
             else -> items
         }
-        if (searchQuery.isBlank()) base
-        else base.filter { it.content.contains(searchQuery, ignoreCase = true) }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "History",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text("History", style = MaterialTheme.typography.titleLarge) },
                 actions = {
-                    IconButton(onClick = {
-                        showSearch = !showSearch
-                        if (!showSearch) searchQuery = ""
-                    }) {
-                        Icon(
-                            if (showSearch) Icons.Filled.Close else Icons.Filled.Search,
-                            contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    IconButton(onClick = onOpenTimeline) {
+                        Icon(Icons.Filled.SmartDisplay, contentDescription = "Timeline")
                     }
                     IconButton(onClick = onOpenVault) {
-                        Icon(Icons.Filled.FilterList, contentDescription = "Filter", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(Icons.Filled.Lock, contentDescription = "Vault")
+                    }
+                    IconButton(
+                        onClick = {
+                            if (all.isEmpty()) {
+                                Toast.makeText(context, "Nothing to export", Toast.LENGTH_SHORT).show()
+                            } else {
+                                scope.launch {
+                                    val uri = HistoryExporter.exportAsCsv(context, all)
+                                    if (uri != null) {
+                                        HistoryExporter.shareCsv(context, uri)
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Filled.FileDownload, contentDescription = "Export history")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { SnackbarHost(snackbar) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
@@ -137,113 +145,68 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            OutlinedTextField(
+                value = search,
+                onValueChange = {
+                    search = it
+                    vm.setSearchQuery(it)
+                },
+                placeholder = { Text("Search your scans") },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            )
 
-            // ── Search bar (when active) ──
-            if (showSearch) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search history...") },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 4.dp),
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
-
-            // ── Filter chips ──
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 24.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(listOf("All", "Favorites", "Vault")) { filter ->
-                    val isSel = filter == selectedFilter
-                    Box(
-                        modifier = Modifier
-                            .height(36.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(
-                                if (isSel) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceContainerHigh
-                            )
-                            .clickable { selectedFilter = filter }
-                            .padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            filter,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                items(filters) { f ->
+                    PillChip(label = f, selected = f == filter, onClick = { filter = f })
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(6.dp))
 
-            if (filtered.isEmpty()) {
-                HistoryEmptyState()
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 24.dp),
+            when {
+                visible.isEmpty() && search.isNotBlank() -> QsEmptyState(
+                    icon = Icons.Filled.Search,
+                    title = "No matches",
+                    subtitle = "Try a different search term.",
+                    modifier = Modifier.fillMaxWidth().weight(1f)
+                )
+                visible.isEmpty() -> QsEmptyState(
+                    icon = Icons.Filled.QrCodeScanner,
+                    title = "No scans yet",
+                    subtitle = "Scanned codes will show up here automatically.",
+                    actionLabel = "Start scanning",
+                    onAction = onNavigateToScanner,
+                    modifier = Modifier.fillMaxWidth().weight(1f)
+                )
+                else -> LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filtered, key = { it.id }) { scan ->
+                    items(visible, key = { it.id }) { scan ->
                         HistoryRow(
                             scan = scan,
                             onClick = { onRowClick(scan) },
-                            onToggleFavorite = { vm.toggleFavorite(scan) },
+                            onFavorite = { vm.toggleFavorite(scan) },
                             onDelete = {
                                 vm.delete(scan.id)
                                 scope.launch {
-                                    val result = snackbarHostState.showSnackbar("Deleted", actionLabel = "Undo")
-                                    if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
-                                        vm.restore(scan)
-                                    }
+                                    val res = snackbar.showSnackbar("Scan deleted", actionLabel = "Undo")
+                                    if (res == SnackbarResult.ActionPerformed) vm.restore(scan)
                                 }
                             }
                         )
                     }
-                    item { Spacer(Modifier.height(16.dp)) }
+                    item { Spacer(Modifier.height(12.dp)) }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun HistoryEmptyState() {
-    Box(modifier = Modifier.fillMaxSize().padding(40.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Filled.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "No scans yet",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Start scanning to build your history",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
@@ -252,106 +215,78 @@ private fun HistoryEmptyState() {
 private fun HistoryRow(
     scan: ScanResult,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
+    onFavorite: () -> Unit,
     onDelete: () -> Unit
 ) {
-    var menuOpen by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Tonal circle icon
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                typeIcon(scan.type),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(22.dp)
-            )
-        }
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                scan.content.take(60),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                "${typeLabel(scan.type)} • ${formatTimestamp(scan.timestamp)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        IconButton(onClick = onToggleFavorite) {
-            Icon(
-                if (scan.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                contentDescription = "Favorite",
-                tint = if (scan.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(22.dp)
-            )
-        }
-        Box {
-            IconButton(onClick = { menuOpen = true }) {
-                Icon(
-                    Icons.Filled.MoreVert,
-                    contentDescription = "More",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+    QsCard(onClick = onClick, contentPadding = 14.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(historyIcon(scan.type))
+            Spacer(Modifier.size(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    scan.note.ifBlank { scan.content },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    buildString {
+                        append(historyLabel(scan.type))
+                        append(" · ")
+                        append(relativeTime(scan.timestamp))
+                        if (scan.isVault) append(" · 🔒")
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text("Delete") },
-                    leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
-                    onClick = { menuOpen = false; onDelete() }
+            IconButton(onClick = onFavorite) {
+                Icon(
+                    if (scan.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    contentDescription = "Toggle favorite",
+                    tint = if (scan.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                 )
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Outlined.Delete, contentDescription = "Delete scan", tint = MaterialTheme.colorScheme.outline)
             }
         }
     }
 }
 
-private fun typeIcon(type: String) = when (type) {
+private fun historyIcon(type: String): ImageVector = when (type) {
     BarcodeTypeDetector.TYPE_URL -> Icons.Filled.Link
     BarcodeTypeDetector.TYPE_WIFI -> Icons.Filled.Wifi
     BarcodeTypeDetector.TYPE_VCARD -> Icons.Filled.Person
     BarcodeTypeDetector.TYPE_EMAIL -> Icons.Filled.Email
-    BarcodeTypeDetector.TYPE_PHONE -> Icons.Filled.Phone
+    BarcodeTypeDetector.TYPE_PHONE -> Icons.Filled.Call
     BarcodeTypeDetector.TYPE_SMS -> Icons.Filled.Sms
+    BarcodeTypeDetector.TYPE_GEO -> Icons.Filled.LocationOn
+    BarcodeTypeDetector.TYPE_PRODUCT -> Icons.Filled.SdStorage
     else -> Icons.Filled.Description
 }
 
-private fun typeLabel(type: String) = when (type) {
-    BarcodeTypeDetector.TYPE_URL -> "URL"
-    BarcodeTypeDetector.TYPE_WIFI -> "WiFi"
+private fun historyLabel(type: String) = when (type) {
+    BarcodeTypeDetector.TYPE_URL -> "Link"
+    BarcodeTypeDetector.TYPE_WIFI -> "Wi-Fi"
     BarcodeTypeDetector.TYPE_VCARD -> "Contact"
     BarcodeTypeDetector.TYPE_EMAIL -> "Email"
     BarcodeTypeDetector.TYPE_PHONE -> "Phone"
     BarcodeTypeDetector.TYPE_SMS -> "SMS"
+    BarcodeTypeDetector.TYPE_GEO -> "Location"
+    BarcodeTypeDetector.TYPE_PRODUCT -> "Product"
+    BarcodeTypeDetector.TYPE_CALENDAR -> "Event"
     else -> "Text"
 }
 
-private fun formatTimestamp(ts: Long): String {
+private fun relativeTime(ts: Long): String {
     val diff = System.currentTimeMillis() - ts
     return when {
-        diff < 60_000 -> "Just now"
-        diff < 3_600_000 -> "${diff / 60_000} min ago"
-        diff < 86_400_000 -> "${diff / 3_600_000} hours ago"
-        diff < 172_800_000 -> "Yesterday"
-        else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(ts))
+        diff < 60_000 -> "just now"
+        diff < 3_600_000 -> "${diff / 60_000}m ago"
+        diff < 86_400_000 -> "${diff / 3_600_000}h ago"
+        diff < 172_800_000 -> "yesterday"
+        else -> SimpleDateFormat("d MMM", Locale.getDefault()).format(Date(ts))
     }
 }

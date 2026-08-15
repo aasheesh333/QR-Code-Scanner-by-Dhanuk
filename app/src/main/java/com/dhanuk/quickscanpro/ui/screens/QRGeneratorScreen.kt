@@ -3,10 +3,10 @@ package com.dhanuk.quickscanpro.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -30,25 +29,21 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.QrCode2
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.TextSnippet
+import androidx.compose.material.icons.filled.ViewModule
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,15 +59,26 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.qrgenerator.QRCodeGenerator
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
+import com.dhanuk.quickscanpro.ui.design.IconBadge
+import com.dhanuk.quickscanpro.ui.design.PillChip
+import com.dhanuk.quickscanpro.ui.design.QsButton
+import com.dhanuk.quickscanpro.ui.design.QsCard
+import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
+import com.dhanuk.quickscanpro.ui.design.SectionLabel
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun QRGeneratorScreen(onOpenSettings: () -> Unit = {}) {
+fun QRGeneratorScreen(
+    onOpenSettings: () -> Unit = {},
+    onOpenBulk: () -> Unit = {},
+    onOpenTemplates: () -> Unit = {}
+) {
     val vm: QRGeneratorViewModel = viewModel()
     val context = LocalContext.current
     val selectedType by vm.selectedType.collectAsState()
     val bitmap by vm.generatedBitmap.collectAsState()
+    val content by vm.generatedContent.collectAsState()
     val f1 by vm.f1.collectAsState()
     val f2 by vm.f2.collectAsState()
     val f3 by vm.f3.collectAsState()
@@ -83,32 +89,20 @@ fun QRGeneratorScreen(onOpenSettings: () -> Unit = {}) {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Filled.QrCodeScanner,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "Create QR Code",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
+                        IconBadge(Icons.Filled.QrCode2, size = 30.dp)
+                        Spacer(Modifier.width(10.dp))
+                        Text("Create QR", style = MaterialTheme.typography.titleLarge)
                     }
                 },
                 actions = {
+                    IconButton(onClick = onOpenTemplates) {
+                        Icon(Icons.Filled.ViewModule, contentDescription = "Templates")
+                    }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(
-                            Icons.Filled.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -117,122 +111,99 @@ fun QRGeneratorScreen(onOpenSettings: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .imePadding()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(Modifier.height(0.dp))
-
-            // ── Type selection card ──
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                    .padding(20.dp)
+            SectionLabel("Content type")
+            LazyRow(
+                contentPadding = PaddingValues(vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    "Type",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(Modifier.height(12.dp))
-                TypeChipRow(selectedType) { vm.setType(it) }
-            }
-
-            // ── Input form ──
-            DynamicInputForm(selectedType, f1, f2, f3, f4, vm::setF1, vm::setF2, vm::setF3, vm::setF4)
-
-            // ── QR Preview card ──
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(220.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val previewBitmap = bitmap
-                    if (previewBitmap != null) {
-                        Image(
-                            bitmap = previewBitmap.asImageBitmap(),
-                            contentDescription = "Generated QR",
-                            modifier = Modifier.fillMaxSize().padding(16.dp)
-                        )
-                    } else {
-                        Icon(
-                            Icons.Filled.QrCode2,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                            modifier = Modifier.size(56.dp)
-                        )
-                    }
+                items(CHIPS) { chip ->
+                    PillChip(
+                        label = chip.label,
+                        icon = chip.icon,
+                        selected = chip.type == selectedType,
+                        onClick = { vm.setType(chip.type) }
+                    )
                 }
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "Scan to test before saving",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
             }
 
-            // ── Primary action ──
-            Button(
-                onClick = { vm.generateFromInputs() },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                enabled = f1.isNotBlank(),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text("Generate QR Code", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            QsCard {
+                DynamicForm(selectedType, f1, f2, f3, f4, vm::setF1, vm::setF2, vm::setF3, vm::setF4)
             }
 
-            // ── Secondary actions ──
-            val qrBitmap = bitmap
-            if (qrBitmap != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+            QsCard {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    OutlinedButton(
+                    Box(
+                        modifier = Modifier
+                            .size(216.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val bmp = bitmap
+                        if (bmp != null) {
+                            Image(
+                                bitmap = bmp.asImageBitmap(),
+                                contentDescription = "Generated QR code",
+                                modifier = Modifier.fillMaxSize().padding(14.dp)
+                            )
+                        } else {
+                            Icon(
+                                Icons.Filled.QrCode2,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                modifier = Modifier.size(64.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        if (content.isBlank()) "Fill the fields, then generate" else "Scan it to test before sharing",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            QsButton(
+                text = "Generate QR code",
+                enabled = f1.isNotBlank(),
+                onClick = { vm.generateFromInputs() }
+            )
+
+            val bmp = bitmap
+            if (bmp != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    QsOutlinedButton(
+                        text = "Save",
+                        modifier = Modifier.weight(1f),
                         onClick = {
-                            val saved = QRCodeGenerator.saveToGallery(context, qrBitmap, "qr_${System.currentTimeMillis()}")
+                            val saved = QRCodeGenerator.saveToGallery(context, bmp, "qr_${System.currentTimeMillis()}")
                             if (saved) vm.saveCurrentQR(f1)
                             Toast.makeText(context, if (saved) "Saved to gallery" else "Save failed", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Save Image")
-                    }
-                    OutlinedButton(
-                        onClick = { QRCodeGenerator.shareQrBitmap(context, qrBitmap) },
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Share")
-                    }
+                        }
+                    )
+                    QsOutlinedButton(
+                        text = "Share",
+                        modifier = Modifier.weight(1f),
+                        onClick = { QRCodeGenerator.shareQrBitmap(context, bmp) }
+                    )
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = onOpenBulk, modifier = Modifier.fillMaxWidth()) {
+                Text("Generate many QR codes at once (bulk)", style = MaterialTheme.typography.labelLarge)
+            }
+
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -251,70 +222,51 @@ private val CHIPS = listOf(
 )
 
 @Composable
-private fun TypeChipRow(selected: QRContentBuilder.QRType, onSelect: (QRContentBuilder.QRType) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(CHIPS) { chip ->
-            val isSel = chip.type == selected
-            Box(
-                modifier = Modifier
-                    .height(36.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(
-                        if (isSel) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceContainerHigh
-                    )
-                    .clickable { onSelect(chip.type) }
-                    .padding(horizontal = 14.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        chip.icon,
-                        contentDescription = null,
-                        tint = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        chip.label,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DynamicInputForm(
+private fun DynamicForm(
     type: QRContentBuilder.QRType,
     f1: String, f2: String, f3: String, f4: String,
     setF1: (String) -> Unit, setF2: (String) -> Unit, setF3: (String) -> Unit, setF4: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         when (type) {
-            QRContentBuilder.QRType.URL -> QRField(f1, setF1, "Enter URL", "https://example.com", Icons.Filled.Language)
-            QRContentBuilder.QRType.TEXT -> QRField(f1, setF1, "Plain text", "Enter text")
-            QRContentBuilder.QRType.PHONE -> QRField(f1, setF1, "Phone number", "+1 555 000 1234", Icons.Filled.Call)
-            QRContentBuilder.QRType.SMS -> { QRField(f1, setF1, "Phone number"); QRField(f2, setF2, "Message", singleLine = false) }
-            QRContentBuilder.QRType.EMAIL -> { QRField(f1, setF1, "To", leadingIcon = Icons.Filled.Mail); QRField(f2, setF2, "Subject"); QRField(f3, setF3, "Body", singleLine = false) }
-            QRContentBuilder.QRType.WIFI -> { QRField(f1, setF1, "SSID", leadingIcon = Icons.Filled.Wifi); QRField(f2, setF2, "Password"); QRField(f3, setF3, "Encryption (WPA/WEP/NOPASS)") }
-            QRContentBuilder.QRType.VCARD -> { QRField(f1, setF1, "Full name", leadingIcon = Icons.Filled.ContactPage); QRField(f2, setF2, "Phone"); QRField(f3, setF3, "Email"); QRField(f4, setF4, "Organization") }
+            QRContentBuilder.QRType.URL -> Field(f1, setF1, "Website URL", "https://example.com", Icons.Filled.Language)
+            QRContentBuilder.QRType.TEXT -> Field(f1, setF1, "Plain text", "Your message")
+            QRContentBuilder.QRType.PHONE -> Field(f1, setF1, "Phone number", "+91 98765 43210", Icons.Filled.Call)
+            QRContentBuilder.QRType.SMS -> {
+                Field(f1, setF1, "Phone number", leadingIcon = Icons.Filled.Sms)
+                Field(f2, setF2, "Message", singleLine = false)
+            }
+            QRContentBuilder.QRType.EMAIL -> {
+                Field(f1, setF1, "Recipient", leadingIcon = Icons.Filled.Mail)
+                Field(f2, setF2, "Subject")
+                Field(f3, setF3, "Message body", singleLine = false)
+            }
+            QRContentBuilder.QRType.WIFI -> {
+                Field(f1, setF1, "Network name (SSID)", leadingIcon = Icons.Filled.Wifi)
+                Field(f2, setF2, "Password")
+                Field(f3, setF3, "Security (WPA / WEP / NOPASS)", "WPA")
+            }
+            QRContentBuilder.QRType.VCARD -> {
+                Field(f1, setF1, "Full name", leadingIcon = Icons.Filled.ContactPage)
+                Field(f2, setF2, "Phone")
+                Field(f3, setF3, "Email")
+                Field(f4, setF4, "Company")
+            }
             QRContentBuilder.QRType.CALENDAR -> {
-                QRField(f1, setF1, "Event title", leadingIcon = Icons.Filled.CalendarMonth)
-                QRField(f2, setF2, "Location (optional)")
-                QRField(f3, setF3, "Start (YYYYMMDDTHHMMSS)")
-                QRField(f4, setF4, "End (YYYYMMDDTHHMMSS)")
+                Field(f1, setF1, "Event title", leadingIcon = Icons.Filled.CalendarMonth)
+                Field(f2, setF2, "Location (optional)")
+                Field(f3, setF3, "Start · YYYYMMDDTHHMMSS", "20261231T180000")
+                Field(f4, setF4, "End · YYYYMMDDTHHMMSS", "20261231T210000")
             }
         }
     }
 }
 
 @Composable
-private fun QRField(
+private fun Field(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
@@ -328,8 +280,8 @@ private fun QRField(
         label = { Text(label) },
         placeholder = placeholder?.let { { Text(it) } },
         leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null) } },
-        modifier = Modifier.fillMaxWidth(),
         singleLine = singleLine,
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth()
     )
 }

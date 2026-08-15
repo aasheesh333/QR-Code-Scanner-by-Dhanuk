@@ -1,6 +1,5 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,27 +9,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddBox
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.GppBad
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -39,227 +31,181 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.background
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dhanuk.quickscanpro.ui.design.IconBadge
+import com.dhanuk.quickscanpro.ui.design.QsCard
+import com.dhanuk.quickscanpro.ui.design.QsEmptyState
+import com.dhanuk.quickscanpro.ui.design.SectionLabel
+import com.dhanuk.quickscanpro.util.AutoOrganizer
 import com.dhanuk.quickscanpro.viewmodel.AnalyticsViewModel
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
-import com.dhanuk.quickscanpro.database.ScanResult
-import java.net.URI
-import java.util.Calendar
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnalyticsScreen(onOpenSettings: () -> Unit = {}) {
+fun AnalyticsScreen(onNavigateBack: () -> Unit = {}) {
     val vm: AnalyticsViewModel = viewModel()
     val historyVm: HistoryViewModel = viewModel()
     val stats by vm.stats.collectAsState()
-    val scans by historyVm.history.collectAsState()
+    val autoCats by historyVm.autoCategoryCounts.collectAsState()
     val leakChecks by historyVm.leakChecks.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "Analytics",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(
-                            Icons.Filled.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                title = { Text("Insights", style = MaterialTheme.typography.titleLarge) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            KPIRow(
-                totalScans = stats.totalScans,
-                generated = stats.totalGeneratedQRs,
-                leakChecks = leakChecks.size
-            )
-            if (stats.totalScans > 0) {
-                ScanTypesCard(stats.topTypes)
-                WeeklyActivityCard(scans)
-                TopSourcesCard(scans)
-            } else {
-                Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                    Text("No scans yet. Start scanning to see analytics.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (stats.totalScans == 0) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                QsEmptyState(
+                    icon = Icons.Filled.Insights,
+                    title = "No data yet",
+                    subtitle = "Scan a few codes and your personal stats will appear here."
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Spacer(Modifier.height(0.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    StatTile("Total scans", stats.totalScans.toString(), Modifier.weight(1f))
+                    StatTile("This week", stats.scansThisWeek.toString(), Modifier.weight(1f))
+                    StatTile("Today", stats.scansToday.toString(), Modifier.weight(1f))
                 }
+
+                QsCard {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconBadge(Icons.Filled.Security)
+                        Spacer(Modifier.padding(horizontal = 7.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Security checks run", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "Offline link-safety & leak checks",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            leakChecks.size.toString(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Column {
+                    SectionLabel("Smart categories")
+                    QsCard {
+                        val top = autoCats.take(6)
+                        if (top.isEmpty()) {
+                            Text(
+                                "Categories appear after scanning.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            val max = top.maxOf { it.count }.coerceAtLeast(1)
+                            top.forEach { cat ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        AutoOrganizer.emojiFor(cat.auto_category),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                    Spacer(Modifier.padding(horizontal = 5.dp))
+                                    Text(
+                                        cat.auto_category,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    LinearProgressIndicator(
+                                        progress = { cat.count.toFloat() / max },
+                                        modifier = Modifier
+                                            .weight(1.4f)
+                                            .height(8.dp)
+                                            .clip(RoundedCornerShape(4.dp)),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        trackColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                    )
+                                    Spacer(Modifier.padding(horizontal = 5.dp))
+                                    Text(
+                                        cat.count.toString(),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Column {
+                    SectionLabel("Code types")
+                    QsCard {
+                        stats.topTypes.forEach { (type, count) ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    type.replaceFirstChar { it.uppercase() },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    count.toString(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
             }
         }
     }
 }
 
 @Composable
-private fun KPIRow(totalScans: Int, generated: Int, leakChecks: Int) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        KPICard(Icons.Filled.QrCode, totalScans.toString(), "Total Scans", Modifier.weight(1f))
-        KPICard(Icons.Filled.AddBox, generated.toString(), "Generated", Modifier.weight(1f))
-        KPICard(Icons.Filled.GppBad, leakChecks.toString(), "This Week", Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun KPICard(icon: ImageVector, value: String, label: String, modifier: Modifier) {
+private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(16.dp)
+            .padding(vertical = 18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-        }
-        Spacer(Modifier.height(12.dp))
         Text(
             value,
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
         )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun ScanTypesCard(types: List<Pair<String, Int>>) {
-    if (types.isEmpty()) return
-    val total = types.sumOf { it.second }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Scan Types", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-        types.take(4).forEach { (type, count) ->
-            val pct = if (total > 0) (count * 100 / total) else 0
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    type.replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-                Text("$pct%", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            LinearProgressIndicator(
-                progress = { pct / 100f },
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
-            )
-        }
-    }
-}
-
-@Composable
-private fun WeeklyActivityCard(scans: List<ScanResult>) {
-    val days = listOf("M", "T", "W", "T", "F", "S", "S")
-    val calendar = Calendar.getInstance()
-    calendar.set(Calendar.HOUR_OF_DAY, 0)
-    calendar.set(Calendar.MINUTE, 0)
-    calendar.set(Calendar.SECOND, 0)
-    calendar.set(Calendar.MILLISECOND, 0)
-    val todayStart = calendar.timeInMillis
-    val counts = (6 downTo 0).map { daysAgo ->
-        val start = todayStart - daysAgo * 86_400_000L
-        scans.count { it.timestamp in start until (start + 86_400_000L) }
-    }
-    val maxCount = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Weekly Activity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-        Box(modifier = Modifier.fillMaxWidth().height(160.dp).padding(top = 16.dp, bottom = 8.dp)) {
-            Row(modifier = Modifier.fillMaxSize().align(Alignment.BottomCenter), horizontalArrangement = Arrangement.SpaceBetween) {
-                days.forEachIndexed { idx, day ->
-                    val h = counts[idx].toFloat() / maxCount
-                    val isHighlight = idx == 6
-                    val color = if (isHighlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
-                    Column(modifier = Modifier.weight(1f).align(Alignment.Bottom), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(modifier = Modifier.width(24.dp).height((h * 120).dp.coerceAtLeast(4.dp)).clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)).background(color))
-                        Text(day, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopSourcesCard(scans: List<ScanResult>) {
-    val sources = scans.filter { it.type == "url" }
-        .mapNotNull { scan ->
-            runCatching { URI(scan.content).host?.removePrefix("www.") }.getOrNull()
-        }
-        .filter { it.isNotBlank() }
-        .groupingBy { it }
-        .eachCount()
-        .entries
-        .sortedByDescending { it.value }
-        .take(3)
-    if (sources.isEmpty()) return
-    val maxCount = sources.maxOf { it.value }.toFloat()
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Top Sources", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-        sources.forEach { (domain, count) ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                }
-                Spacer(Modifier.width(12.dp))
-                Text(domain, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                Box(modifier = Modifier.width(64.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                    Box(modifier = Modifier.fillMaxWidth(count / maxCount).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.primary))
-                }
-                Spacer(Modifier.width(8.dp))
-                Text(count.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(32.dp))
-            }
-        }
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,40 +12,36 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Policy
-import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -57,56 +52,49 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.BuildConfig
+import com.dhanuk.quickscanpro.config.AppConfig
+import com.dhanuk.quickscanpro.ui.design.SectionLabel
+import com.dhanuk.quickscanpro.ui.design.SettingInfoRow
+import com.dhanuk.quickscanpro.ui.design.SettingNavRow
+import com.dhanuk.quickscanpro.ui.design.SettingToggleRow
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit,
     onNavigateToAbout: () -> Unit = {},
-    onNavigateToVault: () -> Unit = {}
+    onNavigateToVault: () -> Unit = {},
+    onNavigateToThemeStudio: () -> Unit = {},
+    onNavigateToPermissions: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
+    onNavigateToTerms: () -> Unit = {},
+    onNavigateToContact: () -> Unit = {}
 ) {
     val settingsVm: SettingsViewModel = viewModel()
     val historyVm: HistoryViewModel = viewModel()
+    val context = LocalContext.current
+
     val sound by settingsVm.soundEnabled.collectAsState()
     val vibrate by settingsVm.vibrateEnabled.collectAsState()
-    val autoSave by settingsVm.autoCopyOnScan.collectAsState()
-    val biometrics by settingsVm.biometricLock.collectAsState()
+    val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
+    val biometric by settingsVm.biometricLock.collectAsState()
     val defaultAction by settingsVm.defaultAction.collectAsState()
     val scanHistory by settingsVm.scanHistory.collectAsState()
-    var showDefaultActionDialog by rememberSaveable { mutableStateOf(false) }
-    var showClearConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    val context = LocalContext.current
+    val incognito by settingsVm.incognitoMode.collectAsState()
+
+    var showActionDialog by rememberSaveable { mutableStateOf(false) }
+    var showClearDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Settings",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+            TopAppBar(
+                title = { Text("Settings", style = MaterialTheme.typography.titleLarge) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -116,229 +104,197 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(22.dp)
         ) {
             Spacer(Modifier.height(0.dp))
 
-            // ── General ──
-            SettingsGroup("General") {
-                NavRow(Icons.Filled.RocketLaunch, "Default action after scan", subtitle = defaultActionLabel(defaultAction)) { showDefaultActionDialog = true }
-                GroupDivider()
-                ToggleRow(Icons.Filled.VolumeUp, "Scan sound", sound) { settingsVm.setSound(it) }
-                GroupDivider()
-                ToggleRow(Icons.Filled.Vibration, "Vibration", vibrate) { settingsVm.setVibrate(it) }
+            Column {
+                SectionLabel("Scanning")
+                Group {
+                    SettingNavRow(
+                        Icons.Filled.SwapVert,
+                        "Default action after scan",
+                        subtitle = actionLabel(defaultAction)
+                    ) { showActionDialog = true }
+                    DividerLine()
+                    SettingToggleRow(Icons.Filled.VolumeUp, "Scan sound", checked = sound) { settingsVm.setSound(it) }
+                    DividerLine()
+                    SettingToggleRow(Icons.Filled.Vibration, "Vibration", checked = vibrate) { settingsVm.setVibrate(it) }
+                }
             }
 
-            // ── Scanner ──
-            SettingsGroup("Scanner") {
-                ToggleRow(Icons.Filled.Save, "Auto-copy scans", autoSave) { settingsVm.setAutoCopy(it) }
-                GroupDivider()
-                ToggleRow(Icons.Filled.History, "Scan history", scanHistory) { settingsVm.setScanHistory(it) }
+            Column {
+                SectionLabel("Productivity")
+                Group {
+                    SettingToggleRow(
+                        Icons.Filled.Save,
+                        "Auto-copy scans",
+                        subtitle = "Copy every result to the clipboard instantly",
+                        checked = autoCopy
+                    ) { settingsVm.setAutoCopy(it) }
+                    DividerLine()
+                    SettingToggleRow(
+                        Icons.Filled.History,
+                        "Keep scan history",
+                        subtitle = "Turn off to never store scans",
+                        checked = scanHistory
+                    ) { settingsVm.setScanHistory(it) }
+                    DividerLine()
+                SettingToggleRow(
+                    Icons.Filled.VisibilityOff,
+                    "Incognito mode",
+                        subtitle = "Don't log this session",
+                        checked = incognito
+                    ) { settingsVm.setIncognito(it) }
+                }
             }
 
-            // ── Privacy & Security ──
-            SettingsGroup("Privacy & Security") {
-                ToggleRow(Icons.Filled.Fingerprint, "App lock", biometrics) { settingsVm.setBiometricLock(it) }
-                GroupDivider()
-                NavRow(Icons.Filled.Lock, "Secure vault") { onNavigateToVault() }
-                GroupDivider()
-                DangerRow(Icons.Filled.DeleteForever, "Clear history") { showClearConfirmDialog = true }
+            Column {
+                SectionLabel("Privacy & security")
+                Group {
+                    SettingToggleRow(
+                        Icons.Filled.Fingerprint,
+                        "App lock",
+                        subtitle = "Protect the vault with biometrics",
+                        checked = biometric
+                    ) { settingsVm.setBiometricLock(it) }
+                    DividerLine()
+                    SettingNavRow(Icons.Filled.Lock, "Secure vault") { onNavigateToVault() }
+                    DividerLine()
+                    SettingNavRow(Icons.Filled.Shield, "Permissions explained") { onNavigateToPermissions() }
+                    DividerLine()
+                    SettingNavRow(
+                        Icons.Filled.DeleteForever,
+                        "Clear all history",
+                        danger = true
+                    ) { showClearDialog = true }
+                }
             }
 
-            // ── About ──
-            SettingsGroup("About") {
-                NavRow(Icons.Filled.Policy, "Privacy policy") {
-                    runCatching {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://dhanuk.page.gd/QuickScan-Pro/privacy-policy.html")))
+            Column {
+                SectionLabel("Appearance")
+                Group {
+                    SettingNavRow(
+                        Icons.Filled.DarkMode,
+                        "Theme Studio",
+                        subtitle = "Light, dark or AMOLED"
+                    ) { onNavigateToThemeStudio() }
+                }
+            }
+
+            Column {
+                SectionLabel("Support & legal")
+                Group {
+                    SettingNavRow(Icons.Filled.Policy, "Privacy policy") { onNavigateToPrivacy() }
+                    DividerLine()
+                    SettingNavRow(Icons.Filled.Description, "Terms of use") { onNavigateToTerms() }
+                    DividerLine()
+                    SettingNavRow(
+                        Icons.Filled.Email,
+                        "Contact us",
+                        subtitle = AppConfig.SUPPORT_EMAIL
+                    ) { onNavigateToContact() }
+                    DividerLine()
+                    SettingNavRow(Icons.Filled.Star, "Rate QuickScan Pro") {
+                        runCatching {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.PLAY_STORE_URL)))
+                        }
                     }
-                }
-                GroupDivider()
-                NavRow(Icons.Filled.Star, "Rate app") {
-                    runCatching {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")))
-                    }.onFailure {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=${context.packageName}")))
+                    DividerLine()
+                    SettingNavRow(Icons.Filled.Share, "Share the app") {
+                        runCatching {
+                            context.startActivity(Intent.createChooser(
+                                Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "QuickScan Pro — ${AppConfig.PLAY_STORE_URL}")
+                                },
+                                "Share via"
+                            ))
+                        }
                     }
-                }
-                GroupDivider()
-                NavRow(Icons.Filled.Info, "About QuickScan Pro", onClick = onNavigateToAbout)
-                GroupDivider()
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TonalIcon(Icons.Filled.Notifications)
-                    Spacer(Modifier.width(14.dp))
-                    Text("Version", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                    Text(BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    DividerLine()
+                    SettingNavRow(Icons.Filled.Info, "About QuickScan Pro") { onNavigateToAbout() }
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            SettingInfoRow(Icons.Filled.Info, "Version", BuildConfig.VERSION_NAME)
+            Spacer(Modifier.height(16.dp))
         }
     }
 
-    if (showDefaultActionDialog) DefaultActionDialog(defaultAction, { settingsVm.setDefaultAction(it) }, { showDefaultActionDialog = false })
-    if (showClearConfirmDialog) {
+    if (showActionDialog) {
         AlertDialog(
-            onDismissRequest = { showClearConfirmDialog = false },
+            onDismissRequest = { showActionDialog = false },
+            title = { Text("Default action after scan") },
+            text = {
+                Column {
+                    ACTIONS.forEach { (key, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    settingsVm.setDefaultAction(key)
+                                    showActionDialog = false
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = defaultAction == key, onClick = {
+                                settingsVm.setDefaultAction(key)
+                                showActionDialog = false
+                            })
+                            Text(label, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showActionDialog = false }) { Text("Cancel") } }
+        )
+    }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
             title = { Text("Clear all history?") },
-            text = { Text("This will permanently delete all scan results.") },
-            confirmButton = { TextButton(onClick = { historyVm.deleteAll(); showClearConfirmDialog = false }) { Text("Clear", color = MaterialTheme.colorScheme.error) } },
-            dismissButton = { TextButton(onClick = { showClearConfirmDialog = false }) { Text("Cancel") } }
+            text = { Text("All saved scans will be permanently deleted.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    historyVm.deleteAll()
+                    showClearDialog = false
+                }) { Text("Clear", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { showClearDialog = false }) { Text("Cancel") } }
         )
     }
 }
 
+private val ACTIONS = listOf(
+    "show_result" to "Show result page",
+    "open_url" to "Open URL / act instantly",
+    "copy_clipboard" to "Copy to clipboard",
+    "share" to "Share"
+)
+
+private fun actionLabel(action: String) = ACTIONS.firstOrNull { it.first == action }?.second ?: "Show result page"
+
 @Composable
-private fun SettingsGroup(label: String, content: @Composable () -> Unit) {
-    Column {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-        ) {
-            content()
-        }
+private fun Group(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+    ) {
+        content()
     }
 }
 
 @Composable
-private fun GroupDivider() {
+private fun DividerLine() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 70.dp),
-        thickness = 0.5.dp,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-    )
-}
-
-@Composable
-private fun TonalIcon(icon: ImageVector) {
-    Box(
-        modifier = Modifier
-            .size(38.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.secondaryContainer),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-    }
-}
-
-@Composable
-private fun ToggleRow(icon: ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TonalIcon(icon)
-        Spacer(Modifier.width(14.dp))
-        Text(
-            title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = onChange,
-            colors = SwitchDefaults.colors(
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
-            )
-        )
-    }
-}
-
-@Composable
-private fun NavRow(icon: ImageVector, title: String, subtitle: String? = null, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TonalIcon(icon)
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
-    }
-}
-
-@Composable
-private fun DangerRow(icon: ImageVector, title: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
-        }
-        Spacer(Modifier.width(14.dp))
-        Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error)
-    }
-}
-
-private fun defaultActionLabel(action: String) = when (action) {
-    "show_result" -> "Show result only"
-    "open_url" -> "Open URL"
-    "copy_clipboard" -> "Copy"
-    "share" -> "Share"
-    else -> "Show result only"
-}
-
-@Composable
-private fun DefaultActionDialog(current: String, onSelect: (String) -> Unit, onDismiss: () -> Unit) {
-    val options = listOf(
-        "show_result" to "Show result only",
-        "open_url" to "Open URL",
-        "copy_clipboard" to "Copy",
-        "share" to "Share"
-    )
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Default action") },
-        text = {
-            Column {
-                options.forEach { (key, label) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelect(key); onDismiss() }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(current == key, { onSelect(key); onDismiss() })
-                        Spacer(Modifier.width(12.dp))
-                        Text(label, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        thickness = 0.6.dp,
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     )
 }

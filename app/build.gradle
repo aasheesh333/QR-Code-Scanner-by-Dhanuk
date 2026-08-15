@@ -167,6 +167,7 @@ dependencies {
     implementation "com.google.guava:guava:31.1-android"
 
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
 
     def room_version = "2.6.1"
     implementation "androidx.room:room-runtime:$room_version"

@@ -16,127 +16,131 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val AppLightScheme = lightColorScheme(
-    primary = AccentPrimary,
-    onPrimary = InkOnPrimary,
-    primaryContainer = AccentPrimaryContainer,
-    onPrimaryContainer = InkOnPrimaryContainer,
-    secondary = AccentSecondary,
-    onSecondary = Color.White,
-    secondaryContainer = AccentSecondaryContainer,
-    onSecondaryContainer = InkOnSecondaryContainer,
-    tertiary = AccentTertiary,
-    onTertiary = Color.White,
-    tertiaryContainer = AccentTertiaryContainer,
-    onTertiaryContainer = InkOnTertiaryContainer,
-    background = SurfaceBright,
-    onBackground = InkPrimary,
-    surface = SurfaceBright,
-    onSurface = InkPrimary,
-    surfaceVariant = SurfaceHighest,
-    onSurfaceVariant = InkSecondary,
-    surfaceTint = AccentPrimary,
-    inverseSurface = Color(0xFF0D0E11),
-    inverseOnSurface = Color(0xFF9D9CA1),
-    inversePrimary = AccentPrimaryContainer,
-    surfaceContainerLowest = SurfaceLowest,
-    surfaceContainerLow = SurfaceLow,
-    surfaceContainer = SurfaceMid,
-    surfaceContainerHigh = SurfaceHigh,
-    surfaceContainerHighest = SurfaceHighest,
-    surfaceBright = SurfaceBright,
-    surfaceDim = SurfaceDim,
-    outline = OutlineStrong,
-    outlineVariant = OutlineFaint,
-    error = SemanticDanger,
-    onError = Color.White,
-    errorContainer = SemanticDangerSoft,
-    onErrorContainer = Color(0xFF6E0523)
-)
-
-private val AppDarkScheme = darkColorScheme(
-    primary = DarkAccent,
-    onPrimary = Color(0xFF001367),
-    primaryContainer = AccentPrimaryDim,
-    onPrimaryContainer = Color(0xFFE1E0F9),
-    secondary = Color(0xFFC5C4DC),
-    onSecondary = Color(0xFF2E2F42),
-    secondaryContainer = Color(0xFF444559),
-    onSecondaryContainer = Color(0xFFE1E0F9),
-    tertiary = Color(0xFFE8BAD5),
-    onTertiary = Color(0xFF46273C),
-    tertiaryContainer = Color(0xFF5F3D53),
-    onTertiaryContainer = Color(0xFFFFCFEC),
-    background = DarkBg,
-    onBackground = DarkOnBg,
-    surface = DarkBg,
-    onSurface = DarkOnBg,
-    surfaceVariant = DarkSurfaceHighest,
-    onSurfaceVariant = DarkOnSurfaceVariant,
-    surfaceTint = DarkAccent,
-    inverseSurface = Color(0xFFE2E2EB),
-    inverseOnSurface = Color(0xFF303239),
-    inversePrimary = AccentPrimary,
-    surfaceContainerLowest = Color(0xFF08090C),
-    surfaceContainerLow = DarkSurfaceLow,
-    surfaceContainer = DarkSurfaceHigh,
-    surfaceContainerHigh = DarkSurfaceHighest,
-    surfaceContainerHighest = Color(0xFF31323A),
-    surfaceBright = Color(0xFF33343C),
-    surfaceDim = DarkBg,
-    outline = Color(0xFF8F909A),
-    outlineVariant = DarkOutline,
-    error = Color(0xFFFFB3C0),
-    onError = Color(0xFF6E0523),
-    errorContainer = Color(0xFF8F2438),
-    onErrorContainer = Color(0xFFFFD9DE)
-)
-
-private val AppAmoledScheme = AppDarkScheme.copy(
-    background = AmoledBg,
-    surface = AmoledSurface,
-    surfaceContainerLowest = Color.Black,
-    surfaceContainerLow = Color(0xFF080808),
-    surfaceContainer = Color(0xFF111111),
-    surfaceVariant = Color(0xFF1A1A1A)
-)
-
 enum class ThemeMode(val label: String) {
     LIGHT("Light"),
     DARK("Dark"),
     SYSTEM("System default"),
-    AMOLED("AMOLED black")
+    AMOLED("Pure black (AMOLED)")
 }
+
+private val LightScheme = lightColorScheme(
+    primary = CobaltPrimary,
+    onPrimary = Color.White,
+    primaryContainer = CobaltPrimaryContainer,
+    onPrimaryContainer = CobaltOnPrimaryContainer,
+    secondary = CobaltSecondary,
+    onSecondary = Color.White,
+    secondaryContainer = CobaltSecondaryContainer,
+    onSecondaryContainer = CobaltOnSecondaryContainer,
+    tertiary = CobaltTertiary,
+    onTertiary = Color.White,
+    tertiaryContainer = CobaltTertiaryContainer,
+    onTertiaryContainer = CobaltOnTertiaryContainer,
+    background = CanvasCool,
+    onBackground = InkDark,
+    surface = CanvasCool,
+    onSurface = InkDark,
+    surfaceVariant = CanvasTinted,
+    onSurfaceVariant = InkMedium,
+    surfaceTint = CobaltPrimary,
+    inverseSurface = Onyx,
+    inverseOnSurface = TextNight,
+    inversePrimary = CobaltPrimary,
+    surfaceContainerLowest = CardWhite,
+    surfaceContainerLow = CanvasCool,
+    surfaceContainer = CanvasTinted,
+    surfaceContainerHigh = CanvasRaised,
+    surfaceContainerHighest = CanvasSunken,
+    surfaceBright = CardWhite,
+    surfaceDim = CanvasSunken,
+    outline = LineStrong,
+    outlineVariant = LineFaint,
+    error = Danger,
+    onError = Color.White,
+    errorContainer = DangerSoft,
+    onErrorContainer = Color(0xFF7A1408),
+    scrim = Color(0x66000000)
+)
+
+private val DarkScheme = darkColorScheme(
+    primary = Color(0xFF9DBBFF),
+    onPrimary = Color(0xFF0F3B8F),
+    primaryContainer = Color(0xFF1E4FBB),
+    onPrimaryContainer = Color(0xFFDCE8FD),
+    secondary = Color(0xFFA8B6CC),
+    onSecondary = Color(0xFF1F2B42),
+    secondaryContainer = Color(0xFF33415C),
+    onSecondaryContainer = Color(0xFFDCE4F2),
+    tertiary = Color(0xFF6FD8C8),
+    onTertiary = Color(0xFF0A4A42),
+    tertiaryContainer = Color(0xFF14645A),
+    onTertiaryContainer = Color(0xFFCFF4EC),
+    background = Graphite,
+    onBackground = TextNight,
+    surface = Graphite,
+    onSurface = TextNight,
+    surfaceVariant = GraphiteMid,
+    onSurfaceVariant = TextNightSoft,
+    surfaceTint = Color(0xFF9DBBFF),
+    inverseSurface = CardWhite,
+    inverseOnSurface = InkDark,
+    inversePrimary = CobaltPrimary,
+    surfaceContainerLowest = Onyx,
+    surfaceContainerLow = GraphiteLow,
+    surfaceContainer = GraphiteMid,
+    surfaceContainerHigh = GraphiteHigh,
+    surfaceContainerHighest = GraphiteHighest,
+    surfaceBright = GraphiteHigh,
+    surfaceDim = Graphite,
+    outline = GraphiteLine,
+    outlineVariant = GraphiteLine,
+    error = Color(0xFFFC9A90),
+    onError = Color(0xFF7A1408),
+    errorContainer = Color(0xFF912018),
+    onErrorContainer = Color(0xFFFBE5E2),
+    scrim = Color(0x99000000)
+)
+
+private val AmoledScheme = DarkScheme.copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = Color(0xFF0A0E18),
+    surfaceContainer = Color(0xFF10151F),
+    surfaceContainerHigh = Color(0xFF161D2C),
+    surfaceContainerHighest = Color(0xFF1C2434),
+    surfaceBright = Color(0xFF1C2434),
+    surfaceDim = Color.Black
+)
 
 @Composable
 fun QuickScanProTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM, // default ignored when ThemeViewModel provides value; app ships LIGHT
+    themeMode: ThemeMode = ThemeMode.LIGHT,
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val dark = when (themeMode) {
-        ThemeMode.LIGHT  -> false
-        ThemeMode.DARK   -> true
-        ThemeMode.AMOLED -> true
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK, ThemeMode.AMOLED -> true
         ThemeMode.SYSTEM -> darkTheme
     }
 
     val scheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        themeMode == ThemeMode.AMOLED -> AppAmoledScheme
-        dark -> AppDarkScheme
-        else -> AppLightScheme
+        themeMode == ThemeMode.AMOLED -> AmoledScheme
+        dark -> DarkScheme
+        else -> LightScheme
     }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
-            window.statusBarColor = scheme.surface.toArgb()
+            window.statusBarColor = scheme.background.toArgb()
+            window.navigationBarColor = scheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !dark
             WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !dark
         }
@@ -144,7 +148,7 @@ fun QuickScanProTheme(
 
     MaterialTheme(
         colorScheme = scheme,
-        typography = AuroraTypography,
+        typography = AppTypography,
         content = content
     )
 }

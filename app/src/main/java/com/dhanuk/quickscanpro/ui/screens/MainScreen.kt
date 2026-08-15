@@ -36,14 +36,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
-import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
-import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
-import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import com.dhanuk.quickscanpro.database.ScanResult
+import com.dhanuk.quickscanpro.ui.navigation.BottomNavItem
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
+import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
+import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
+import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+
+private fun encode(data: String) = URLEncoder.encode(data, StandardCharsets.UTF_8.toString())
 
 private fun handleDefaultScanAction(context: Context, content: String, action: String) {
     when (action) {
@@ -53,21 +55,20 @@ private fun handleDefaultScanAction(context: Context, content: String, action: S
             Toast.makeText(context, "Scan copied", Toast.LENGTH_SHORT).show()
         }
         "share" -> {
-            context.startActivity(Intent.createChooser(
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, content)
-                },
-                "Share scan"
-            ))
+            runCatching {
+                context.startActivity(Intent.createChooser(
+                    Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, content)
+                    },
+                    "Share scan"
+                ))
+            }
         }
         "open_url" -> {
             if (BarcodeTypeDetector.detectType(content) == BarcodeTypeDetector.TYPE_URL) {
-                runCatching {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(content)))
-                }.onFailure {
-                    Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
-                }
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(content))) }
+                    .onFailure { Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show() }
             } else {
                 Toast.makeText(context, "Saved to history", Toast.LENGTH_SHORT).show()
             }
@@ -79,39 +80,28 @@ private fun handleDefaultScanAction(context: Context, content: String, action: S
 fun MainScreen() {
     val navController = rememberNavController()
     val context = LocalContext.current
-    val settingsViewModel: SettingsViewModel = viewModel()
-    val historyViewModel: HistoryViewModel = viewModel()
-    val onboardingCompleted by settingsViewModel.onboardingCompleted.collectAsState()
-    val defaultAction by settingsViewModel.defaultAction.collectAsState()
-    val autoSave by settingsViewModel.autoCopyOnScan.collectAsState()
+    val settingsVm: SettingsViewModel = viewModel()
+    val historyVm: HistoryViewModel = viewModel()
+    val onboardingCompleted by settingsVm.onboardingCompleted.collectAsState()
+    val defaultAction by settingsVm.defaultAction.collectAsState()
+    val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
 
     when {
         onboardingCompleted == null -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
         onboardingCompleted == false -> {
-            OnboardingScreen {
-                settingsViewModel.completeOnboarding()
-            }
+            OnboardingScreen { settingsVm.completeOnboarding() }
         }
         else -> {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = { AppBottomBar(navController) }
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding)) {
-                    AppNavigation(
-                        navController = navController,
-                        context = context,
-                        defaultAction = defaultAction,
-                        autoCopy = autoSave,
-                        historyViewModel = historyViewModel
-                    )
+            ) { inner ->
+                Box(modifier = Modifier.padding(inner)) {
+                    AppNavigation(navController, context, defaultAction, autoCopy, historyVm)
                 }
             }
         }
@@ -120,18 +110,17 @@ fun MainScreen() {
 
 @Composable
 private fun AppBottomBar(navController: NavHostController) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: return
-    val routePrefix = currentRoute.split("/").first().substringBefore("?")
-    val showBarPrefixes = BottomNavItem.entries.map { it.route.split("/").first() }
-    if (!showBarPrefixes.contains(routePrefix)) return
+    val entry by navController.currentBackStackEntryAsState()
+    val route = entry?.destination?.route ?: return
+    val prefix = route.split("/").first().substringBefore("?")
+    if (BottomNavItem.entries.none { it.route.split("/").first() == prefix }) return
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         tonalElevation = 3.dp
     ) {
         BottomNavItem.entries.forEach { item ->
-            val selected = currentRoute == item.route
+            val selected = route.split("/").first() == item.route
             NavigationBarItem(
                 selected = selected,
                 onClick = {
@@ -146,14 +135,18 @@ private fun AppBottomBar(navController: NavHostController) {
                 icon = { Icon(item.icon, contentDescription = item.title) },
                 label = { Text(item.title) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
         }
+    }
+}
+
+private fun NavHostController.bottomNav(route: String) {
+    navigate(route) {
+        popUpTo(graph.startDestinationId) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 
@@ -163,7 +156,7 @@ private fun AppNavigation(
     context: Context,
     defaultAction: String,
     autoCopy: Boolean,
-    historyViewModel: HistoryViewModel
+    historyVm: HistoryViewModel
 ) {
     NavHost(
         navController = navController,
@@ -182,20 +175,13 @@ private fun AppNavigation(
                         Toast.makeText(context, "Scan copied", Toast.LENGTH_SHORT).show()
                     }
                     if (defaultAction == "show_result") {
-                        val encoded = URLEncoder.encode(result, StandardCharsets.UTF_8.toString())
-                        navController.navigate("result/$encoded")
+                        navController.navigate("result/${encode(result)}")
                     } else {
-                        historyViewModel.addScanResult(ScanResult(content = result))
+                        historyVm.addScanResult(ScanResult(content = result))
                         handleDefaultScanAction(context, result, defaultAction)
                     }
                 },
-                onViewAllHistory = {
-                    navController.navigate(BottomNavItem.History.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
+                onViewAllHistory = { navController.bottomNav(BottomNavItem.History.route) },
                 onOpenBatch = { navController.navigate("batch_scan") },
                 onOpenCompare = { navController.navigate("compare_scan") },
                 onOpenVault = { navController.navigate("vault") },
@@ -203,88 +189,57 @@ private fun AppNavigation(
                 onOpenTemplates = { navController.navigate("templates") },
                 onOpenLeakCheck = { navController.navigate("leak_check") },
                 onOpenAnalytics = { navController.navigate("analytics") },
-                onOpenSettings = {
-                    navController.navigate(BottomNavItem.Settings.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                onOpenGenerate = {
-                    navController.navigate(BottomNavItem.Generate.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
+                onOpenSettings = { navController.bottomNav(BottomNavItem.Settings.route) },
+                onOpenGenerate = { navController.bottomNav(BottomNavItem.Generate.route) },
+                onOpenTextScan = { navController.navigate("text_scan") },
+                onOpenWifiShare = { navController.navigate("wifi_share") }
             )
         }
         composable(BottomNavItem.Generate.route) {
-            QRGeneratorScreen(onOpenSettings = {
-                navController.navigate(BottomNavItem.Settings.route) {
-                    launchSingleTop = true
-                }
-            })
+            QRGeneratorScreen(
+                onOpenSettings = { navController.bottomNav(BottomNavItem.Settings.route) },
+                onOpenBulk = { navController.navigate("bulk_generate") },
+                onOpenTemplates = { navController.navigate("templates") }
+            )
         }
         composable(BottomNavItem.History.route) {
             HistoryScreen(
                 onOpenVault = { navController.navigate("vault") },
-                onOpenCompare = { navController.navigate("compare_scan") },
-                onNavigateToScanner = {
-                    navController.navigate(BottomNavItem.Home.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                onNavigateToSettings = {
-                    navController.navigate(BottomNavItem.Settings.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                onRowClick = { scan ->
-                    val encoded = URLEncoder.encode(scan.content, StandardCharsets.UTF_8.toString())
-                    navController.navigate("result/$encoded")
-                }
+                onOpenTimeline = { navController.navigate("timeline") },
+                onNavigateToScanner = { navController.bottomNav(BottomNavItem.Home.route) },
+                onRowClick = { scan -> navController.navigate("result/${encode(scan.content)}") }
             )
-        }
-        composable("analytics") {
-            AnalyticsScreen()
         }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToAbout = { navController.navigate("about") },
-                onNavigateToVault = { navController.navigate("vault") }
+                onNavigateToVault = { navController.navigate("vault") },
+                onNavigateToThemeStudio = { navController.navigate("theme_studio") },
+                onNavigateToPermissions = { navController.navigate("permissions") },
+                onNavigateToPrivacy = { navController.navigate("privacy") },
+                onNavigateToTerms = { navController.navigate("terms") },
+                onNavigateToContact = { navController.navigate("contact") }
             )
         }
-
+        composable("analytics") { AnalyticsScreen { navController.popBackStack() } }
         composable(
             route = "result/{data}",
             arguments = listOf(navArgument("data") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val data = backStackEntry.arguments?.getString("data") ?: ""
+        ) { entry ->
+            val data = entry.arguments?.getString("data") ?: ""
             ResultScreen(
                 data = data,
                 onNavigateBack = { navController.popBackStack() },
-                onOpenProductLookup = { barcode ->
-                    val encoded = URLEncoder.encode(barcode, StandardCharsets.UTF_8.toString())
-                    navController.navigate("product_lookup/$encoded")
-                }
+                onOpenProductLookup = { barcode -> navController.navigate("product_lookup/${encode(barcode)}") }
             )
         }
-
         composable("batch_scan") { BatchScanScreen { navController.popBackStack() } }
         composable("compare_scan") { CompareScanScreen { navController.popBackStack() } }
-        composable("vault") {
-            VaultScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        composable("vault") { VaultScreen { navController.popBackStack() } }
         composable("theme_studio") { ThemeStudioScreen { navController.popBackStack() } }
-        composable("timeline") { TimelineScreen { navController.popBackStack() } }
+        composable("timeline") {
+            TimelineScreen(onNavigateBack = { navController.popBackStack() })
+        }
         composable("templates") {
             val qrVm: QRGeneratorViewModel = viewModel()
             TemplatesScreen(
@@ -297,20 +252,48 @@ private fun AppNavigation(
                         p3 = template.prefill.f3,
                         p4 = template.prefill.f4
                     )
-                    navController.navigate(BottomNavItem.Generate.route)
+                    navController.bottomNav(BottomNavItem.Generate.route)
                 }
             )
         }
-        composable("leak_check") { LeakCheckScreen { navController.popBackStack() } }
+        composable("leak_check") {
+            LeakCheckScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenPasswordTools = { navController.navigate("password_tools") }
+            )
+        }
+        composable("text_scan") {
+            TextScanScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onTextExtracted = { text ->
+                    historyVm.addScanResult(ScanResult(content = text))
+                    navController.navigate("result/${encode(text)}")
+                }
+            )
+        }
+        composable("wifi_share") {
+            WifiShareScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onShareReady = { content ->
+                    historyVm.addScanResult(ScanResult(content = content))
+                }
+            )
+        }
+        composable("bulk_generate") { BulkGenerateScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable("password_tools") { PasswordToolsScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(
             route = "product_lookup/{barcode}",
             arguments = listOf(navArgument("barcode") { type = NavType.StringType })
-        ) { backStackEntry ->
+        ) { entry ->
             ProductLookupScreen(
-                barcode = backStackEntry.arguments?.getString("barcode") ?: "",
+                barcode = entry.arguments?.getString("barcode") ?: "",
                 onNavigateBack = { navController.popBackStack() }
             )
         }
         composable("about") { AboutScreen { navController.popBackStack() } }
+        composable("permissions") { PermissionsUsageScreen { navController.popBackStack() } }
+        composable("privacy") { PrivacyPolicyScreen { navController.popBackStack() } }
+        composable("terms") { TermsAndConditionsScreen { navController.popBackStack() } }
+        composable("contact") { ContactUsScreen { navController.popBackStack() } }
     }
 }

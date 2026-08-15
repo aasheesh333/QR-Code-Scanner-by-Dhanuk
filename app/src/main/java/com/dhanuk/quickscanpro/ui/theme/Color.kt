@@ -2,85 +2,51 @@ package com.dhanuk.quickscanpro.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ─────────────────────────────────────────────────────────────
-// QuickScan Pro — Fresh Material 3 Indigo (Stitch v3 design)
-//   primary       #4456BA (indigo, tonal spot from #3F51B5 seed)
-//   surface       #FAF8FD (off-white)
-//   onSurface     #303239
-//   cards         #FFFFFF (surface-container-lowest)
-//   tonal circles #E1E0F9 (secondary-container)
-// ─────────────────────────────────────────────────────────────
+// QuickScan Pro 4 — Cobalt professional palette (fresh design, v3 redesign)
 
-// Primary — indigo
-val AccentPrimary = Color(0xFF4456BA)
-val AccentPrimaryBrand = Color(0xFF3F51B5)      // seed / brand
-val AccentPrimaryContainer = Color(0xFF8596FF)  // primaryContainer
-val AccentPrimarySoft = Color(0xFFE1E0F9)       // tonal container for chips/circles
-val AccentPrimaryDim = Color(0xFF3749AD)
-val InkOnPrimaryContainer = Color(0xFF001367)
+val CobaltPrimary = Color(0xFF1A56DB)
+val CobaltPrimaryDark = Color(0xFF1443AE)
+val CobaltPrimaryContainer = Color(0xFFDCE8FD)
+val CobaltOnPrimaryContainer = Color(0xFF0B2E66)
+val CobaltBrandDeep = Color(0xFF0F3B8F)
 
-// Secondary — neutral slate
-val AccentSecondary = Color(0xFF5C5D72)
-val AccentSecondaryContainer = Color(0xFFE1E0F9)
-val InkOnSecondaryContainer = Color(0xFF4F5065)
+val CobaltSecondary = Color(0xFF52627A)
+val CobaltSecondaryContainer = Color(0xFFE2E8F2)
+val CobaltOnSecondaryContainer = Color(0xFF33415C)
 
-// Tertiary — muted mauve (rarely used)
-val AccentTertiary = Color(0xFF79546C)
-val AccentTertiaryContainer = Color(0xFFFFCFEC)
-val InkOnTertiaryContainer = Color(0xFF67435B)
+val CobaltTertiary = Color(0xFF0E9384)
+val CobaltTertiaryContainer = Color(0xFFCFF4EC)
+val CobaltOnTertiaryContainer = Color(0xFF0A4A42)
 
-// Ink scale
-val InkPrimary = Color(0xFF303239)          // onSurface
-val InkSecondary = Color(0xFF5D5F66)        // onSurfaceVariant
-val InkTertiary = Color(0xFF797A82)         // outline
-val InkOnPrimary = Color(0xFFFAF8FF)
+val InkDark = Color(0xFF16202E)
+val InkMedium = Color(0xFF4B5768)
+val InkSoft = Color(0xFF6B7686)
 
-// Surfaces — off-white hierarchy
-val SurfaceBright = Color(0xFFFAF8FD)       // background / surface
-val SurfaceLowest = Color(0xFFFFFFFF)       // cards
-val SurfaceLow = Color(0xFFF4F3F9)
-val SurfaceMid = Color(0xFFEEEDF4)
-val SurfaceHigh = Color(0xFFE8E7EF)
-val SurfaceHighest = Color(0xFFE2E2EB)
-val SurfaceDim = Color(0xFFD9D9E2)
+val CanvasCool = Color(0xFFF5F7FB)
+val CardWhite = Color(0xFFFFFFFF)
+val CanvasTinted = Color(0xFFEEF2F8)
+val CanvasRaised = Color(0xFFE7ECF4)
+val CanvasSunken = Color(0xFFDDE4EE)
+val LineFaint = Color(0xFFE3E8F0)
+val LineStrong = Color(0xFFC4CDDA)
 
-// Outlines & dividers
-val OutlineStrong = Color(0xFF797A82)
-val OutlineFaint = Color(0xFFB1B1BA)
-val Divider = Color(0xFFE2E2EB)
+val Positive = Color(0xFF059669)
+val PositiveSoft = Color(0xFFDCF5E9)
+val Caution = Color(0xFFD97706)
+val CautionSoft = Color(0xFFFDEED3)
+val Danger = Color(0xFFD92D20)
+val DangerSoft = Color(0xFFFBE5E2)
+val Info = Color(0xFF1A56DB)
+val InfoSoft = Color(0xFFDCE8FD)
 
-// Camera / scanner
-val CameraBg = Color(0xFF0D0E11)
-val CameraOverlayScrim = Color(0xCC000000)
-val CameraFrame = Color(0xFFFFFFFF)
-val CameraButtonShadow = Color(0x33000000)
+val Onyx = Color(0xFF0B0F16)
+val Graphite = Color(0xFF121826)
+val GraphiteLow = Color(0xFF161D2E)
+val GraphiteMid = Color(0xFF1C2438)
+val GraphiteHigh = Color(0xFF242E45)
+val GraphiteHighest = Color(0xFF2D3852)
+val GraphiteLine = Color(0xFF33405C)
+val TextNight = Color(0xFFE7ECF5)
+val TextNightSoft = Color(0xFF9AA6BC)
 
-// Dark theme — derived from same indigo seed
-val DarkBg = Color(0xFF0D0E11)
-val DarkSurface = Color(0xFF131418)
-val DarkSurfaceLow = Color(0xFF17181D)
-val DarkSurfaceHigh = Color(0xFF1F2026)
-val DarkSurfaceHighest = Color(0xFF26272E)
-val DarkOutline = Color(0xFF45464E)
-val DarkOnBg = Color(0xFFE2E2EB)
-val DarkOnSurfaceVariant = Color(0xFFB1B1BA)
-val DarkAccent = Color(0xFF8596FF)
-
-// AMOLED
-val AmoledBg = Color(0xFF000000)
-val AmoledSurface = Color(0xFF0A0A0C)
-
-// Semantic
-val SemanticSafe = Color(0xFF16A34A)
-val SemanticSafeSoft = Color(0xFFE8F5ED)
-val SemanticWarn = Color(0xFFF59E0B)
-val SemanticWarnSoft = Color(0xFFFEF3C7)
-val SemanticDanger = Color(0xFFA8364B)
-val SemanticDangerSoft = Color(0xFFF97386)
-val SemanticInfo = Color(0xFF4456BA)
-val SemanticInfoSoft = Color(0xFFE1E0F9)
-
-// Safety check traffic-light palette
-val SafetySafe = Color(0xFF10B981)
-val SafetyWarn = Color(0xFFF59E0B)
-val SafetyRisky = Color(0xFFA8364B)
+val ScannerDark = Color(0xFF05070C)
