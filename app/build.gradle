@@ -96,13 +96,18 @@ android {
         }
     }
 
-    // Guard: never ship release builds with Google's public test ad IDs
+    // Guard: never ship release builds with Google's public test ad IDs.
+    // Only block actual packaging tasks so compileReleaseKotlin / lintRelease can
+    // run locally for verification without real credentials.
     def testIds = [
         "ca-app-pub-3940256099942544~3347511713",
         "ca-app-pub-3940256099942544/6300978111",
         "ca-app-pub-3940256099942544/1033173712"
     ]
-    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+    if (gradle.startParameter.taskNames.any {
+        def t = it.toLowerCase()
+        t.contains('assemblerelease') || t.contains('packagerelease') || t.contains('bundlerelease') || t.contains('assemble') && t.contains('release')
+    }) {
         if (admobAppId in testIds || bannerAdId in testIds || interstitialAdId in testIds) {
             throw new GradleException(
                 "Release build aborted: AdMob test IDs detected. " +
