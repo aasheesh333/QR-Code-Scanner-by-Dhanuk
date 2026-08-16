@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -177,22 +179,36 @@ fun TextScanScreen(
                         shape = RoundedCornerShape(14.dp)
                     )
                 }
+                TextButton(onClick = { captured = "" }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Scan again")
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    TextButton(onClick = { captured = "" }, modifier = Modifier.weight(1f)) {
-                        Text("Scan again")
-                    }
-                    TextButton(
+                    QsOutlinedButton(
+                        text = "Copy text",
+                        icon = Icons.Filled.ContentCopy,
+                        modifier = Modifier.weight(1f),
                         onClick = {
                             (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
                                 .setPrimaryClip(ClipData.newPlainText("ocr", captured))
                             Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.width(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Copy text")
-                    }
+                        }
+                    )
+                    QsOutlinedButton(
+                        text = "Share text",
+                        icon = Icons.Filled.Share,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            runCatching {
+                                context.startActivity(Intent.createChooser(
+                                    Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, captured)
+                                    },
+                                    "Share text"
+                                ))
+                            }
+                        }
+                    )
                 }
                 QsButton(
                     text = "Save to history",

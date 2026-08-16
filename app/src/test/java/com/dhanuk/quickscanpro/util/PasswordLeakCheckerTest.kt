@@ -145,4 +145,28 @@ class PasswordLeakCheckerTest {
     fun sha1Hex_knownVector() {
         assertEquals("5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8", PasswordLeakChecker.sha1Hex("password"))
     }
+
+    @Test
+    fun check_facebook_returnsLeaked() {
+        val report = PasswordLeakChecker.check("facebook.com")
+        assertTrue(report.leaked)
+        assertEquals("facebook.com", report.domain)
+    }
+
+    @Test
+    fun check_zomato_returnsLeaked() {
+        assertTrue(PasswordLeakChecker.check("zomato.com").leaked)
+    }
+
+    @Test
+    fun check_noTld_fallsBackToDotCom() {
+        val report = PasswordLeakChecker.check("shein")
+        assertTrue(report.leaked)
+    }
+
+    @Test
+    fun check_instagram_notFlaggedAsBreached() {
+        val report = PasswordLeakChecker.check("instagram.com")
+        assertFalse(report.leaked)
+    }
 }

@@ -96,6 +96,9 @@ fun MainScreen() {
     val onboardingCompleted by settingsVm.onboardingCompleted.collectAsState()
     val defaultAction by settingsVm.defaultAction.collectAsState()
     val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
+    val scanHistory by settingsVm.scanHistory.collectAsState()
+    val incognito by settingsVm.incognitoMode.collectAsState()
+    val canSave = scanHistory && !incognito
 
     when {
         onboardingCompleted == false -> {
@@ -124,7 +127,7 @@ fun MainScreen() {
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Box(modifier = Modifier.fillMaxSize().widthIn(max = ScreenWidthCap)) {
-                        AppNavigation(navController, context, defaultAction, autoCopy, historyVm, qrGeneratorVm)
+                        AppNavigation(navController, context, defaultAction, autoCopy, canSave, historyVm, qrGeneratorVm)
                     }
                 }
             }
@@ -180,6 +183,7 @@ private fun AppNavigation(
     context: Context,
     defaultAction: String,
     autoCopy: Boolean,
+    canSave: Boolean,
     historyVm: HistoryViewModel,
     qrGeneratorVm: QRGeneratorViewModel
 ) {
@@ -202,7 +206,7 @@ private fun AppNavigation(
                     if (defaultAction == "show_result") {
                         navController.navigate("result/${encode(result)}")
                     } else {
-                        historyVm.addScanResult(ScanResult(content = result))
+                        if (canSave) historyVm.addScanResult(ScanResult(content = result))
                         handleDefaultScanAction(context, result, defaultAction)
                     }
                 },
@@ -277,6 +281,7 @@ private fun AppNavigation(
                         p3 = template.prefill.f3,
                         p4 = template.prefill.f4
                     )
+                    Toast.makeText(context, "Template applied — fill the fields and generate", Toast.LENGTH_SHORT).show()
                     navController.bottomNav(BottomNavItem.Generate.route)
                 }
             )
@@ -291,7 +296,7 @@ private fun AppNavigation(
             TextScanScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onTextExtracted = { text ->
-                    historyVm.addScanResult(ScanResult(content = text))
+                    if (canSave) historyVm.addScanResult(ScanResult(content = text))
                     navController.navigate("result/${encode(text)}")
                 }
             )
@@ -300,7 +305,7 @@ private fun AppNavigation(
             WifiShareScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onShareReady = { content ->
-                    historyVm.addScanResult(ScanResult(content = content))
+                    if (canSave) historyVm.addScanResult(ScanResult(content = content))
                 }
             )
         }

@@ -25,15 +25,17 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +54,7 @@ import com.dhanuk.quickscanpro.ui.design.PillChip
 import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsEmptyState
+import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.text.SimpleDateFormat
@@ -62,11 +65,31 @@ import java.util.Locale
 @Composable
 fun VaultScreen(onNavigateBack: () -> Unit) {
     val settingsVm: SettingsViewModel = viewModel()
-    val biometricLock by settingsVm.biometricLock.collectAsState()
+    val lockMode by settingsVm.vaultLockMode.collectAsState()
+    val vaultPin by settingsVm.vaultPin.collectAsState()
     val context = LocalContext.current
     var unlocked by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(biometricLock) { if (!biometricLock) unlocked = true }
+    var showPinDialog by rememberSaveable { mutableStateOf(false) }
+    var pinEntry by rememberSaveable { mutableStateOf("") }
+    var pinError by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val biometricAvailable = isBiometricAvailable(context)
+    val needsBiometric = lockMode == "biometric" && !unlocked
+    val needsPin = lockMode == "pin" && !unlocked
+
+    val activity = context as? FragmentActivity
+
+    fun unlockWithPin() {
+        if (pinEntry == vaultPin) {
+            unlocked = true
+            pinError = null
+            pinEntry = ""
+            showPinDialog = false
+        } else {
+            pinError = "Wrong PIN"
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -101,17 +124,32 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    val activity = context as? FragmentActivity
-                    if (activity != null && isBiometricAvailable(context)) {
+                    if (lockMode == "biometric" && biometricAvailable && activity != null) {
                         QsButton(
                             text = "Unlock with biometrics",
                             icon = Icons.Filled.Fingerprint,
                             onClick = { showBiometricPrompt(activity) { if (it) unlocked = true } },
                             modifier = Modifier.padding(horizontal = 8.dp)
                         )
+                        if (vaultPin.isNotBlank()) {
+                            QsOutlinedButton(
+                                text = "Unlock with PIN",
+                                onClick = { showPinDialog = true },
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+                    } else if (needsPin) {
+                        QsButton(
+                            text = "Enter PIN to unlock",
+                            onClick = { showPinDialog = true },
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
                     } else {
                         Text(
-                            "Biometrics unavailable on this device. You can disable the vault lock in Settings.",
+                            if (lockMode == "biometric")
+                                "Biometrics unavailable on this device. Set a vault PIN in Settings, or disable the lock."
+                            else
+                                "No lock method configured. Set a PIN or biometrics in Settings.",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -121,6 +159,33 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
         } else {
             VaultBody(Modifier.padding(padding))
         }
+    }
+
+    if ((needsBiometric || needsPin) && showPinDialog) {
+        AlertDialog(
+            onDismissRequest = { showPinDialog = false },
+            title = { Text("Enter vault PIN") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = pinEntry,
+                        onValueChange = { pinEntry = it.filter { c -> c.isDigit() }.take(6) },
+                        label = { Text("PIN") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    pinError?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = ::unlockWithPin) { Text("Unlock") } },
+            dismissButton = { TextButton(onClick = { showPinDialog = false }) { Text("Cancel") } }
+        )
     }
 }
 

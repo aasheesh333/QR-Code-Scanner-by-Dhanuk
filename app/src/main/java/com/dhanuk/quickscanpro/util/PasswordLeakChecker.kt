@@ -80,7 +80,23 @@ object PasswordLeakChecker {
         "wikitree.com", "wiziw.com", "wongnai.com", "wrike.com",
         "xdating.com", "xhamstertools.com", "xkcd.com", "xposedmag.com",
         "yotepresto.com", "youku.com", "youmiam.com", "youpik.com",
-        "zacks.com", "zoho.com", "zoomcar.com", "zyngagames.com"
+        "zacks.com", "zoho.com", "zoomcar.com", "zyngagames.com",
+        "facebook.com", "uber.com", "zomato.com", "duolingo.com",
+        "myfitnesspal.com", "pandora.com", "imgur.com", "couchsurfing.com",
+        "codecademy.com", "livejournal.com", "geni.com", "evite.com",
+        "gaana.com", "foodpanda.com", "disqus.com", "fetlife.com",
+        "cam4.com", "capitalone.com", "drizly.com", "wish.com",
+        "xing.com", "zoosk.com", "neopets.com", "myanimelist.net",
+        "mpgh.net", "renren.com", "tianya.cn", "comixology.com",
+        "cracked.to", "farmersonly.com", "hotschedules.com", "lpsg.com",
+        "jivosite.com", "bitcointalk.org", "battle.net", "eharmony.com",
+        "match.com", "okcupid.com", "habbo.com", "hackforums.net",
+        "daniweb.com", "dcinside.com", "coub.com", "doxbin.com",
+        "flexbooker.com", "blackhatworld.com", "blueapron.com", "brazzers.com",
+        "britishairways.com", "capcom.com", "carphonewarehouse.com",
+        "catholicmatch.com", "afreecatv.com", "anyflip.com", "apollo.io",
+        "artstation.com", "bayt.com", "7k7k.com", "2gis.ru",
+        "friendfinder.com", "xsplit.com"
     )
 
     data class LeakReport(
@@ -162,12 +178,15 @@ object PasswordLeakChecker {
             return LeakReport(normalizedDomain, false)
         }
 
+        // "shein" with no TLD resolves to the same check as "shein.com".
+        val lookupDomain = if ('.' in normalizedDomain) normalizedDomain else "$normalizedDomain.com"
+
         val signals = mutableListOf<String>()
         var leaked = false
         var breachCount = 0
         var firstSeenYear = 0
 
-        if (normalizedDomain in KNOWN_LEAKED_DOMAINS) {
+        if (lookupDomain in KNOWN_LEAKED_DOMAINS) {
             leaked = true
             breachCount = when (normalizedDomain) {
                 "linkedin.com" -> 2

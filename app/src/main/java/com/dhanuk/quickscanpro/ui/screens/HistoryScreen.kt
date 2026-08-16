@@ -1,7 +1,12 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +40,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +50,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -60,6 +67,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.design.IconBadge
@@ -91,6 +99,25 @@ fun HistoryScreen(
 
     var search by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf("All") }
+    var pendingDelete by remember { mutableStateOf<ScanResult?>(null) }
+
+    fun exportNow() {
+        if (all.isEmpty()) {
+            Toast.makeText(context, "Nothing to export", Toast.LENGTH_SHORT).show()
+            return
+        }
+        scope.launch {
+            val uri = HistoryExporter.exportAsCsv(context, all)
+            if (uri != null) HistoryExporter.shareCsv(context, uri)
+        }
+    }
+
+    val exportPermLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) exportNow()
+        else Toast.makeText(context, "Storage permission is needed to export", Toast.LENGTH_SHORT).show()
+    }
 
     val filters = listOf("All", "Favorites", "Link", "Wi-Fi", "Contact", "Product")
     val visible = remember(items, filter) {
@@ -122,15 +149,13 @@ fun HistoryScreen(
                     }
                     IconButton(
                         onClick = {
-                            if (all.isEmpty()) {
-                                Toast.makeText(context, "Nothing to export", Toast.LENGTH_SHORT).show()
+                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+                                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                                PackageManager.PERMISSION_GRANTED
+                            ) {
+                                exportPermLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                             } else {
-                                scope.launch {
-                                    val uri = HistoryExporter.exportAsCsv(context, all)
-                                    if (uri != null) {
-                                        HistoryExporter.shareCsv(context, uri)
-                                    }
-                                }
+                                exportNow()
                             }
                         }
                     ) {
@@ -198,19 +223,32 @@ fun HistoryScreen(
                             scan = scan,
                             onClick = { onRowClick(scan) },
                             onFavorite = { vm.toggleFavorite(scan) },
-                            onDelete = {
-                                vm.delete(scan.id)
-                                scope.launch {
-                                    val res = snackbar.showSnackbar("Scan deleted", actionLabel = "Undo")
-                                    if (res == SnackbarResult.ActionPerformed) vm.restore(scan)
-                                }
-                            }
+                            onDelete = { pendingDelete = scan }
                         )
                     }
                     item { Spacer(Modifier.height(12.dp)) }
                 }
             }
         }
+    }
+
+    pendingDelete?.let { scan ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("Delete this scan?") },
+            text = { Text("This will permanently remove the scan from your history.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.delete(scan.id)
+                    pendingDelete = null
+                    scope.launch {
+                        val res = snackbar.showSnackbar("Scan deleted", actionLabel = "Undo")
+                        if (res == SnackbarResult.ActionPerformed) vm.restore(scan)
+                    }
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } }
+        )
     }
 }
 

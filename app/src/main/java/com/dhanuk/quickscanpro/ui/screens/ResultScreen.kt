@@ -54,6 +54,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,6 +87,7 @@ import com.dhanuk.quickscanpro.util.LinkSafetyChecker
 import com.dhanuk.quickscanpro.util.TextLanguageDetector
 import com.dhanuk.quickscanpro.util.VoiceSpeaker
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
+import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +98,9 @@ fun ResultScreen(
 ) {
     val context = LocalContext.current
     val historyVm: HistoryViewModel = viewModel()
+    val settingsVm: SettingsViewModel = viewModel()
+    val historyEnabled by settingsVm.scanHistory.collectAsState()
+    val incognito by settingsVm.incognitoMode.collectAsState()
     var savedOnce by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(data) {
@@ -104,7 +109,7 @@ fun ResultScreen(
             val exists = historyVm.history.value.any {
                 it.content == data && System.currentTimeMillis() - it.timestamp < 60_000
             }
-            if (!exists) historyVm.addScanResult(ScanResult(content = data, type = type))
+            if (!exists && historyEnabled && !incognito) historyVm.addScanResult(ScanResult(content = data, type = type))
             savedOnce = true
         }
     }

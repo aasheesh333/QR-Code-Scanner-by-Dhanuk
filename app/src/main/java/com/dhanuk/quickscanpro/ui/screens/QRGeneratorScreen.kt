@@ -42,7 +42,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -117,7 +116,7 @@ fun QRGeneratorScreen(
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SectionLabel("Content type")
             LazyRow(
@@ -134,19 +133,25 @@ fun QRGeneratorScreen(
                 }
             }
 
-            QsCard {
+            QsCard(contentPadding = 12.dp) {
                 DynamicForm(selectedType, f1, f2, f3, f4, vm::setF1, vm::setF2, vm::setF3, vm::setF4)
             }
 
-            QsCard {
+            QsOutlinedButton(
+                text = "Generate many QR codes at once (bulk)",
+                icon = Icons.Filled.ViewModule,
+                onClick = onOpenBulk
+            )
+
+            QsCard(contentPadding = 12.dp) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(216.dp)
-                            .clip(RoundedCornerShape(20.dp))
+                            .size(150.dp)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                         contentAlignment = Alignment.Center
                     ) {
@@ -155,18 +160,18 @@ fun QRGeneratorScreen(
                             Image(
                                 bitmap = bmp.asImageBitmap(),
                                 contentDescription = "Generated QR code",
-                                modifier = Modifier.fillMaxSize().padding(14.dp)
+                                modifier = Modifier.fillMaxSize().padding(10.dp)
                             )
                         } else {
                             Icon(
                                 Icons.Filled.QrCode2,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                                modifier = Modifier.size(64.dp)
+                                modifier = Modifier.size(44.dp)
                             )
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(
                         if (content.isBlank()) "Fill the fields, then generate" else "Scan it to test before sharing",
                         style = MaterialTheme.typography.labelMedium,
@@ -200,10 +205,6 @@ fun QRGeneratorScreen(
                         onClick = { QRCodeGenerator.shareQrBitmap(context, bmp) }
                     )
                 }
-            }
-
-            TextButton(onClick = onOpenBulk, modifier = Modifier.fillMaxWidth()) {
-                Text("Generate many QR codes at once (bulk)", style = MaterialTheme.typography.labelLarge)
             }
 
             Spacer(Modifier.height(8.dp))

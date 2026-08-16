@@ -38,6 +38,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -83,13 +84,19 @@ fun SettingsScreen(
     val sound by settingsVm.soundEnabled.collectAsState()
     val vibrate by settingsVm.vibrateEnabled.collectAsState()
     val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
-    val biometric by settingsVm.biometricLock.collectAsState()
+    val vaultLockMode by settingsVm.vaultLockMode.collectAsState()
+    val vaultPin by settingsVm.vaultPin.collectAsState()
     val defaultAction by settingsVm.defaultAction.collectAsState()
     val scanHistory by settingsVm.scanHistory.collectAsState()
     val incognito by settingsVm.incognitoMode.collectAsState()
 
     var showActionDialog by rememberSaveable { mutableStateOf(false) }
     var showClearDialog by rememberSaveable { mutableStateOf(false) }
+    var showVaultLockDialog by rememberSaveable { mutableStateOf(false) }
+    var showPinDialog by rememberSaveable { mutableStateOf(false) }
+    var pinEntry by rememberSaveable { mutableStateOf("") }
+    var pinConfirm by rememberSaveable { mutableStateOf("") }
+    var pinError by rememberSaveable { mutableStateOf<String?>(null) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -156,12 +163,17 @@ fun SettingsScreen(
             Column {
                 SectionLabel("Privacy & security")
                 Group {
-                    SettingToggleRow(
+                    SettingNavRow(
                         Icons.Filled.Fingerprint,
-                        "App lock",
-                        subtitle = "Protect the vault with biometrics",
-                        checked = biometric
-                    ) { settingsVm.setBiometricLock(it) }
+                        "Vault lock",
+                        subtitle = vaultLockLabel(vaultLockMode, vaultPin)
+                    ) { showVaultLockDialog = true }
+                    DividerLine()
+                    SettingNavRow(
+                        Icons.Filled.Lock,
+                        "Set vault PIN",
+                        subtitle = if (vaultPin.isBlank()) "Not set" else "Change PIN"
+                    ) { showPinDialog = true }
                     DividerLine()
                     SettingNavRow(Icons.Filled.Lock, "Secure vault") { onNavigateToVault() }
                     DividerLine()
@@ -270,6 +282,94 @@ fun SettingsScreen(
             dismissButton = { TextButton(onClick = { showClearDialog = false }) { Text("Cancel") } }
         )
     }
+
+    if (showVaultLockDialog) {
+        AlertDialog(
+            onDismissRequest = { showVaultLockDialog = false },
+            title = { Text("Vault lock method") },
+            text = {
+                Column {
+                    listOf("none" to "No lock", "pin" to "PIN code", "biometric" to "Biometric").forEach { (value, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    settingsVm.setVaultLockMode(value)
+                                    showVaultLockDialog = false
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = vaultLockMode == value, onClick = {
+                                settingsVm.setVaultLockMode(value)
+                                showVaultLockDialog = false
+                            })
+                            Text(label, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showVaultLockDialog = false }) { Text("Cancel") } }
+        )
+    }
+
+    if (showPinDialog) {
+        AlertDialog(
+            onDismissRequest = { showPinDialog = false },
+            title = { Text(if (vaultPin.isBlank()) "Set vault PIN" else "Change vault PIN") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = pinEntry,
+                        onValueChange = { pinEntry = it.filter { c -> c.isDigit() }.take(6) },
+                        label = { Text("New PIN (4–6 digits)") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = pinConfirm,
+                        onValueChange = { pinConfirm = it.filter { c -> c.isDigit() }.take(6) },
+                        label = { Text("Confirm PIN") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    pinError?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    when {
+                        pinEntry.length < 4 -> pinError = "PIN must be at least 4 digits"
+                        pinEntry != pinConfirm -> pinError = "PINs do not match"
+                        else -> {
+                            settingsVm.setVaultPin(pinEntry)
+                            pinEntry = ""
+                            pinConfirm = ""
+                            pinError = null
+                            showPinDialog = false
+                        }
+                    }
+                }) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { showPinDialog = false }) { Text("Cancel") } }
+        )
+    }
+}
+
+private fun vaultLockLabel(mode: String, pin: String): String = when (mode) {
+    "pin" -> if (pin.isBlank()) "PIN set in Settings" else "Protected by PIN"
+    "biometric" -> "Protected by biometrics"
+    else -> "No lock"
 }
 
 private val ACTIONS = listOf(

@@ -22,6 +22,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val autoCopyKey = booleanPreferencesKey("auto_copy_on_scan")
     private val onboardingCompletedKey = booleanPreferencesKey("onboarding_completed")
     private val biometricLockKey = booleanPreferencesKey("biometric_lock_enabled")
+    private val vaultLockModeKey = stringPreferencesKey("vault_lock_mode")
+    private val vaultPinKey = stringPreferencesKey("vault_pin")
     private val scanHistoryKey = booleanPreferencesKey("scan_history_enabled")
     private val defaultActionKey = stringPreferencesKey("default_scan_action")
     private val themePrimaryIdxKey = intPreferencesKey("theme_primary_index")
@@ -51,6 +53,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val biometricLock = dataStore.data
         .map { it[biometricLockKey] ?: false }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    /** Vault lock mode: "none", "pin" or "biometric". Migrates the old boolean flag. */
+    val vaultLockMode = dataStore.data
+        .map { it[vaultLockModeKey] ?: if (it[biometricLockKey] == true) "biometric" else "none" }
+        .stateIn(viewModelScope, SharingStarted.Lazily, "none")
+
+    val vaultPin = dataStore.data
+        .map { it[vaultPinKey] ?: "" }
+        .stateIn(viewModelScope, SharingStarted.Lazily, "")
 
     val scanHistory = dataStore.data
         .map { it[scanHistoryKey] ?: true }
@@ -94,6 +105,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setBiometricLock(enabled: Boolean) {
         viewModelScope.launch { dataStore.edit { it[biometricLockKey] = enabled } }
+    }
+
+    fun setVaultLockMode(mode: String) {
+        viewModelScope.launch { dataStore.edit { it[vaultLockModeKey] = mode } }
+    }
+
+    fun setVaultPin(pin: String) {
+        viewModelScope.launch {
+            dataStore.edit {
+                it[vaultPinKey] = pin
+                if (pin.isNotBlank()) it[vaultLockModeKey] = "pin"
+            }
+        }
     }
 
     fun setScanHistory(enabled: Boolean) {

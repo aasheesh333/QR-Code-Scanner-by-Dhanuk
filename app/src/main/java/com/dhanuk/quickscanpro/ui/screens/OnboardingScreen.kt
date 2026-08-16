@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GppGood
 import androidx.compose.material.icons.filled.Hub
@@ -87,14 +89,17 @@ fun OnboardingScreen(onFinished: () -> Unit) {
         HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
             val p = pages[page]
             Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(220.dp)
-                        .clip(RoundedCornerShape(48.dp))
+                        .size(176.dp)
+                        .clip(RoundedCornerShape(44.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -102,10 +107,10 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                         p.icon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(92.dp)
+                        modifier = Modifier.size(72.dp)
                     )
                 }
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(28.dp))
                 Text(
                     p.title,
                     style = MaterialTheme.typography.headlineMedium,
@@ -113,13 +118,14 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(10.dp))
                 Text(
                     p.body,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
+                Spacer(Modifier.height(24.dp))
             }
         }
 
