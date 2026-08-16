@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,8 +50,10 @@ fun ThemeStudioScreen(onNavigateBack: () -> Unit) {
     val mode by vm.themeMode.collectAsState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Theme Studio", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

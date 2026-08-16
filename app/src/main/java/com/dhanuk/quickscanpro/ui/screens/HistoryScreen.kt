@@ -2,6 +2,7 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -107,8 +108,10 @@ fun HistoryScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("History", style = MaterialTheme.typography.titleLarge) },
                 actions = {
                     IconButton(onClick = onOpenTimeline) {

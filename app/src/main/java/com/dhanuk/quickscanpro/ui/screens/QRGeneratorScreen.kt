@@ -3,6 +3,7 @@ package com.dhanuk.quickscanpro.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,9 +73,9 @@ import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 fun QRGeneratorScreen(
     onOpenSettings: () -> Unit = {},
     onOpenBulk: () -> Unit = {},
-    onOpenTemplates: () -> Unit = {}
+    onOpenTemplates: () -> Unit = {},
+    vm: QRGeneratorViewModel = viewModel()
 ) {
-    val vm: QRGeneratorViewModel = viewModel()
     val context = LocalContext.current
     val selectedType by vm.selectedType.collectAsState()
     val bitmap by vm.generatedBitmap.collectAsState()
@@ -85,8 +86,10 @@ fun QRGeneratorScreen(
     val f4 by vm.f4.collectAsState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconBadge(Icons.Filled.QrCode2, size = 30.dp)

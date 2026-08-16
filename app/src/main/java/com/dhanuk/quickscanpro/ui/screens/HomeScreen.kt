@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,6 +81,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.ui.design.CameraPreviewBox
+import com.dhanuk.quickscanpro.ui.design.previewHeight
 import com.dhanuk.quickscanpro.ui.design.IconBadge
 import com.dhanuk.quickscanpro.ui.design.IconBadgeRadius
 import com.dhanuk.quickscanpro.ui.design.QsCard
@@ -173,8 +175,10 @@ fun HomeScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -213,7 +217,7 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(3f / 4f)
+                        .height(previewHeight(0.30f, 220.dp, 320.dp))
                         .clip(RoundedCornerShape(28.dp))
                         .background(MaterialTheme.colorScheme.inverseSurface)
                 ) {
@@ -221,7 +225,8 @@ fun HomeScreen(
                         CameraPreviewBox(
                             onScan = onScanWithFeedback,
                             onCameraReady = { camera = it },
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            cornerRadius = 0.dp
                         )
                         HintPill("Center the code inside the frame", Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp))
                     } else {

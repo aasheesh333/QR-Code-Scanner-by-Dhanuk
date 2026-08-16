@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
 import android.widget.Toast
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -112,8 +113,10 @@ fun ResultScreen(
     val scanForContent = historyVm.history.value.firstOrNull { it.content == data }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Scan Result", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

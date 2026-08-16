@@ -1,5 +1,6 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,8 +54,10 @@ fun AnalyticsScreen(onNavigateBack: () -> Unit = {}) {
     val leakChecks by historyVm.leakChecks.collectAsState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Insights", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

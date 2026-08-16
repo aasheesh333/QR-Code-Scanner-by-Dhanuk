@@ -3,6 +3,7 @@ package com.dhanuk.quickscanpro.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -109,8 +110,10 @@ private fun LegalInfoScreen(title: String, body: String, url: String, onNavigate
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text(title, style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

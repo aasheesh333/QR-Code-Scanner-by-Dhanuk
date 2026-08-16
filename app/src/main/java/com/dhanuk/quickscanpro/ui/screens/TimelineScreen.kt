@@ -1,5 +1,6 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,8 +62,10 @@ fun TimelineScreen(
     val history by vm.history.collectAsState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Timeline", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

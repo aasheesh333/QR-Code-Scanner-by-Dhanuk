@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.dhanuk.quickscanpro.ui.design.CameraPreviewBox
+import com.dhanuk.quickscanpro.ui.design.previewHeight
 import com.dhanuk.quickscanpro.ui.design.IconBadge
 import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
@@ -66,8 +68,10 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Compare Codes", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -102,7 +106,7 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                         }
                     },
                     onCameraReady = {},
-                    modifier = Modifier.fillMaxWidth().height(260.dp)
+                    modifier = Modifier.fillMaxWidth().height(previewHeight(0.32f, 200.dp, 300.dp))
                 )
             }
 

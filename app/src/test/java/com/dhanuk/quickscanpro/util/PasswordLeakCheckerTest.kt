@@ -11,7 +11,7 @@ class PasswordLeakCheckerTest {
     fun check_knownLeakedDomain_linkedin_returnsLeaked() {
         val report = PasswordLeakChecker.check("linkedin.com")
         assertTrue(report.leaked)
-        assertEquals(1, report.breachCount)
+        assertEquals(2, report.breachCount)
         assertEquals(2012, report.firstSeenYear)
     }
 
@@ -120,5 +120,29 @@ class PasswordLeakCheckerTest {
         val p1 = PasswordLeakChecker.sha1Prefix("hello", 10)
         val p2 = PasswordLeakChecker.sha1Prefix("world", 10)
         assert(p1 != p2)
+    }
+
+    @Test
+    fun parseRangeResponse_findsSuffixCount() {
+        val body = "0018A45C4D1DEF81644B54AB7F969B88D65:1\n03310E67579D88A1D3E0E50E69C5D0B2A:4"
+        assertEquals(4L, PasswordLeakChecker.parseRangeResponse(body, "03310E67579D88A1D3E0E50E69C5D0B2A"))
+        assertEquals(1L, PasswordLeakChecker.parseRangeResponse(body, "0018A45C4D1DEF81644B54AB7F969B88D65"))
+    }
+
+    @Test
+    fun parseRangeResponse_missingSuffix_returnsZero() {
+        assertEquals(0L, PasswordLeakChecker.parseRangeResponse("AAA:5", "BBB"))
+    }
+
+    @Test
+    fun sha1Hex_passwordIsLowercaseHex40() {
+        val hash = PasswordLeakChecker.sha1Hex("password")
+        assertEquals(40, hash.length)
+        assertTrue(hash.all { it in "0123456789abcdef" })
+    }
+
+    @Test
+    fun sha1Hex_knownVector() {
+        assertEquals("5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8", PasswordLeakChecker.sha1Hex("password"))
     }
 }

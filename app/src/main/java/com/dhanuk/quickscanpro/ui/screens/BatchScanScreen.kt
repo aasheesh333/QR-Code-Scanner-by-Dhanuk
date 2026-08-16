@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.design.CameraPreviewBox
+import com.dhanuk.quickscanpro.ui.design.previewHeight
 import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsEmptyState
@@ -65,8 +67,10 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Batch Scan", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = { vm.stopBatch(); onNavigateBack() }) {
@@ -107,7 +111,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                         onCameraReady = {},
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .height(previewHeight(0.28f, 170.dp, 260.dp))
                     )
                 }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,8 +60,10 @@ fun BulkGenerateScreen(onNavigateBack: () -> Unit) {
     var processing by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Bulk QR Generator", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

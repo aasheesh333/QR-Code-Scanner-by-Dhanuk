@@ -45,6 +45,12 @@ val IconBadgeRadius = RoundedCornerShape(14.dp)
 val ButtonRadius = RoundedCornerShape(50)
 
 @Composable
+fun previewHeight(fraction: Float, min: Dp, max: Dp): Dp {
+    val screenHeight = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp
+    return (screenHeight * fraction).coerceIn(min, max)
+}
+
+@Composable
 fun QsCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,

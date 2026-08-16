@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,6 +53,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.dhanuk.quickscanpro.ui.design.CameraPreviewBox
+import com.dhanuk.quickscanpro.ui.design.previewHeight
 import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
@@ -99,8 +101,10 @@ fun TextScanScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Read Text (OCR)", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -138,7 +142,7 @@ fun TextScanScreen(
                             onScan = { text ->
                                 if (captured.isBlank() && text.length > 2) captured = text
                             },
-                            modifier = Modifier.fillMaxWidth().height(260.dp)
+                            modifier = Modifier.fillMaxWidth().height(previewHeight(0.35f, 220.dp, 320.dp))
                         )
                     } else {
                         QsCard {

@@ -10,6 +10,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -45,6 +48,8 @@ import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import java.nio.charset.StandardCharsets
 
 private fun encode(data: String) = android.net.Uri.encode(data)
+
+private val ScreenWidthCap = 480.dp
 
 private fun decode(data: String): String = try {
     java.net.URLDecoder.decode(data, StandardCharsets.UTF_8.toString())
@@ -87,6 +92,7 @@ fun MainScreen() {
     val context = LocalContext.current
     val settingsVm: SettingsViewModel = viewModel()
     val historyVm: HistoryViewModel = viewModel()
+    val qrGeneratorVm: QRGeneratorViewModel = viewModel()
     val onboardingCompleted by settingsVm.onboardingCompleted.collectAsState()
     val defaultAction by settingsVm.defaultAction.collectAsState()
     val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
@@ -98,10 +104,28 @@ fun MainScreen() {
         else -> {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
-                bottomBar = { AppBottomBar(navController) }
+                bottomBar = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        com.dhanuk.quickscanpro.ui.composables.BannerAd(
+                            adUnitId = com.dhanuk.quickscanpro.BuildConfig.BANNER_AD_ID,
+                            modifier = Modifier.widthIn(max = ScreenWidthCap)
+                        )
+                        AppBottomBar(navController)
+                    }
+                }
             ) { inner ->
-                Box(modifier = Modifier.padding(inner)) {
-                    AppNavigation(navController, context, defaultAction, autoCopy, historyVm)
+                Box(
+                    modifier = Modifier
+                        .padding(inner)
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Box(modifier = Modifier.fillMaxSize().widthIn(max = ScreenWidthCap)) {
+                        AppNavigation(navController, context, defaultAction, autoCopy, historyVm, qrGeneratorVm)
+                    }
                 }
             }
         }
@@ -156,7 +180,8 @@ private fun AppNavigation(
     context: Context,
     defaultAction: String,
     autoCopy: Boolean,
-    historyVm: HistoryViewModel
+    historyVm: HistoryViewModel,
+    qrGeneratorVm: QRGeneratorViewModel
 ) {
     NavHost(
         navController = navController,
@@ -197,6 +222,7 @@ private fun AppNavigation(
         }
         composable(BottomNavItem.Generate.route) {
             QRGeneratorScreen(
+                vm = qrGeneratorVm,
                 onOpenSettings = { navController.bottomNav(BottomNavItem.Settings.route) },
                 onOpenBulk = { navController.navigate("bulk_generate") },
                 onOpenTemplates = { navController.navigate("templates") }
@@ -241,11 +267,10 @@ private fun AppNavigation(
             TimelineScreen(onNavigateBack = { navController.popBackStack() })
         }
         composable("templates") {
-            val qrVm: QRGeneratorViewModel = viewModel()
             TemplatesScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onUseTemplate = { template ->
-                    qrVm.prefill(
+                    qrGeneratorVm.prefill(
                         type = template.type,
                         p1 = template.prefill.f1,
                         p2 = template.prefill.f2,

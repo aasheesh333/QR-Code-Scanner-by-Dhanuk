@@ -33,9 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.dhanuk.quickscanpro.analyzer.BarcodeAnalyzer
 
 private const val TAG = "CameraPreviewBox"
@@ -45,7 +48,8 @@ fun CameraPreviewBox(
     onScan: (String) -> Unit,
     onCameraReady: (Camera?) -> Unit,
     modifier: Modifier = Modifier,
-    textMode: Boolean = false
+    textMode: Boolean = false,
+    cornerRadius: Dp = 22.dp
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -64,9 +68,39 @@ fun CameraPreviewBox(
             scaleType = PreviewView.ScaleType.FILL_CENTER
         }
     }
+    val currentOnCameraReady by rememberUpdatedState(onCameraReady)
 
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, analyzer) {
+        var bound = false
+        var previewUseCase: Preview? = null
+        var analysisUseCase: ImageAnalysis? = null
         val future = ProcessCameraProvider.getInstance(context)
+
+        val bind = { provider: ProcessCameraProvider ->
+            try {
+                provider.unbindAll()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+                val analysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also { it.setAnalyzer(executor, analyzer) }
+                previewUseCase = preview
+                analysisUseCase = analysis
+                val camera = provider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    analysis
+                )
+                bound = true
+                currentOnCameraReady(camera)
+            } catch (e: Exception) {
+                Log.e(TAG, "bind failed", e)
+            }
+        }
+
         val listener = Runnable {
             val provider = try {
                 future.get()
@@ -74,43 +108,54 @@ fun CameraPreviewBox(
                 Log.e(TAG, "camera provider failed", e)
                 return@Runnable
             }
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            }
-            val analysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also { it.setAnalyzer(executor, analyzer) }
-            try {
-                provider.unbindAll()
-                val camera = provider.bindToLifecycle(
-                    lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview,
-                    analysis
-                )
-                onCameraReady(camera)
-            } catch (e: Exception) {
-                Log.e(TAG, "bind failed", e)
-            }
+            bind(provider)
         }
         future.addListener(listener, executor)
+
+        // If another camera consumer stole the binding while this screen was in
+        // the background, re-own it when the screen comes back to the front.
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                try {
+                    if (future.isDone && previewUseCase != null) {
+                        val provider = future.get()
+                        if (!provider.isBound(analysisUseCase!!)) bind(provider)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "rebind check failed", e)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
         onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
             try {
                 when (analyzer) {
                     is BarcodeAnalyzer -> analyzer.close()
                     is com.dhanuk.quickscanpro.analyzer.TextAnalyzer -> analyzer.close()
                 }
-                val provider = try { future.get() } catch (_: Exception) { null }
-                provider?.unbindAll()
-                onCameraReady(null)
+                if (bound && previewUseCase != null && analysisUseCase != null) {
+                    val provider = try {
+                        if (future.isDone) future.get() else null
+                    } catch (_: Exception) {
+                        null
+                    }
+                    provider?.unbind(previewUseCase!!, analysisUseCase!!)
+                    bound = false
+                }
+                currentOnCameraReady(null)
             } catch (e: Exception) {
                 Log.e(TAG, "unbind failed", e)
             }
         }
     }
 
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(MaterialTheme.colorScheme.inverseSurface)
+    ) {
         AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
         ScanOverlay(Modifier.fillMaxSize())
     }

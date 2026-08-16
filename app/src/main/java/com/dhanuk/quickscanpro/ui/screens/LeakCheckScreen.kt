@@ -1,5 +1,6 @@
 package com.dhanuk.quickscanpro.ui.screens
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -71,9 +72,15 @@ fun LeakCheckScreen(
     var checking by rememberSaveable { mutableStateOf(false) }
     var report by remember { mutableStateOf<PasswordLeakChecker.LeakReport?>(null) }
 
+    var passwordInput by rememberSaveable { mutableStateOf("") }
+    var checkingPassword by rememberSaveable { mutableStateOf(false) }
+    var passwordReport by remember { mutableStateOf<PasswordLeakChecker.PasswordLeakReport?>(null) }
+
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Leak Check", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -101,60 +108,123 @@ fun LeakCheckScreen(
                     IconBadge(Icons.Filled.Key)
                     Spacer(Modifier.padding(horizontal = 7.dp))
                     Text(
-                        "Check if a website you use has appeared in known public data breaches. 100% offline.",
+                        "Check websites against a documented breach database, or test a password live — securely.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            QsCard(onClick = onOpenPasswordTools, contentPadding = 14.dp) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconBadge(Icons.Filled.Key, size = 36.dp)
-                    Spacer(Modifier.padding(horizontal = 6.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("Password tools", style = MaterialTheme.typography.titleSmall)
+            Column {
+                SectionLabel("Website breach check")
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    label = { Text("Website or domain") },
+                    placeholder = { Text("example.com") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(10.dp))
+                QsButton(
+                    text = if (checking) "Checking…" else "Run website check",
+                    enabled = input.isNotBlank() && !checking,
+                    onClick = {
+                        checking = true
+                        report = null
+                        scope.launch {
+                            val r = withContext(Dispatchers.Default) { PasswordLeakChecker.check(input) }
+                            vm.saveLeakCheck(
+                                domain = r.domain,
+                                leaked = r.leaked,
+                                breachCount = r.breachCount,
+                                firstSeen = r.firstSeenYear.toLong()
+                            )
+                            report = r
+                            checking = false
+                        }
+                    }
+                )
+            }
+
+            Column {
+                SectionLabel("Password exposure check")
+                QsCard {
+                    OutlinedTextField(
+                        value = passwordInput,
+                        onValueChange = { passwordInput = it },
+                        label = { Text("Test a password") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "Live check against the Have I Been Pwned database. Your password never leaves this device — only a hashed fingerprint is compared (k-anonymity).",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                QsButton(
+                    text = if (checkingPassword) "Checking…" else "Check password exposure",
+                    enabled = passwordInput.isNotBlank() && !checkingPassword,
+                    onClick = {
+                        checkingPassword = true
+                        passwordReport = null
+                        scope.launch {
+                            passwordReport = PasswordLeakChecker.checkPassword(passwordInput)
+                            checkingPassword = false
+                        }
+                    }
+                )
+            }
+
+            if (checking || checkingPassword) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
+
+            passwordReport?.let { r ->
+                val ok = r.success && !r.exposed
+                val color = if (ok) Positive else Danger
+                QsCard {
+                    if (r.success) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (ok) Icons.Filled.GppGood else Icons.Filled.GppBad,
+                                contentDescription = null,
+                                tint = color
+                            )
+                            Spacer(Modifier.padding(horizontal = 7.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    if (ok) "Password not found in breach data" else "Password exposed in breaches",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = color
+                                )
+                                if (!ok) {
+                                    Text(
+                                        "Seen ${r.exposureCount} time${if (r.exposureCount != 1L) "s" else ""} in known data breaches. Change it and avoid reuse.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        QsButton(
+                            text = "Use the secure generator",
+                            onClick = onOpenPasswordTools
+                        )
+                    } else {
                         Text(
-                            "Strength checker + secure generator",
-                            style = MaterialTheme.typography.labelSmall,
+                            r.error ?: "Could not reach the breach database.",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-            }
-
-            OutlinedTextField(
-                value = input,
-                onValueChange = { input = it },
-                label = { Text("Website or domain") },
-                placeholder = { Text("example.com") },
-                singleLine = true,
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            QsButton(
-                text = if (checking) "Checking…" else "Run leak check",
-                enabled = input.isNotBlank() && !checking,
-                onClick = {
-                    checking = true
-                    report = null
-                    scope.launch {
-                        val r = withContext(Dispatchers.Default) { PasswordLeakChecker.check(input) }
-                        vm.saveLeakCheck(
-                            domain = r.domain,
-                            leaked = r.leaked,
-                            breachCount = r.breachCount,
-                            firstSeen = r.firstSeenYear.toLong()
-                        )
-                        report = r
-                        checking = false
-                    }
-                }
-            )
-
-            if (checking) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
 
             report?.let { r ->
