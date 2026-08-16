@@ -45,8 +45,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val onboardingCompleted = dataStore.data
-        .map { it[onboardingCompletedKey] }
-        .stateIn(viewModelScope, SharingStarted.Lazily, null)
+        .map { it[onboardingCompletedKey] ?: false }
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val biometricLock = dataStore.data
         .map { it[biometricLockKey] ?: false }

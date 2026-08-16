@@ -92,11 +92,6 @@ fun MainScreen() {
     val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
 
     when {
-        onboardingCompleted == null -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
         onboardingCompleted == false -> {
             OnboardingScreen { settingsVm.completeOnboarding() }
         }
