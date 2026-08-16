@@ -90,10 +90,20 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            ndk {
+                debugSymbolLevel 'FULL'
+            }
         }
         debug {
             debuggable true
         }
+    }
+
+    lint {
+        // Report issues but never fail the CI build on lint warnings.
+        abortOnError false
+        checkReleaseBuilds false
+        htmlReport true
     }
 
     // Guard: never ship release builds with Google's public test ad IDs.

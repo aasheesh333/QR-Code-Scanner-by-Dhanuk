@@ -57,6 +57,13 @@ class BatchScanViewModel : ViewModel() {
         }
     }
 
+    /** Removes by item identity so an in-flight scan can't shift the target. */
+    fun remove(item: BatchScanItem) {
+        _results.value = _results.value.filterNot {
+            it.content == item.content && it.timestamp == item.timestamp
+        }
+    }
+
     private val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     fun exportAsText(): String {

@@ -16,9 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Fingerprint
@@ -39,6 +38,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,6 +58,8 @@ import com.dhanuk.quickscanpro.ui.design.QsEmptyState
 import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -66,13 +69,17 @@ import java.util.Locale
 fun VaultScreen(onNavigateBack: () -> Unit) {
     val settingsVm: SettingsViewModel = viewModel()
     val lockMode by settingsVm.vaultLockMode.collectAsState()
-    val vaultPin by settingsVm.vaultPin.collectAsState()
+    val pinSet by settingsVm.vaultPinSet.collectAsState()
     val context = LocalContext.current
-    var unlocked by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    // Intentionally NOT rememberSaveable: a process-death restore must re-authenticate.
+    var unlocked by remember { mutableStateOf(false) }
 
-    var showPinDialog by rememberSaveable { mutableStateOf(false) }
-    var pinEntry by rememberSaveable { mutableStateOf("") }
-    var pinError by rememberSaveable { mutableStateOf<String?>(null) }
+    var showPinDialog by remember { mutableStateOf(false) }
+    var pinEntry by remember { mutableStateOf("") }
+    var pinError by remember { mutableStateOf<String?>(null) }
+    var attempts by remember { mutableStateOf(0) }
+    var verifying by remember { mutableStateOf(false) }
 
     val biometricAvailable = isBiometricAvailable(context)
     val needsBiometric = lockMode == "biometric" && !unlocked
@@ -81,13 +88,33 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
     val activity = context as? FragmentActivity
 
     fun unlockWithPin() {
-        if (pinEntry == vaultPin) {
-            unlocked = true
-            pinError = null
-            pinEntry = ""
-            showPinDialog = false
-        } else {
-            pinError = "Wrong PIN"
+        if (attempts >= 5) {
+            pinError = "Too many attempts. Try again later."
+            return
+        }
+        verifying = true
+        scope.launch {
+            val ok = settingsVm.verifyVaultPin(pinEntry)
+            verifying = false
+            if (ok) {
+                unlocked = true
+                pinError = null
+                pinEntry = ""
+                attempts = 0
+                showPinDialog = false
+            } else {
+                val failedAttempts = attempts + 1
+                attempts = failedAttempts
+                pinEntry = ""
+                if (failedAttempts >= 5) {
+                    pinError = "Too many attempts. Try again in 30 seconds."
+                    delay(30_000)
+                    attempts = 0
+                    pinError = null
+                } else {
+                    pinError = "Wrong PIN (${5 - failedAttempts} left)"
+                }
+            }
         }
     }
 
@@ -131,14 +158,14 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                             onClick = { showBiometricPrompt(activity) { if (it) unlocked = true } },
                             modifier = Modifier.padding(horizontal = 8.dp)
                         )
-                        if (vaultPin.isNotBlank()) {
+                        if (pinSet) {
                             QsOutlinedButton(
                                 text = "Unlock with PIN",
                                 onClick = { showPinDialog = true },
                                 modifier = Modifier.padding(horizontal = 8.dp)
                             )
                         }
-                    } else if (needsPin) {
+                    } else if (needsPin && pinSet) {
                         QsButton(
                             text = "Enter PIN to unlock",
                             onClick = { showPinDialog = true },
@@ -148,6 +175,8 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                         Text(
                             if (lockMode == "biometric")
                                 "Biometrics unavailable on this device. Set a vault PIN in Settings, or disable the lock."
+                            else if (needsPin)
+                                "No vault PIN is configured. Set one in Settings before enabling PIN lock."
                             else
                                 "No lock method configured. Set a PIN or biometrics in Settings.",
                             style = MaterialTheme.typography.labelSmall,
@@ -183,8 +212,8 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = ::unlockWithPin) { Text("Unlock") } },
-            dismissButton = { TextButton(onClick = { showPinDialog = false }) { Text("Cancel") } }
+            confirmButton = { TextButton(onClick = ::unlockWithPin, enabled = !verifying && pinEntry.length >= 4) { Text("Unlock") } },
+            dismissButton = { TextButton(onClick = { showPinDialog = false; pinEntry = ""; pinError = null }) { Text("Cancel") } }
         )
     }
 }
@@ -221,15 +250,14 @@ private fun VaultBody(modifier: Modifier) {
                 modifier = Modifier.fillMaxWidth().weight(1f)
             )
         } else {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Spacer(Modifier.height(4.dp))
-                visible.forEach { scan ->
+                item { Spacer(Modifier.height(4.dp)) }
+                items(visible, key = { it.id }) { scan ->
                     QsCard(contentPadding = 14.dp) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconBadge(Icons.Filled.Lock)
@@ -257,7 +285,7 @@ private fun VaultBody(modifier: Modifier) {
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                item { Spacer(Modifier.height(8.dp)) }
             }
         }
     }

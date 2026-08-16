@@ -8,12 +8,12 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.dhanuk.quickscanpro.database.ScanResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -26,9 +26,9 @@ object HistoryExporter {
         val csvContent = buildString {
             appendLine("id,content,type,favorite,timestamp")
             for (item in list) {
-                val escapedContent = "\"${item.content.replace("\"", "\"\"")}\""
+                val safeContent = sanitizeCsvField(item.content)
                 val safeType = sanitizeCsvField(item.type)
-                appendLine("${item.id},$escapedContent,$safeType,${item.isFavorite},${item.timestamp}")
+                appendLine("${item.id},$safeContent,$safeType,${item.isFavorite},${item.timestamp}")
             }
         }
 
@@ -41,22 +41,26 @@ object HistoryExporter {
                     put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }
                 val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                uri?.let {
-                    context.contentResolver.openOutputStream(it)?.use { os ->
-                        os.write(csvContent.toByteArray())
-                    }
+                    ?: throw IllegalStateException("Could not create the download entry")
+                try {
+                    val stream = context.contentResolver.openOutputStream(uri)
+                        ?: throw IllegalStateException("Could not open the download entry")
+                    stream.use { it.write(csvContent.toByteArray()) }
                     values.clear()
                     values.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                    context.contentResolver.update(it, values, null, null)
+                    context.contentResolver.update(uri, values, null, null)
+                    uri
+                } catch (e: Exception) {
+                    // Never leave an invisible IS_PENDING=1 orphan behind in Downloads.
+                    runCatching { context.contentResolver.delete(uri, null, null) }
+                    throw e
                 }
-                uri
             } else {
-                @Suppress("DEPRECATION")
-                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                dir.mkdirs()
+                // Write to the app's external files dir (no permission needed) and share via FileProvider.
+                val dir = File(context.getExternalFilesDir(null), "exports").apply { mkdirs() }
                 val file = File(dir, fileName)
                 FileOutputStream(file).use { it.write(csvContent.toByteArray()) }
-                Uri.fromFile(file)
+                FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
@@ -67,11 +71,10 @@ object HistoryExporter {
     }
 
     private fun sanitizeCsvField(field: String): String {
-        val escaped = "\"${field.replace("\"", "\"\"")}\""
-        if (field.isNotEmpty() && field[0] in "=+@-") {
-            return "\"'${field.replace("\"", "\"\"")}\""
-        }
-        return escaped
+        // Neutralize CSV/formula injection: prefix a leading '=,+,-,@ or tab with an apostrophe.
+        val needsGuard = field.isNotEmpty() && field[0] in "=+@-\t\r"
+        val body = if (needsGuard) "'$field" else field
+        return "\"${body.replace("\"", "\"\"")}\""
     }
 
     fun shareCsv(context: Context, uri: Uri) {
@@ -79,7 +82,7 @@ object HistoryExporter {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/csv"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             context.startActivity(Intent.createChooser(intent, "Share history"))
         } catch (_: Exception) {

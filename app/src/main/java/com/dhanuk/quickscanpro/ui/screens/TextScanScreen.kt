@@ -63,6 +63,10 @@ import com.dhanuk.quickscanpro.ui.design.SectionLabel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "TextScanScreen"
 
@@ -235,31 +239,47 @@ fun TextScanScreen(
 }
 
 private fun recognizeFromUri(context: Context, uri: Uri, onResult: (String?) -> Unit) {
-    try {
-        val stream = context.contentResolver.openInputStream(uri)
-        if (stream == null) {
-            onResult(null)
-            return
+    // Decode + downsample off the main thread to avoid OOM/ANR on large gallery photos.
+    CoroutineScope(Dispatchers.IO).launch {
+        val bitmap = try {
+            decodeSampledBitmap(context, uri, 2048)
+        } catch (e: Exception) {
+            Log.e(TAG, "OCR decode failed", e)
+            null
         }
-        val bitmap = BitmapFactory.decodeStream(stream)
-        stream.close()
         if (bitmap == null) {
-            onResult(null)
-            return
+            withContext(Dispatchers.Main) { onResult(null) }
+            return@launch
         }
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { visionText ->
-                recognizer.close()
-                onResult(visionText.text.trim())
-            }
-            .addOnFailureListener { e ->
-                recognizer.close()
-                Log.e(TAG, "OCR failed", e)
-                onResult(null)
-            }
-    } catch (e: Exception) {
-        Log.e(TAG, "OCR failed", e)
-        onResult(null)
+        try {
+            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            recognizer.process(InputImage.fromBitmap(bitmap, 0))
+                .addOnSuccessListener { visionText ->
+                    recognizer.close()
+                    onResult(visionText.text.trim())
+                }
+                .addOnFailureListener { e ->
+                    recognizer.close()
+                    Log.e(TAG, "OCR failed", e)
+                    onResult(null)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "OCR failed", e)
+            withContext(Dispatchers.Main) { onResult(null) }
+        }
     }
+}
+
+/** Decodes a content Uri, sub-sampling so the longest edge stays under [maxEdge] px. */
+private fun decodeSampledBitmap(context: Context, uri: Uri, maxEdge: Int): android.graphics.Bitmap? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+
+    var sample = 1
+    val longest = maxOf(bounds.outWidth, bounds.outHeight)
+    while (longest / sample > maxEdge) sample *= 2
+
+    val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+    return context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
 }

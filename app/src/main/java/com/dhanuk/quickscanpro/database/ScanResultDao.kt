@@ -79,8 +79,11 @@ interface ScanResultDao {
     @Query("DELETE FROM scan_results WHERE id = :id")
     suspend fun delete(id: Int)
 
-    @Query("DELETE FROM scan_results")
+    @Query("DELETE FROM scan_results WHERE is_vault = 0")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM scan_results")
+    suspend fun deleteEverything()
 
     @Query("DELETE FROM scan_results WHERE is_vault = 1")
     suspend fun deleteAllVault()

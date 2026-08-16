@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.QrCode2
@@ -47,6 +48,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +69,9 @@ import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +82,7 @@ fun QRGeneratorScreen(
     vm: QRGeneratorViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val selectedType by vm.selectedType.collectAsState()
     val bitmap by vm.generatedBitmap.collectAsState()
     val content by vm.generatedContent.collectAsState()
@@ -97,6 +104,9 @@ fun QRGeneratorScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onOpenBulk) {
+                        Icon(Icons.Filled.Layers, contentDescription = "Bulk generate")
+                    }
                     IconButton(onClick = onOpenTemplates) {
                         Icon(Icons.Filled.ViewModule, contentDescription = "Templates")
                     }
@@ -137,12 +147,6 @@ fun QRGeneratorScreen(
                 DynamicForm(selectedType, f1, f2, f3, f4, vm::setF1, vm::setF2, vm::setF3, vm::setF4)
             }
 
-            QsOutlinedButton(
-                text = "Generate many QR codes at once (bulk)",
-                icon = Icons.Filled.ViewModule,
-                onClick = onOpenBulk
-            )
-
             QsCard(contentPadding = 12.dp) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -157,8 +161,9 @@ fun QRGeneratorScreen(
                     ) {
                         val bmp = bitmap
                         if (bmp != null) {
+                            val image = remember(bmp) { bmp.asImageBitmap() }
                             Image(
-                                bitmap = bmp.asImageBitmap(),
+                                bitmap = image,
                                 contentDescription = "Generated QR code",
                                 modifier = Modifier.fillMaxSize().padding(10.dp)
                             )
@@ -194,9 +199,13 @@ fun QRGeneratorScreen(
                         text = "Save",
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            val saved = QRCodeGenerator.saveToGallery(context, bmp, "qr_${System.currentTimeMillis()}")
-                            if (saved) vm.saveCurrentQR(f1)
-                            Toast.makeText(context, if (saved) "Saved to gallery" else "Save failed", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                val saved = withContext(Dispatchers.IO) {
+                                    QRCodeGenerator.saveToGallery(context, bmp, "qr_${System.currentTimeMillis()}")
+                                }
+                                if (saved) vm.saveCurrentQR(f1)
+                                Toast.makeText(context, if (saved) "Saved to gallery" else "Save failed", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                     QsOutlinedButton(

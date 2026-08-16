@@ -18,7 +18,8 @@ class QuickScanProApplication : Application() {
         super.onCreate()
         initCrashlytics()
         initAds()
-        initOneSignal()
+        // OneSignal is intentionally NOT started here — it collects device data, so it
+        // is deferred until the UMP consent flow has resolved (see MainActivity).
     }
 
     private fun initCrashlytics() {
@@ -37,10 +38,15 @@ class QuickScanProApplication : Application() {
         // MobileAds.initialize() is called after ConsentManager grants permission
     }
 
-    private fun initOneSignal() {
+    private var oneSignalStarted = false
+
+    /** Starts OneSignal once, after consent has been resolved. Safe to call repeatedly. */
+    fun initOneSignal() {
+        if (oneSignalStarted) return
         try {
             val appId = BuildConfig.ONESIGNAL_APP_ID
             if (appId.isEmpty() || appId == "placeholder-onesignal-app-id") return
+            oneSignalStarted = true
 
             OneSignal.Debug.logLevel = if (BuildConfig.DEBUG) LogLevel.VERBOSE else LogLevel.WARN
             OneSignal.initWithContext(this, appId)

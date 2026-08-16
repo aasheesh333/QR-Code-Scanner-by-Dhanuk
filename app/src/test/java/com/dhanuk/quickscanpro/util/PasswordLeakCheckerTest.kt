@@ -169,4 +169,26 @@ class PasswordLeakCheckerTest {
         val report = PasswordLeakChecker.check("instagram.com")
         assertFalse(report.leaked)
     }
+
+    @Test
+    fun check_noTld_reportsResolvedDotComDomain() {
+        // Bare word resolves via the .com fallback and the report should show the resolved domain.
+        val report = PasswordLeakChecker.check("shein")
+        assertTrue(report.leaked)
+        assertEquals("shein.com", report.domain)
+    }
+
+    @Test
+    fun check_prunedFalsePositives_returnNotLeaked() {
+        // These were never in HIBP and must not be flagged.
+        listOf("onesignal.com", "bitly.co", "creativity.com", "thisisme.com", "muskwatch.com", "mrs.com")
+            .forEach { assertFalse("$it should not be flagged", PasswordLeakChecker.check(it).leaked) }
+    }
+
+    @Test
+    fun check_pathStripped_fromUrl() {
+        val report = PasswordLeakChecker.check("https://linkedin.com/in/someone")
+        assertTrue(report.leaked)
+        assertEquals("linkedin.com", report.domain)
+    }
 }

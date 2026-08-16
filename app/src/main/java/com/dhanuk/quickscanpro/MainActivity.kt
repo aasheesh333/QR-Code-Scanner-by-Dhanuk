@@ -34,6 +34,8 @@ class MainActivity : AppCompatActivity() {
             runCatching {
                 FirebaseAnalytics.getInstance(this).setAnalyticsCollectionEnabled(canShowAds)
             }
+            // Start push messaging only after the consent decision has resolved.
+            (application as? QuickScanProApplication)?.initOneSignal()
         }
 
         setContent {

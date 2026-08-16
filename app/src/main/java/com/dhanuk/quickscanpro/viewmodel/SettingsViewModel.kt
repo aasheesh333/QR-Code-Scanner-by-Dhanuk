@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -63,6 +64,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .map { it[vaultPinKey] ?: "" }
         .stateIn(viewModelScope, SharingStarted.Lazily, "")
 
+    /** Whether a vault PIN has been configured (the hash is never exposed to the UI). */
+    val vaultPinSet = dataStore.data
+        .map { !(it[vaultPinKey] ?: "").isBlank() }
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
     val scanHistory = dataStore.data
         .map { it[scanHistoryKey] ?: true }
         .stateIn(viewModelScope, SharingStarted.Lazily, true)
@@ -111,13 +117,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { dataStore.edit { it[vaultLockModeKey] = mode } }
     }
 
+    /** Stores the PIN as a salted PBKDF2 hash. Blank clears it. Does NOT change the lock mode. */
     fun setVaultPin(pin: String) {
         viewModelScope.launch {
             dataStore.edit {
-                it[vaultPinKey] = pin
-                if (pin.isNotBlank()) it[vaultLockModeKey] = "pin"
+                if (pin.isBlank()) it.remove(vaultPinKey)
+                else it[vaultPinKey] = com.dhanuk.quickscanpro.util.PinHasher.hash(pin)
             }
         }
+    }
+
+    /** Verifies a candidate PIN against the stored hash (accepts legacy plaintext too). */
+    suspend fun verifyVaultPin(candidate: String): Boolean {
+        val stored = dataStore.data.map { it[vaultPinKey] ?: "" }.first()
+        return com.dhanuk.quickscanpro.util.PinHasher.verify(candidate, stored)
     }
 
     fun setScanHistory(enabled: Boolean) {

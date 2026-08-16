@@ -69,11 +69,12 @@ fun LeakCheckScreen(
     val scope = rememberCoroutineScope()
 
     var input by rememberSaveable { mutableStateOf("") }
-    var checking by rememberSaveable { mutableStateOf(false) }
+    var checking by remember { mutableStateOf(false) }
     var report by remember { mutableStateOf<PasswordLeakChecker.LeakReport?>(null) }
+    var inputError by remember { mutableStateOf<String?>(null) }
 
     var passwordInput by rememberSaveable { mutableStateOf("") }
-    var checkingPassword by rememberSaveable { mutableStateOf(false) }
+    var checkingPassword by remember { mutableStateOf(false) }
     var passwordReport by remember { mutableStateOf<PasswordLeakChecker.PasswordLeakReport?>(null) }
 
     Scaffold(
@@ -119,9 +120,11 @@ fun LeakCheckScreen(
                 SectionLabel("Website breach check")
                 OutlinedTextField(
                     value = input,
-                    onValueChange = { input = it },
+                    onValueChange = { input = it; inputError = null },
                     label = { Text("Website or domain") },
                     placeholder = { Text("example.com") },
+                    isError = inputError != null,
+                    supportingText = inputError?.let { error -> { Text(error) } },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -131,6 +134,10 @@ fun LeakCheckScreen(
                     text = if (checking) "Checking…" else "Run website check",
                     enabled = input.isNotBlank() && !checking,
                     onClick = {
+                        if (!isValidWebsiteInput(input)) {
+                            inputError = "Enter a valid domain, for example example.com"
+                            return@QsButton
+                        }
                         checking = true
                         report = null
                         scope.launch {
@@ -310,4 +317,16 @@ fun LeakCheckScreen(
             Spacer(Modifier.height(8.dp))
         }
     }
+}
+
+private fun isValidWebsiteInput(value: String): Boolean {
+    val candidate = value.trim()
+        .removePrefix("https://")
+        .removePrefix("http://")
+        .substringBefore('/')
+        .removePrefix("www.")
+    if (candidate.isBlank() || candidate.any { it.isWhitespace() }) return false
+    // Accept a bare brand name (the checker applies a .com fallback) or a normal domain.
+    return Regex("^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$")
+        .matches(candidate)
 }

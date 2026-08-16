@@ -140,9 +140,10 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun delete(id: Int) {
+    fun delete(id: Int, context: Context? = null) {
         viewModelScope.launch {
             scanResultDao.delete(id)
+            context?.let { ReminderScheduler.cancel(it, id) }
         }
     }
 

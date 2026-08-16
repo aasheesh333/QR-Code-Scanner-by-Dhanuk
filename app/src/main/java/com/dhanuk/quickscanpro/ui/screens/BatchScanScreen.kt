@@ -73,7 +73,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
     val items by vm.results.collectAsState()
     val active by vm.isActive.collectAsState()
 
-    var pendingRemove by remember { mutableStateOf<Int?>(null) }
+    var pendingRemove by remember { mutableStateOf<com.dhanuk.quickscanpro.viewmodel.BatchScanItem?>(null) }
     var showClearConfirm by remember { mutableStateOf(false) }
 
     val hasPerm = remember {
@@ -82,6 +82,13 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { g ->
         hasPerm.value = g
         if (g) vm.startBatch()
+    }
+
+    // Re-reads the live grant so returning from system settings doesn't re-prompt.
+    fun cameraGranted(): Boolean {
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        hasPerm.value = granted
+        return granted
     }
 
     fun exportCsv() {
@@ -139,7 +146,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     subtitle = "Start scanning, and every unique code gets added to this list.",
                     actionLabel = "Start batch",
                     onAction = {
-                        if (hasPerm.value) vm.startBatch()
+                        if (cameraGranted()) vm.startBatch()
                         else permLauncher.launch(Manifest.permission.CAMERA)
                     },
                     modifier = Modifier.fillMaxWidth().weight(1f)
@@ -161,7 +168,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
 
                 QsButton(text = if (active) "Stop scanning" else "Resume scanning", onClick = {
                     if (active) vm.stopBatch()
-                    else if (hasPerm.value) vm.startBatch()
+                    else if (cameraGranted()) vm.startBatch()
                     else permLauncher.launch(Manifest.permission.CAMERA)
                 })
 
@@ -173,7 +180,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                                     Text(item.content, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                                     Text(item.type.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                IconButton(onClick = { pendingRemove = idx }) {
+                                IconButton(onClick = { pendingRemove = item }) {
                                     Icon(Icons.Filled.Delete, contentDescription = "Remove")
                                 }
                             }
@@ -190,10 +197,10 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     QsCard(contentPadding = 14.dp) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Session summary", style = MaterialTheme.typography.titleSmall)
-                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                StatChip("$total", "Total")
-                                StatChip("$unique", "Unique")
-                                StatChip("$products", "Products")
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+                                StatChip("$total", "Total", Modifier.weight(1f))
+                                StatChip("$unique", "Unique", Modifier.weight(1f))
+                                StatChip("$products", "Products", Modifier.weight(1f))
                             }
                         }
                     }
@@ -237,14 +244,14 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
         }
     }
 
-    pendingRemove?.let { idx ->
+    pendingRemove?.let { item ->
         AlertDialog(
             onDismissRequest = { pendingRemove = null },
             title = { Text("Remove this item?") },
             text = { Text("It will be removed from the current batch session.") },
             confirmButton = {
                 TextButton(onClick = {
-                    vm.removeAt(idx)
+                    vm.remove(item)
                     pendingRemove = null
                 }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
             },
@@ -269,9 +276,9 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun StatChip(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun StatChip(value: String, label: String, modifier: Modifier = Modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
+        Text(value, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
 }

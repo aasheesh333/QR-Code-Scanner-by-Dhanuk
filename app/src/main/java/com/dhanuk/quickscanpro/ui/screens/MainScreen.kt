@@ -45,19 +45,20 @@ import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.QRGeneratorViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
-import java.nio.charset.StandardCharsets
 
 private fun encode(data: String) = android.net.Uri.encode(data)
 
 private val ScreenWidthCap = 480.dp
 
-private fun decode(data: String): String = try {
-    java.net.URLDecoder.decode(data, StandardCharsets.UTF_8.toString())
-} catch (_: Exception) {
-    data
-}
+/**
+ * Navigation already URI-decodes path arguments once, so the value returned by
+ * `arguments.getString(...)` is the original content. Decoding again here (e.g.
+ * with URLDecoder) double-decodes and corrupts payloads — `+` becomes a space,
+ * `%XX` sequences get mangled. Keep this as identity.
+ */
+private fun decode(data: String): String = data
 
-private fun handleDefaultScanAction(context: Context, content: String, action: String) {
+private fun handleDefaultScanAction(context: Context, content: String, action: String, canSave: Boolean) {
     when (action) {
         "copy_clipboard" -> {
             (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
@@ -79,8 +80,10 @@ private fun handleDefaultScanAction(context: Context, content: String, action: S
             if (BarcodeTypeDetector.detectType(content) == BarcodeTypeDetector.TYPE_URL) {
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(content))) }
                     .onFailure { Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show() }
-            } else {
+            } else if (canSave) {
                 Toast.makeText(context, "Saved to history", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Scanned (history off)", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -207,7 +210,7 @@ private fun AppNavigation(
                         navController.navigate("result/${encode(result)}")
                     } else {
                         if (canSave) historyVm.addScanResult(ScanResult(content = result))
-                        handleDefaultScanAction(context, result, defaultAction)
+                        handleDefaultScanAction(context, result, defaultAction, canSave)
                     }
                 },
                 onViewAllHistory = { navController.bottomNav(BottomNavItem.History.route) },
@@ -237,7 +240,7 @@ private fun AppNavigation(
                 onOpenVault = { navController.navigate("vault") },
                 onOpenTimeline = { navController.navigate("timeline") },
                 onNavigateToScanner = { navController.bottomNav(BottomNavItem.Home.route) },
-                onRowClick = { scan -> navController.navigate("result/${encode(scan.content)}") }
+                onRowClick = { scan -> navController.navigate("result/${encode(scan.content)}?fromHistory=true") }
             )
         }
         composable(BottomNavItem.Settings.route) {
@@ -253,12 +256,17 @@ private fun AppNavigation(
         }
         composable("analytics") { AnalyticsScreen { navController.popBackStack() } }
         composable(
-            route = "result/{data}",
-            arguments = listOf(navArgument("data") { type = NavType.StringType })
+            route = "result/{data}?fromHistory={fromHistory}",
+            arguments = listOf(
+                navArgument("data") { type = NavType.StringType },
+                navArgument("fromHistory") { type = NavType.BoolType; defaultValue = false }
+            )
         ) { entry ->
             val data = entry.arguments?.getString("data")?.let(::decode) ?: ""
+            val fromHistory = entry.arguments?.getBoolean("fromHistory") ?: false
             ResultScreen(
                 data = data,
+                fromHistory = fromHistory,
                 onNavigateBack = { navController.popBackStack() },
                 onOpenProductLookup = { barcode -> navController.navigate("product_lookup/${encode(barcode)}") }
             )

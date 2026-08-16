@@ -94,6 +94,7 @@ import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 fun ResultScreen(
     data: String,
     onNavigateBack: () -> Unit,
+    fromHistory: Boolean = false,
     onOpenProductLookup: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -101,12 +102,13 @@ fun ResultScreen(
     val settingsVm: SettingsViewModel = viewModel()
     val historyEnabled by settingsVm.scanHistory.collectAsState()
     val incognito by settingsVm.incognitoMode.collectAsState()
+    val history by historyVm.history.collectAsState()
     var savedOnce by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(data) {
-        if (!savedOnce) {
+        if (!fromHistory && !savedOnce) {
             val type = BarcodeTypeDetector.detectType(data)
-            val exists = historyVm.history.value.any {
+            val exists = history.any {
                 it.content == data && System.currentTimeMillis() - it.timestamp < 60_000
             }
             if (!exists && historyEnabled && !incognito) historyVm.addScanResult(ScanResult(content = data, type = type))
@@ -115,7 +117,7 @@ fun ResultScreen(
     }
 
     val type = remember(data) { BarcodeTypeDetector.detectType(data) }
-    val scanForContent = historyVm.history.value.firstOrNull { it.content == data }
+    val scanForContent = history.firstOrNull { it.content == data }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -157,7 +159,9 @@ fun ResultScreen(
                     type = type,
                     isVault = scanForContent?.isVault == true,
                     onToggleVault = {
-                        scanForContent?.let { historyVm.setVault(it, !it.isVault, context) }
+                        val target = scanForContent
+                        if (target != null) historyVm.setVault(target, !target.isVault, context)
+                        else Toast.makeText(context, "Save to history first to use the vault", Toast.LENGTH_SHORT).show()
                     },
                     onNavigateBack = onNavigateBack,
                     onOpenProductLookup = onOpenProductLookup
@@ -189,10 +193,10 @@ private fun shareText(context: Context, text: String) {
 }
 
 private fun openUrl(context: Context, content: String) {
-    val target = if (content.lowercase().let {
-            it.startsWith("http") || it.startsWith("mailto:") || it.startsWith("tel:") ||
-                it.startsWith("sms:") || it.startsWith("geo:") || it.startsWith("market:")
-        }) content else "https://$content"
+    // If the content already carries a scheme (http, mailto, tel, ftp, geo, market, …)
+    // pass it through untouched; otherwise assume a bare domain and prefix https://.
+    val hasScheme = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:").containsMatchIn(content.trim())
+    val target = if (hasScheme) content.trim() else "https://${content.trim()}"
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: Exception) {

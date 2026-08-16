@@ -1,12 +1,6 @@
 package com.dhanuk.quickscanpro.ui.screens
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -67,7 +61,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.design.IconBadge
@@ -112,13 +105,6 @@ fun HistoryScreen(
         }
     }
 
-    val exportPermLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) exportNow()
-        else Toast.makeText(context, "Storage permission is needed to export", Toast.LENGTH_SHORT).show()
-    }
-
     val filters = listOf("All", "Favorites", "Link", "Wi-Fi", "Contact", "Product")
     val visible = remember(items, filter) {
         when (filter) {
@@ -147,18 +133,7 @@ fun HistoryScreen(
                     IconButton(onClick = onOpenVault) {
                         Icon(Icons.Filled.Lock, contentDescription = "Vault")
                     }
-                    IconButton(
-                        onClick = {
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
-                                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                                PackageManager.PERMISSION_GRANTED
-                            ) {
-                                exportPermLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            } else {
-                                exportNow()
-                            }
-                        }
-                    ) {
+                    IconButton(onClick = { exportNow() }) {
                         Icon(Icons.Filled.FileDownload, contentDescription = "Export history")
                     }
                 },
@@ -239,7 +214,7 @@ fun HistoryScreen(
             text = { Text("This will permanently remove the scan from your history.") },
             confirmButton = {
                 TextButton(onClick = {
-                    vm.delete(scan.id)
+                    vm.delete(scan.id, context)
                     pendingDelete = null
                     scope.launch {
                         val res = snackbar.showSnackbar("Scan deleted", actionLabel = "Undo")

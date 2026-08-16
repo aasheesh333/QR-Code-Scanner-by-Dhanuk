@@ -85,7 +85,7 @@ fun SettingsScreen(
     val vibrate by settingsVm.vibrateEnabled.collectAsState()
     val autoCopy by settingsVm.autoCopyOnScan.collectAsState()
     val vaultLockMode by settingsVm.vaultLockMode.collectAsState()
-    val vaultPin by settingsVm.vaultPin.collectAsState()
+    val vaultPinSet by settingsVm.vaultPinSet.collectAsState()
     val defaultAction by settingsVm.defaultAction.collectAsState()
     val scanHistory by settingsVm.scanHistory.collectAsState()
     val incognito by settingsVm.incognitoMode.collectAsState()
@@ -166,13 +166,13 @@ fun SettingsScreen(
                     SettingNavRow(
                         Icons.Filled.Fingerprint,
                         "Vault lock",
-                        subtitle = vaultLockLabel(vaultLockMode, vaultPin)
+                        subtitle = vaultLockLabel(vaultLockMode, vaultPinSet)
                     ) { showVaultLockDialog = true }
                     DividerLine()
                     SettingNavRow(
                         Icons.Filled.Lock,
                         "Set vault PIN",
-                        subtitle = if (vaultPin.isBlank()) "Not set" else "Change PIN"
+                        subtitle = if (!vaultPinSet) "Not set" else "Change PIN"
                     ) { showPinDialog = true }
                     DividerLine()
                     SettingNavRow(Icons.Filled.Lock, "Secure vault") { onNavigateToVault() }
@@ -272,7 +272,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
             title = { Text("Clear all history?") },
-            text = { Text("All saved scans will be permanently deleted.") },
+            text = { Text("All saved scans will be permanently deleted. Items locked in your vault are kept.") },
             confirmButton = {
                 TextButton(onClick = {
                     historyVm.deleteAll()
@@ -290,21 +290,42 @@ fun SettingsScreen(
             text = {
                 Column {
                     listOf("none" to "No lock", "pin" to "PIN code", "biometric" to "Biometric").forEach { (value, label) ->
+                        val selectPin = value == "pin" && !vaultPinSet
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    settingsVm.setVaultLockMode(value)
-                                    showVaultLockDialog = false
+                                    if (selectPin) {
+                                        // Can't lock by PIN before one exists — set it first.
+                                        showVaultLockDialog = false
+                                        showPinDialog = true
+                                    } else {
+                                        settingsVm.setVaultLockMode(value)
+                                        showVaultLockDialog = false
+                                    }
                                 }
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(selected = vaultLockMode == value, onClick = {
-                                settingsVm.setVaultLockMode(value)
-                                showVaultLockDialog = false
+                                if (selectPin) {
+                                    showVaultLockDialog = false
+                                    showPinDialog = true
+                                } else {
+                                    settingsVm.setVaultLockMode(value)
+                                    showVaultLockDialog = false
+                                }
                             })
-                            Text(label, modifier = Modifier.padding(start = 8.dp))
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text(label)
+                                if (selectPin) {
+                                    Text(
+                                        "Set a PIN first",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -315,8 +336,8 @@ fun SettingsScreen(
 
     if (showPinDialog) {
         AlertDialog(
-            onDismissRequest = { showPinDialog = false },
-            title = { Text(if (vaultPin.isBlank()) "Set vault PIN" else "Change vault PIN") },
+            onDismissRequest = { showPinDialog = false; pinEntry = ""; pinConfirm = ""; pinError = null },
+            title = { Text(if (!vaultPinSet) "Set vault PIN" else "Change vault PIN") },
             text = {
                 Column {
                     OutlinedTextField(
@@ -353,6 +374,8 @@ fun SettingsScreen(
                         pinEntry != pinConfirm -> pinError = "PINs do not match"
                         else -> {
                             settingsVm.setVaultPin(pinEntry)
+                            // First PIN also arms PIN locking if the vault was previously unlocked.
+                            if (vaultLockMode == "none") settingsVm.setVaultLockMode("pin")
                             pinEntry = ""
                             pinConfirm = ""
                             pinError = null
@@ -361,13 +384,17 @@ fun SettingsScreen(
                     }
                 }) { Text("Save") }
             },
-            dismissButton = { TextButton(onClick = { showPinDialog = false }) { Text("Cancel") } }
+            dismissButton = {
+                TextButton(onClick = {
+                    showPinDialog = false; pinEntry = ""; pinConfirm = ""; pinError = null
+                }) { Text("Cancel") }
+            }
         )
     }
 }
 
-private fun vaultLockLabel(mode: String, pin: String): String = when (mode) {
-    "pin" -> if (pin.isBlank()) "PIN set in Settings" else "Protected by PIN"
+private fun vaultLockLabel(mode: String, pinSet: Boolean): String = when (mode) {
+    "pin" -> if (!pinSet) "PIN not set yet" else "Protected by PIN"
     "biometric" -> "Protected by biometrics"
     else -> "No lock"
 }

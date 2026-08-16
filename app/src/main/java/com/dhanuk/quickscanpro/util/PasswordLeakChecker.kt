@@ -28,10 +28,10 @@ object PasswordLeakChecker {
         "flagstar.com", "easyjet.com", "t-mobile.com", "optus.com.au",
         "medibank.com.au", "last.fm", "badoo.com", "500px.com", "animoto.com",
         "appen.com", "aptoide.com", "astrology.com", "autodesk.com",
-        "bambuser.com", "bigbasket.com", "bitly.co", "blankmediagames.com",
+        "bambuser.com", "bigbasket.com", "blankmediagames.com",
         "bookmate.com", "bountysource.com", "bukalapak.com", "buxfer.com",
         "cambrianhub.com", "canyva.com", "catholic.com", "cdprojektred.com",
-        "chegg.com", "cloob.com", "cloudpets.com", "creativity.com",
+        "chegg.com", "cloob.com", "cloudpets.com",
         "dailymail.co.uk", "dangdang.com", "dbolical.com", "desire2learn.com",
         "dexway.com", "digitalocean.com", "dodonaea.net", "doyo.cn",
         "dubsmash.com", "edmodo.com", "emailbook.net", "epicgames.com",
@@ -48,12 +48,12 @@ object PasswordLeakChecker {
         "luminpdf.com", "mackeeper.com", "mangafox.me", "mashable.com",
         "mathway.com", "mdpi.com", "mediaite.com", "meetic.com", "meowshare.com",
         "militarysingles.com", "minecraft.net", "mindjolt.com", "minecraftworldmap.com",
-        "mobilegeeks.de", "morpac.com", "motorcyclecruiser.com", "mrs.com",
-        "multiplication.com", "muskwatch.com", "myheritage.com", "myrewards.com",
+        "mobilegeeks.de", "morpac.com", "motorcyclecruiser.com",
+        "multiplication.com", "myheritage.com", "myrewards.com",
         "myway.com", "namemc.com", "neilgaiman.com", "net-a-porter.com",
         "newegg.com", "newgrounds.com", "nexon.com", "nicehash.com",
         "nvidia.com", "ogusers.com", "omgpop.com", "onedirect.org",
-        "onedollarplc.com", "onesignal.com", "onthehouse.com", "openstreetmap.org",
+        "onedollarplc.com", "onthehouse.com", "openstreetmap.org",
         "paragon-software.com", "parkmobile.com", "peloton.com", "phonehouse.es",
         "phun.org", "pixlr.com", "planetside2.com", "planningcenteronline.com",
         "pocket-lint.com", "pokki.com", "poshmark.com", "prnewswire.com",
@@ -67,7 +67,7 @@ object PasswordLeakChecker {
         "startribune.com", "stockx.com", "strato.de", "supercell.com",
         "swagbucks.com", "sydneywater.com", "taobao.com", "taringa.net",
         "teleperformance.com", "themarketeers.com", "thisisglobal.com",
-        "thisisme.com", "thorn.com", "ticketfly.com", "toastbank.com",
+        "thorn.com", "ticketfly.com", "toastbank.com",
         "token.io", "tokopedia.com", "townhall.com", "tribune.com",
         "trello.com", "truecaller.com", "twitch.tv", "twitter.com",
         "ubisoft.com", "unacademy.com", "underarmour.com", "upromise.com",
@@ -188,14 +188,14 @@ object PasswordLeakChecker {
 
         if (lookupDomain in KNOWN_LEAKED_DOMAINS) {
             leaked = true
-            breachCount = when (normalizedDomain) {
+            breachCount = when (lookupDomain) {
                 "linkedin.com" -> 2
                 "yahoo.com" -> 2
                 "adobe.com", "adobe.net" -> 1
                 "dropbox.com", "tumblr.com" -> 1
                 else -> 1
             }
-            firstSeenYear = when (normalizedDomain) {
+            firstSeenYear = when (lookupDomain) {
                 "linkedin.com" -> 2012
                 "adobe.com", "adobe.net" -> 2013
                 "dropbox.com", "tumblr.com" -> 2013
@@ -221,24 +221,24 @@ object PasswordLeakChecker {
         }
 
         // Heuristic phishing/risk signals — informational only, never counted as a breach.
-        if (normalizedDomain.contains('-') && normalizedDomain.split('-').size >= 3) {
+        if (lookupDomain.contains('-') && lookupDomain.split('-').size >= 3) {
             signals += "Suspicious multi-hyphen domain pattern"
         }
-        if (normalizedDomain.endsWith(".xyz") || normalizedDomain.endsWith(".top") || normalizedDomain.endsWith(".click") || normalizedDomain.endsWith(".work")) {
+        if (lookupDomain.endsWith(".xyz") || lookupDomain.endsWith(".top") || lookupDomain.endsWith(".click") || lookupDomain.endsWith(".work")) {
             signals += "High-abuse TLD"
         }
-        if (normalizedDomain.count { it == '.' } >= 3) {
+        if (lookupDomain.count { it == '.' } >= 3) {
             signals += "Deeply nested subdomain — common in phishing"
         }
-        if (normalizedDomain.length > 30) {
+        if (lookupDomain.length > 30) {
             signals += "Unusually long domain — possible impersonation"
         }
-        if (looksTyposquat(normalizedDomain)) {
+        if (looksTyposquat(lookupDomain)) {
             signals += "Possible typosquat of a known brand"
         }
 
         return LeakReport(
-            domain = normalizedDomain,
+            domain = lookupDomain,
             leaked = leaked,
             breachCount = breachCount,
             firstSeenYear = firstSeenYear,

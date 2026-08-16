@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +58,9 @@ import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
 import com.dhanuk.quickscanpro.util.WifiShareHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +69,7 @@ fun WifiShareScreen(
     onShareReady: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val current = remember { WifiShareHelper.getCurrentWifi(context) }
     var ssid by rememberSaveable { mutableStateOf(current?.ssid ?: "") }
@@ -109,6 +115,7 @@ fun WifiShareScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
+                .imePadding()
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -265,8 +272,13 @@ fun WifiShareScreen(
                         text = "Save",
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            val ok = QRCodeGenerator.saveToGallery(context, bmp, "wifi_${ssid}_${System.currentTimeMillis()}")
-                            Toast.makeText(context, if (ok) "Saved to gallery" else "Save failed", Toast.LENGTH_SHORT).show()
+                            val safeName = ssid.replace(Regex("[^A-Za-z0-9_-]"), "_").take(40).ifBlank { "network" }
+                            scope.launch {
+                                val ok = withContext(Dispatchers.IO) {
+                                    QRCodeGenerator.saveToGallery(context, bmp, "wifi_${safeName}_${System.currentTimeMillis()}")
+                                }
+                                Toast.makeText(context, if (ok) "Saved to gallery" else "Save failed", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                     QsOutlinedButton(
