@@ -12,6 +12,7 @@ import com.dhanuk.quickscanpro.ads.ConsentManager
 import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.ui.screens.MainScreen
 import com.dhanuk.quickscanpro.ui.theme.QuickScanProTheme
+import com.dhanuk.quickscanpro.util.VoiceSpeaker
 import com.dhanuk.quickscanpro.viewmodel.ThemeViewModel
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -24,6 +25,9 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Warm up the TTS engine so "Speak aloud" works instantly on first tap.
+        VoiceSpeaker.init(this)
 
         // Gate ads + analytics behind UMP/GDPR consent
         ConsentManager.requestConsent(this) { canShowAds ->

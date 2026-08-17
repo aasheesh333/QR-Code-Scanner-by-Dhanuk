@@ -152,33 +152,39 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().weight(1f)
                 )
             } else {
-                if (active) {
-                    CameraPreviewBox(
-                        onScan = { content ->
-                            if (vm.addResult(content)) {
-                                Toast.makeText(context, "Added (${vm.totalScanned})", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        onCameraReady = {},
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(previewHeight(0.28f, 170.dp, 260.dp))
-                    )
-                }
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    if (active) {
+                        item {
+                            CameraPreviewBox(
+                                onScan = { content ->
+                                    if (vm.addResult(content)) {
+                                        Toast.makeText(context, "Added (${vm.totalScanned})", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onCameraReady = {},
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(previewHeight(0.28f, 170.dp, 260.dp))
+                            )
+                        }
+                    }
 
-                QsButton(text = if (active) "Stop scanning" else "Resume scanning", onClick = {
-                    if (active) vm.stopBatch()
-                    else if (cameraGranted()) vm.startBatch()
-                    else permLauncher.launch(Manifest.permission.CAMERA)
-                })
+                    item {
+                        QsButton(text = if (active) "Stop scanning" else "Resume scanning", onClick = {
+                            if (active) vm.stopBatch()
+                            else if (cameraGranted()) vm.startBatch()
+                            else permLauncher.launch(Manifest.permission.CAMERA)
+                        })
+                    }
 
-                if (items.isEmpty()) {
-                    Text("No codes yet", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 6.dp))
-                } else {
-                    val total = items.size
-                    val unique = items.distinctBy { it.content }.size
-                    val products = items.count { it.type == BarcodeTypeDetector.TYPE_PRODUCT }
-                    LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (items.isEmpty()) {
+                        item {
+                            Text("No codes yet", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 6.dp))
+                        }
+                    } else {
                         itemsIndexed(items) { _, item ->
                             QsCard(contentPadding = 12.dp) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -192,6 +198,9 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                                 }
                             }
                         }
+                        val total = items.size
+                        val unique = items.distinctBy { it.content }.size
+                        val products = items.count { it.type == BarcodeTypeDetector.TYPE_PRODUCT }
                         item {
                             QsCard(contentPadding = 14.dp) {
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -242,8 +251,8 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                                 )
                             }
                         }
-                        item { Spacer(Modifier.height(8.dp)) }
                     }
+                    item { Spacer(Modifier.height(8.dp)) }
                 }
             }
         }

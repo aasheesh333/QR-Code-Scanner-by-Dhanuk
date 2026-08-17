@@ -16,9 +16,12 @@ import androidx.fragment.app.FragmentActivity
  */
 object VaultAuth {
 
+    // DEVICE_CREDENTIAL lets the system's own PIN/pattern/password screen
+    // unlock the vault on devices without biometrics. Do NOT combine with
+    // BIOMETRIC_STRONG, and do NOT set a negative button text — both crash
+    // BiometricPrompt when DEVICE_CREDENTIAL is present.
     private const val AUTHENTICATORS =
-        BiometricManager.Authenticators.BIOMETRIC_STRONG or
-            BiometricManager.Authenticators.BIOMETRIC_WEAK or
+        BiometricManager.Authenticators.BIOMETRIC_WEAK or
             BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
     fun hasDeviceLock(context: Context): Boolean =
@@ -62,7 +65,6 @@ object VaultAuth {
                 .setTitle(title)
                 .setSubtitle(subtitle)
                 .setAllowedAuthenticators(AUTHENTICATORS)
-                .setNegativeButtonText("Cancel")
                 .build()
         )
     }

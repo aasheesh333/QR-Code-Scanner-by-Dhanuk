@@ -102,6 +102,7 @@ fun ResultScreen(
     val settingsVm: SettingsViewModel = viewModel()
     val historyEnabled by settingsVm.scanHistory.collectAsState()
     val incognito by settingsVm.incognitoMode.collectAsState()
+    val canSaveHistory = historyEnabled && !incognito
     val history by historyVm.history.collectAsState()
     var savedOnce by rememberSaveable { mutableStateOf(false) }
 
@@ -111,13 +112,24 @@ fun ResultScreen(
             val exists = history.any {
                 it.content == data && System.currentTimeMillis() - it.timestamp < 60_000
             }
-            if (!exists && historyEnabled && !incognito) historyVm.addScanResult(ScanResult(content = data, type = type))
+            if (!exists) {
+                if (canSaveHistory) {
+                    historyVm.addScanResult(ScanResult(content = data, type = type))
+                } else {
+                    Toast.makeText(
+                        context,
+                        "History saving is off — enable it in Settings to keep scans",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
             savedOnce = true
         }
     }
 
     val type = remember(data) { BarcodeTypeDetector.detectType(data) }
     val scanForContent = history.firstOrNull { it.content == data }
+    val done: () -> Unit = { VoiceSpeaker.stop(); onNavigateBack() }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -126,7 +138,7 @@ fun ResultScreen(
                 windowInsets = WindowInsets(0, 0, 0, 0),
                 title = { Text("Scan Result", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = done) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -151,19 +163,26 @@ fun ResultScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             when (type) {
-                BarcodeTypeDetector.TYPE_WIFI -> WifiResult(data, onNavigateBack)
-                BarcodeTypeDetector.TYPE_VCARD -> ContactResult(data, onNavigateBack)
-                BarcodeTypeDetector.TYPE_CALENDAR -> EventResult(data, onNavigateBack)
+                BarcodeTypeDetector.TYPE_WIFI -> WifiResult(data, done)
+                BarcodeTypeDetector.TYPE_VCARD -> ContactResult(data, done)
+                BarcodeTypeDetector.TYPE_CALENDAR -> EventResult(data, done)
                 else -> GenericResult(
                     data = data,
                     type = type,
                     isVault = scanForContent?.isVault == true,
                     onToggleVault = {
                         val target = scanForContent
-                        if (target != null) historyVm.setVault(target, !target.isVault, context)
-                        else Toast.makeText(context, "Save to history first to use the vault", Toast.LENGTH_SHORT).show()
+                        when {
+                            target != null -> historyVm.setVault(target, !target.isVault, context)
+                            canSaveHistory -> historyVm.saveAsVaulted(data)
+                            else -> Toast.makeText(
+                                context,
+                                "History saving is off — enable it in Settings to use the vault",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     },
-                    onNavigateBack = onNavigateBack,
+                    onNavigateBack = done,
                     onOpenProductLookup = onOpenProductLookup
                 )
             }

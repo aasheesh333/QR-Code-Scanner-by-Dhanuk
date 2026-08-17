@@ -212,6 +212,24 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     private var lastSavedContent: String? = null
     private var lastSavedTime: Long = 0L
 
+    /** Saves a scan directly as a vaulted item (used from the result screen). */
+    fun saveAsVaulted(content: String) {
+        val detectedType = BarcodeTypeDetector.detectType(content)
+        val autoCat = AutoOrganizer.categorize(detectedType, content)
+        val enriched = ScanResult(content = content, type = detectedType, autoCategory = autoCat, isVault = true)
+
+        lastSavedContent = content
+        lastSavedTime = System.currentTimeMillis()
+
+        viewModelScope.launch {
+            try {
+                scanResultDao.insert(enriched)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to insert vaulted scan result", e)
+            }
+        }
+    }
+
     fun addScanResult(scanResult: ScanResult) {
         val detectedType = BarcodeTypeDetector.detectType(scanResult.content)
         val autoCat = AutoOrganizer.categorize(detectedType, scanResult.content)
