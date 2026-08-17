@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,7 +23,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val onboardingCompletedKey = booleanPreferencesKey("onboarding_completed")
     private val biometricLockKey = booleanPreferencesKey("biometric_lock_enabled")
     private val vaultLockModeKey = stringPreferencesKey("vault_lock_mode")
-    private val vaultPinKey = stringPreferencesKey("vault_pin")
     private val scanHistoryKey = booleanPreferencesKey("scan_history_enabled")
     private val defaultActionKey = stringPreferencesKey("default_scan_action")
     private val themePrimaryIdxKey = intPreferencesKey("theme_primary_index")
@@ -55,19 +53,21 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .map { it[biometricLockKey] ?: false }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    /** Vault lock mode: "none", "pin" or "biometric". Migrates the old boolean flag. */
+    /**
+     * Vault lock mode: "none" or "device" (phone's own lock — biometric/PIN/pattern).
+     * Legacy values ("pin", "biometric", old boolean flag) migrate to device lock.
+     */
     val vaultLockMode = dataStore.data
-        .map { it[vaultLockModeKey] ?: if (it[biometricLockKey] == true) "biometric" else "none" }
+        .map { prefs ->
+            when (prefs[vaultLockModeKey]) {
+                null -> if (prefs[biometricLockKey] == true) "device" else "none"
+                "pin" -> "device"
+                "biometric" -> "device"
+                "device" -> "device"
+                else -> "none"
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.Lazily, "none")
-
-    val vaultPin = dataStore.data
-        .map { it[vaultPinKey] ?: "" }
-        .stateIn(viewModelScope, SharingStarted.Lazily, "")
-
-    /** Whether a vault PIN has been configured (the hash is never exposed to the UI). */
-    val vaultPinSet = dataStore.data
-        .map { !(it[vaultPinKey] ?: "").isBlank() }
-        .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val scanHistory = dataStore.data
         .map { it[scanHistoryKey] ?: true }
@@ -115,22 +115,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setVaultLockMode(mode: String) {
         viewModelScope.launch { dataStore.edit { it[vaultLockModeKey] = mode } }
-    }
-
-    /** Stores the PIN as a salted PBKDF2 hash. Blank clears it. Does NOT change the lock mode. */
-    fun setVaultPin(pin: String) {
-        viewModelScope.launch {
-            dataStore.edit {
-                if (pin.isBlank()) it.remove(vaultPinKey)
-                else it[vaultPinKey] = com.dhanuk.quickscanpro.util.PinHasher.hash(pin)
-            }
-        }
-    }
-
-    /** Verifies a candidate PIN against the stored hash (accepts legacy plaintext too). */
-    suspend fun verifyVaultPin(candidate: String): Boolean {
-        val stored = dataStore.data.map { it[vaultPinKey] ?: "" }.first()
-        return com.dhanuk.quickscanpro.util.PinHasher.verify(candidate, stored)
     }
 
     fun setScanHistory(enabled: Boolean) {

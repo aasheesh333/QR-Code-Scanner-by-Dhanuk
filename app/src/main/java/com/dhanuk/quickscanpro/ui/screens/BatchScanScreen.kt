@@ -172,74 +172,79 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                     else permLauncher.launch(Manifest.permission.CAMERA)
                 })
 
-                LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    itemsIndexed(items) { idx, item ->
-                        QsCard(contentPadding = 12.dp) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(item.content, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-                                    Text(item.type.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                IconButton(onClick = { pendingRemove = item }) {
-                                    Icon(Icons.Filled.Delete, contentDescription = "Remove")
-                                }
-                            }
-                        }
-                    }
-                }
-
                 if (items.isEmpty()) {
                     Text("No codes yet", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 6.dp))
                 } else {
                     val total = items.size
                     val unique = items.distinctBy { it.content }.size
                     val products = items.count { it.type == BarcodeTypeDetector.TYPE_PRODUCT }
-                    QsCard(contentPadding = 14.dp) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Session summary", style = MaterialTheme.typography.titleSmall)
-                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-                                StatChip("$total", "Total", Modifier.weight(1f))
-                                StatChip("$unique", "Unique", Modifier.weight(1f))
-                                StatChip("$products", "Products", Modifier.weight(1f))
+                    LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        itemsIndexed(items) { _, item ->
+                            QsCard(contentPadding = 12.dp) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(item.content, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                                        Text(item.type.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    IconButton(onClick = { pendingRemove = item }) {
+                                        Icon(Icons.Filled.Delete, contentDescription = "Remove")
+                                    }
+                                }
                             }
                         }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QsOutlinedButton(
-                            text = "Export CSV",
-                            icon = Icons.Filled.FileDownload,
-                            onClick = { exportCsv() },
-                            modifier = Modifier.weight(1f)
-                        )
-                        QsOutlinedButton(
-                            text = "Share",
-                            icon = Icons.Filled.Share,
-                            onClick = { shareResults() },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QsOutlinedButton("Clear", onClick = { showClearConfirm = true }, modifier = Modifier.weight(1f))
-                        QsButton(
-                            text = "Save (${items.size})",
-                            icon = Icons.Filled.Save,
-                            onClick = {
-                                if (historyEnabled && !incognito) {
-                                    items.forEach {
-                                        historyVm.addScanResult(ScanResult(content = it.content, type = it.type, timestamp = it.timestamp))
+                        item {
+                            QsCard(contentPadding = 14.dp) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("Session summary", style = MaterialTheme.typography.titleSmall)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+                                        StatChip("$total", "Total", Modifier.weight(1f))
+                                        StatChip("$unique", "Unique", Modifier.weight(1f))
+                                        StatChip("$products", "Products", Modifier.weight(1f))
                                     }
-                                    vm.clearAll()
-                                    Toast.makeText(context, "${items.size} saved to history", Toast.LENGTH_SHORT).show()
-                                    onNavigateBack()
-                                } else {
-                                    Toast.makeText(context, "History saving is off — enable it in Settings", Toast.LENGTH_LONG).show()
                                 }
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
+                            }
+                        }
+                        item {
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                QsOutlinedButton(
+                                    text = "Export CSV",
+                                    icon = Icons.Filled.FileDownload,
+                                    onClick = { exportCsv() },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                QsOutlinedButton(
+                                    text = "Share",
+                                    icon = Icons.Filled.Share,
+                                    onClick = { shareResults() },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                        item {
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                QsOutlinedButton("Clear", onClick = { showClearConfirm = true }, modifier = Modifier.weight(1f))
+                                QsButton(
+                                    text = "Save (${items.size})",
+                                    icon = Icons.Filled.Save,
+                                    onClick = {
+                                        if (historyEnabled && !incognito) {
+                                            items.forEach {
+                                                historyVm.addScanResult(ScanResult(content = it.content, type = it.type, timestamp = it.timestamp))
+                                            }
+                                            vm.clearAll()
+                                            Toast.makeText(context, "${items.size} saved to history", Toast.LENGTH_SHORT).show()
+                                            onNavigateBack()
+                                        } else {
+                                            Toast.makeText(context, "History saving is off — enable it in Settings", Toast.LENGTH_LONG).show()
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                        item { Spacer(Modifier.height(8.dp)) }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
             }
         }
     }
