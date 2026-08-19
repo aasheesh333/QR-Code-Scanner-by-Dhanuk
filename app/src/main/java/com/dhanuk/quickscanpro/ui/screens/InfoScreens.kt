@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,12 +34,6 @@ import com.dhanuk.quickscanpro.config.AppConfig
 import com.dhanuk.quickscanpro.ui.design.IconBadge
 import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
-
-private val ABOUT_BODY = """
-QuickScan Pro is built by Dhanuk Softwares to make everyday digital tasks simpler, faster and smarter.
-
-Our promise: Easy. Fast. Powerful — that's how software should be.
-""".trimIndent()
 
 private val CONTACT_BODY = """
 Support email: ${AppConfig.SUPPORT_EMAIL}
@@ -71,11 +64,6 @@ Location — optionally, to read your current Wi-Fi network name for the Wi-Fi s
 Internet — for ads, product lookup and updates.
 Biometrics — only to unlock your Vault / app lock.
 """.trimIndent()
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AboutUsScreen(onNavigateBack: () -> Unit) =
-    LegalInfoScreen("About Us", ABOUT_BODY, AppConfig.Legal.ABOUT_US, onNavigateBack)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

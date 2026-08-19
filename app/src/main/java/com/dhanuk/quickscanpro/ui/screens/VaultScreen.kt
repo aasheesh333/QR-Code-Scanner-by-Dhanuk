@@ -138,18 +138,10 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                                     activity = activity,
                                     onSuccess = { unlocked = true },
                                     onCancel = {
-                                        if (lockMode == "none") {
-                                            onNavigateBack()
-                                        } else {
-                                            Toast.makeText(context, "Locked", Toast.LENGTH_SHORT).show()
-                                        }
+                                        Toast.makeText(context, "Locked", Toast.LENGTH_SHORT).show()
                                     },
                                     onError = { msg ->
-                                        if (lockMode == "none") {
-                                            onNavigateBack()
-                                        } else {
-                                            Toast.makeText(context, msg.ifBlank { "Authentication failed" }, Toast.LENGTH_SHORT).show()
-                                        }
+                                        Toast.makeText(context, msg.ifBlank { "Authentication failed" }, Toast.LENGTH_SHORT).show()
                                     }
                                 )
                             }

@@ -223,6 +223,23 @@ private fun openUrl(context: Context, content: String) {
     }
 }
 
+private fun openTarget(type: String, data: String): String? = when (type) {
+    BarcodeTypeDetector.TYPE_URL -> data
+    BarcodeTypeDetector.TYPE_EMAIL -> if (data.startsWith("mailto:", ignoreCase = true)) data else "mailto:$data"
+    BarcodeTypeDetector.TYPE_PHONE -> if (data.startsWith("tel:", ignoreCase = true)) data else "tel:$data"
+    BarcodeTypeDetector.TYPE_SMS -> if (data.startsWith("sms:", ignoreCase = true) || data.startsWith("smsto:", ignoreCase = true)) data else "sms:$data"
+    BarcodeTypeDetector.TYPE_GEO -> BarcodeTypeDetector.parseGeo(data)?.let { "geo:${it.latitude},${it.longitude}" }
+    else -> null
+}
+
+private fun openLabel(type: String) = when (type) {
+    BarcodeTypeDetector.TYPE_PHONE -> "Call"
+    BarcodeTypeDetector.TYPE_EMAIL -> "Email"
+    BarcodeTypeDetector.TYPE_SMS -> "Message"
+    BarcodeTypeDetector.TYPE_GEO -> "Open map"
+    else -> "Open"
+}
+
 private fun typeLabel(type: String) = when (type) {
     BarcodeTypeDetector.TYPE_URL -> "Web link"
     BarcodeTypeDetector.TYPE_WIFI -> "Wi-Fi network"
@@ -301,17 +318,21 @@ private fun GenericResult(
     }
 
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        ActionTile(
-            label = if (type == BarcodeTypeDetector.TYPE_PRODUCT) "Look up" else "Open",
-            icon = Icons.Filled.OpenInNew,
-            filled = true,
-            modifier = Modifier.weight(1f)
-        ) {
-            if (type == BarcodeTypeDetector.TYPE_PRODUCT) onOpenProductLookup(data)
-            else if (type == BarcodeTypeDetector.TYPE_GEO) {
-                val geo = BarcodeTypeDetector.parseGeo(data)
-                if (geo != null) openUrl(context, "geo:${geo.latitude},${geo.longitude}")
-            } else openUrl(context, data)
+        val openTarget = openTarget(type, data)
+        if (type == BarcodeTypeDetector.TYPE_PRODUCT) {
+            ActionTile(
+                label = "Look up",
+                icon = Icons.Filled.OpenInNew,
+                filled = true,
+                modifier = Modifier.weight(1f)
+            ) { onOpenProductLookup(data) }
+        } else if (openTarget != null) {
+            ActionTile(
+                label = openLabel(type),
+                icon = Icons.Filled.OpenInNew,
+                filled = true,
+                modifier = Modifier.weight(1f)
+            ) { openUrl(context, openTarget) }
         }
         ActionTile("Copy", Icons.Filled.ContentCopy, filled = false, modifier = Modifier.weight(1f)) {
             copyToClipboard(context, data)

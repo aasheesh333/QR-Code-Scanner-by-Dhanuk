@@ -318,10 +318,6 @@ fun HomeScreen(
                 }
             }
 
-            com.dhanuk.quickscanpro.ui.composables.BannerAd(
-                adUnitId = com.dhanuk.quickscanpro.BuildConfig.BANNER_AD_ID,
-                modifier = Modifier.fillMaxWidth()
-            )
             Spacer(Modifier.height(4.dp))
         }
     }

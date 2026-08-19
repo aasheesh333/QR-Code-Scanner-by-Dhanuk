@@ -12,6 +12,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -103,6 +104,11 @@ fun MainScreen() {
     val incognito by settingsVm.incognitoMode.collectAsState()
     val canSave = scanHistory && !incognito
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoutePrefix = navBackStackEntry?.destination?.route?.split("/")?.first()?.substringBefore("?")
+    val isTabRoute = currentRoutePrefix != null &&
+        BottomNavItem.entries.any { it.route.split("/").first() == currentRoutePrefix }
+
     when {
         onboardingCompleted == false -> {
             OnboardingScreen { settingsVm.completeOnboarding() }
@@ -112,7 +118,14 @@ fun MainScreen() {
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        // On pushed routes AppBottomBar renders nothing, so the
+                        // navigation-bar insets must be applied here to keep the
+                        // banner and content above the system navigation bar.
+                        // On tab routes NavigationBar consumes the same insets
+                        // itself, so this is a no-op there.
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .let { if (isTabRoute) it else it.navigationBarsPadding() },
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         com.dhanuk.quickscanpro.ui.composables.BannerAd(
