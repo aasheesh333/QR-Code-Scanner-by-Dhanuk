@@ -9,10 +9,6 @@ object QRContentBuilder {
             "NOPASS", "NONE", "" -> "nopass"
             else -> "WPA"
         }
-        // Open networks: omit the password field entirely per the ZXing spec.
-        if (enc == "nopass") {
-            return "WIFI:T:nopass;S:${escapeWifi(ssid)};;"
-        }
         return "WIFI:T:$enc;S:${escapeWifi(ssid)};P:${escapeWifi(password)};;"
     }
 
