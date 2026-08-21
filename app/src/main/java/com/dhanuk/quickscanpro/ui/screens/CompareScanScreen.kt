@@ -42,7 +42,6 @@ import androidx.core.content.ContextCompat
 import com.dhanuk.quickscanpro.ui.design.CameraPreviewBox
 import com.dhanuk.quickscanpro.ui.design.previewHeight
 import com.dhanuk.quickscanpro.ui.design.IconBadge
-import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
@@ -53,7 +52,8 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     var left by remember { mutableStateOf<String?>(null) }
     var right by remember { mutableStateOf<String?>(null) }
-    var scanningLeft by remember { mutableStateOf(true) }
+    // 0 = waiting to scan A, 1 = waiting to scan B, 2 = done
+    var phase by remember { mutableStateOf(0) }
 
     val hasPerm = remember {
         ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -94,15 +94,19 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
         ) {
             Spacer(Modifier.height(4.dp))
 
-            Column {
-                SectionLabel(if (scanningLeft) "Scanning code A" else "Scanning code B")
+            if (phase < 2) {
+                SectionLabel(if (phase == 0) "Step 1: Scan Code A" else "Step 2: Scan Code B")
                 CameraPreviewBox(
                     onScan = { result ->
-                        if (scanningLeft) {
-                            left = result
-                            scanningLeft = false
-                        } else {
-                            right = result
+                        when (phase) {
+                            0 -> {
+                                left = result
+                                phase = 1
+                            }
+                            1 -> {
+                                right = result
+                                phase = 2
+                            }
                         }
                     },
                     onCameraReady = {},
@@ -110,11 +114,15 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                CodeSlot("Code A", left, Modifier.weight(1f))
-                CodeSlot("Code B", right, Modifier.weight(1f))
+            // Show captured codes
+            if (left != null || right != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    CodeSlot("Code A", left, Modifier.weight(1f))
+                    CodeSlot("Code B", right, Modifier.weight(1f))
+                }
             }
 
+            // Result
             val a = left
             val b = right
             if (a != null && b != null) {
@@ -144,15 +152,10 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                         onClick = {
                             left = null
                             right = null
-                            scanningLeft = true
+                            phase = 0
                         }
                     )
                 }
-            } else {
-                QsButton(
-                    text = if (a == null) "Scan code A first" else "Now scan code B",
-                    onClick = {}
-                )
             }
 
             Spacer(Modifier.height(8.dp))

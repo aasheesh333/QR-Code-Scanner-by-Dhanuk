@@ -314,6 +314,7 @@ fun WifiShareScreen(
                         if (bmp != null) {
                             bitmap = bmp
                             onShareReady(content)
+                            com.dhanuk.quickscanpro.ads.InterstitialAdManager.showAfterAction(context)
                         } else {
                             bitmap = null
                             Toast.makeText(context, "Could not generate the QR — please retry", Toast.LENGTH_SHORT).show()

@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
+import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.ui.design.IconBadge
 import com.dhanuk.quickscanpro.ui.design.PillChip
 import com.dhanuk.quickscanpro.ui.design.QsCard
@@ -102,7 +103,10 @@ fun HistoryScreen(
         }
         scope.launch {
             val uri = HistoryExporter.exportAsCsv(context, all)
-            if (uri != null) HistoryExporter.shareCsv(context, uri)
+            if (uri != null) {
+                HistoryExporter.shareCsv(context, uri)
+                InterstitialAdManager.showAfterAction(context)
+            }
         }
     }
 

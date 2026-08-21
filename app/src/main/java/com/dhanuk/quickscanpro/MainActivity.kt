@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.dhanuk.quickscanpro.ads.ConsentManager
 import com.dhanuk.quickscanpro.ads.InterstitialAdManager
+import com.dhanuk.quickscanpro.ads.RewardedAdManager
 import com.dhanuk.quickscanpro.ui.screens.MainScreen
 import com.dhanuk.quickscanpro.ui.theme.QuickScanProTheme
 import com.dhanuk.quickscanpro.util.VoiceSpeaker
@@ -34,6 +35,7 @@ class MainActivity : AppCompatActivity() {
             if (canShowAds) {
                 try { MobileAds.initialize(this) } catch (_: Exception) {}
                 InterstitialAdManager.loadAd(this)
+                RewardedAdManager.loadAd(this)
             }
             runCatching {
                 FirebaseAnalytics.getInstance(this).setAnalyticsCollectionEnabled(canShowAds)

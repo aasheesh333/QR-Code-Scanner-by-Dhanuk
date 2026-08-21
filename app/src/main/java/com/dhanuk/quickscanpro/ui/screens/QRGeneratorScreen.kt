@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.qrgenerator.QRCodeGenerator
 import com.dhanuk.quickscanpro.qrgenerator.QRContentBuilder
+import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.ui.design.IconBadge
 import com.dhanuk.quickscanpro.ui.design.PillChip
 import com.dhanuk.quickscanpro.ui.design.QsButton
@@ -200,7 +201,11 @@ fun QRGeneratorScreen(
             QsButton(
                 text = "Generate QR code",
                 enabled = canGenerate,
-                onClick = { vm.generateFromInputs() }
+                onClick = {
+                    vm.generateFromInputs()
+                    // Show interstitial after a successful generation (AdMob-compliant: user-triggered action).
+                    InterstitialAdManager.showAfterAction(context)
+                }
             )
 
             val bmp = bitmap

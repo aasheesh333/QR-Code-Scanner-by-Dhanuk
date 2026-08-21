@@ -104,6 +104,12 @@ fun MainScreen() {
     val incognito by settingsVm.incognitoMode.collectAsState()
     val canSave = scanHistory && !incognito
 
+    // Auto-show interstitial after 3 minutes of app usage.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(3 * 60 * 1000L)
+        com.dhanuk.quickscanpro.ads.InterstitialAdManager.tryAutoShow(context)
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoutePrefix = navBackStackEntry?.destination?.route?.split("/")?.first()?.substringBefore("?")
     // Treat null (before NavHost settles) as a tab route so the first frame

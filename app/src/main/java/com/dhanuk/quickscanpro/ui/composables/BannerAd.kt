@@ -18,6 +18,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.dhanuk.quickscanpro.ads.ConsentManager
+import com.dhanuk.quickscanpro.ads.RewardedAdManager
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -27,7 +28,7 @@ import com.google.android.gms.ads.LoadAdError
 @Composable
 fun BannerAd(adUnitId: String, modifier: Modifier = Modifier) {
     val allowed by ConsentManager.adsAllowed.collectAsState()
-    if (!allowed || adUnitId.isBlank()) return
+    if (!allowed || adUnitId.isBlank() || RewardedAdManager.sessionAdFree) return
 
     var loaded by remember(adUnitId) { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current

@@ -47,6 +47,7 @@ android {
     def admobAppId = getAppConfig("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
     def bannerAdId = getAppConfig("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
     def interstitialAdId = getAppConfig("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
+    def rewardedAdId = getAppConfig("ADMOB_REWARDED_ID", "ca-app-pub-3940256099942544/5224354917")
     def onesignalAppId = getAppConfig("ONESIGNAL_APP_ID", "placeholder-onesignal-app-id")
 
     defaultConfig {
@@ -65,6 +66,7 @@ android {
 
         buildConfigField "String", "BANNER_AD_ID", "\"$bannerAdId\""
         buildConfigField "String", "INTERSTITIAL_AD_ID", "\"$interstitialAdId\""
+        buildConfigField "String", "REWARDED_AD_ID", "\"$rewardedAdId\""
         buildConfigField "String", "ONESIGNAL_APP_ID", "\"$onesignalAppId\""
     }
 

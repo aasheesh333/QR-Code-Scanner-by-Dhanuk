@@ -50,6 +50,7 @@ import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsEmptyState
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
+import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.ui.theme.Danger
 import com.dhanuk.quickscanpro.ui.theme.Positive
 import com.dhanuk.quickscanpro.util.PasswordLeakChecker
@@ -188,6 +189,7 @@ fun LeakCheckScreen(
                         scope.launch {
                             passwordReport = PasswordLeakChecker.checkPassword(passwordInput)
                             checkingPassword = false
+                            InterstitialAdManager.showAfterAction(context)
                         }
                     }
                 )

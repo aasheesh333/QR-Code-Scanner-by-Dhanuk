@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.database.ScanResult
+import com.dhanuk.quickscanpro.ads.InterstitialAdManager
 import com.dhanuk.quickscanpro.ui.design.CameraPreviewBox
 import com.dhanuk.quickscanpro.ui.design.previewHeight
 import com.dhanuk.quickscanpro.ui.design.QsButton
@@ -242,6 +243,7 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                                             }
                                             vm.clearAll()
                                             Toast.makeText(context, "${items.size} saved to history", Toast.LENGTH_SHORT).show()
+                                            InterstitialAdManager.showAfterAction(context)
                                             onNavigateBack()
                                         } else {
                                             Toast.makeText(context, "History saving is off — enable it in Settings", Toast.LENGTH_LONG).show()

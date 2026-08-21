@@ -55,8 +55,14 @@ object WifiShareHelper {
     }
 
     fun isWifiEnabled(context: Context): Boolean {
-        val wm = context.applicationContext.getSystemService<WifiManager>() ?: return false
-        return runCatching { wm.isWifiEnabled }.getOrDefault(false)
+        return try {
+            val cm = context.applicationContext.getSystemService<ConnectivityManager>() ?: return false
+            val network = cm.activeNetwork ?: return false
+            val caps = cm.getNetworkCapabilities(network) ?: return false
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun getCurrentWifi(context: Context): CurrentWifi? {

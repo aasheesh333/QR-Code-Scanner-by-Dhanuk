@@ -16,16 +16,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,9 +41,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dhanuk.quickscanpro.database.ScanResult
 import com.dhanuk.quickscanpro.ui.design.IconBadge
 import com.dhanuk.quickscanpro.ui.design.PillChip
 import com.dhanuk.quickscanpro.ui.design.QsButton
@@ -163,8 +169,11 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
 @Composable
 private fun VaultBody(modifier: Modifier) {
     val vm: HistoryViewModel = viewModel()
+    val context = LocalContext.current
     val vault by vm.vaultScans.collectAsState()
     var favoritesOnly by rememberSaveable { mutableStateOf(false) }
+    var selectedItem by remember { mutableStateOf<ScanResult?>(null) }
+    var confirmDelete by remember { mutableStateOf<ScanResult?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
         Row(
@@ -206,10 +215,11 @@ private fun VaultBody(modifier: Modifier) {
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    scan.content,
+                                    scan.note.ifBlank { scan.content },
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     "${scan.type.uppercase()} · ${vaultTime(scan.timestamp)}",
@@ -224,12 +234,76 @@ private fun VaultBody(modifier: Modifier) {
                                     tint = if (scan.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                 )
                             }
+                            IconButton(onClick = { confirmDelete = scan }) {
+                                Icon(
+                                    Icons.Filled.Delete,
+                                    contentDescription = "Delete",
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                            IconButton(onClick = { selectedItem = scan }) {
+                                Icon(
+                                    Icons.Filled.LockOpen,
+                                    contentDescription = "View / Unvault",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
                 }
                 item { Spacer(Modifier.height(8.dp)) }
             }
         }
+    }
+
+    // Detail dialog: view content + unvault action
+    selectedItem?.let { scan ->
+        AlertDialog(
+            onDismissRequest = { selectedItem = null },
+            title = { Text(scan.type.uppercase()) },
+            text = {
+                Column {
+                    Text(
+                        scan.content,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        vaultTime(scan.timestamp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.setVault(scan, false, context)
+                    selectedItem = null
+                }) { Text("Unvault") }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedItem = null }) { Text("Close") }
+            }
+        )
+    }
+
+    // Delete confirmation
+    confirmDelete?.let { scan ->
+        AlertDialog(
+            onDismissRequest = { confirmDelete = null },
+            title = { Text("Delete this vault item?") },
+            text = { Text("This will permanently remove the scan from the vault.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.delete(scan.id, context)
+                    confirmDelete = null
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = null }) { Text("Cancel") }
+            }
+        )
     }
 }
 
