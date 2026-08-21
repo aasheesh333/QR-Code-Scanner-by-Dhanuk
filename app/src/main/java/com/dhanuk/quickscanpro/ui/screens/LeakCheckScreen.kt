@@ -71,6 +71,7 @@ fun LeakCheckScreen(
     val vm: HistoryViewModel = viewModel()
     val checks by vm.leakChecks.collectAsState()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     var input by rememberSaveable { mutableStateOf("") }
     var checking by remember { mutableStateOf(false) }
