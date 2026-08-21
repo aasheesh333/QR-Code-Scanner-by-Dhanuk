@@ -59,6 +59,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun BulkGenerateScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var input by rememberSaveable { mutableStateOf("") }
     val entries = remember { mutableStateListOf<BulkQr>() }
     var processing by rememberSaveable { mutableStateOf(false) }
