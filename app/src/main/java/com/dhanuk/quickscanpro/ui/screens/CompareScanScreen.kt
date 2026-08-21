@@ -132,7 +132,7 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                     onCameraReady = {},
                     modifier = Modifier.fillMaxWidth().height(previewHeight(0.32f, 200.dp, 300.dp))
                 )
-                QsOutlinedButton(text = "Cancel scan") { scanningFor = null }
+                QsOutlinedButton(text = "Cancel scan", onClick = { scanningFor = null })
             }
 
             // Captured codes
