@@ -238,11 +238,11 @@ fun BatchScanScreen(onNavigateBack: () -> Unit) {
                                     icon = Icons.Filled.Save,
                                     onClick = {
                                         if (historyEnabled && !incognito) {
-                                            items.forEach {
-                                                historyVm.addScanResult(ScanResult(content = it.content, type = it.type, timestamp = it.timestamp))
-                                            }
+                                            historyVm.saveBatch(
+                                                items.map { ScanResult(content = it.content, type = it.type, timestamp = it.timestamp) }
+                                            )
                                             vm.clearAll()
-                                            Toast.makeText(context, "${items.size} saved to history", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "${items.size} saved to history as one batch", Toast.LENGTH_SHORT).show()
                                             InterstitialAdManager.showAfterAction(context)
                                             onNavigateBack()
                                         } else {

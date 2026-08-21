@@ -2,7 +2,6 @@ package com.dhanuk.quickscanpro.ui.screens
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.WindowInsets
@@ -35,7 +34,6 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -59,7 +57,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dhanuk.quickscanpro.config.AppConfig
-import com.dhanuk.quickscanpro.ads.RewardedAdManager
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
 import com.dhanuk.quickscanpro.ui.design.SettingNavRow
 import com.dhanuk.quickscanpro.ui.design.SettingToggleRow
@@ -175,27 +172,6 @@ fun SettingsScreen(
                         "Clear all history",
                         danger = true
                     ) { showClearDialog = true }
-                }
-            }
-
-            Column {
-                SectionLabel("Ads")
-                Group {
-                    SettingNavRow(
-                        Icons.Filled.Block,
-                        if (RewardedAdManager.sessionAdFree) "Ads off (session)" else "Remove ads",
-                        subtitle = if (RewardedAdManager.sessionAdFree) "Ads are off for this session" else "Watch a short ad to hide ads for this session"
-                    ) {
-                        if (!RewardedAdManager.sessionAdFree) {
-                            val activity = context as? android.app.Activity
-                            if (activity != null) {
-                                RewardedAdManager.show(activity) {
-                                    RewardedAdManager.grantAdFreeSession()
-                                    Toast.makeText(context, "Ads off for this session — thank you!", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    }
                 }
             }
 

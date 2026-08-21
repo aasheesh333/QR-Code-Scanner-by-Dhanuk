@@ -85,6 +85,7 @@ import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.LinkSafetyChecker
 import com.dhanuk.quickscanpro.util.TextLanguageDetector
+import com.dhanuk.quickscanpro.util.VaultAuth
 import com.dhanuk.quickscanpro.util.VoiceSpeaker
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
 import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
@@ -131,6 +132,24 @@ fun ResultScreen(
     val scanForContent = history.firstOrNull { it.content == data }
     val done: () -> Unit = { VoiceSpeaker.stop(); onNavigateBack() }
 
+    var showSetLockDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showSetLockDialog) {
+        AlertDialog(
+            onDismissRequest = { showSetLockDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSetLockDialog = false
+                    VaultAuth.openSecuritySettings(context)
+                }) { Text("Set up lock") }
+            },
+            dismissButton = { TextButton(onClick = { showSetLockDialog = false }) { Text("Cancel") } },
+            icon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+            title = { Text("Device lock required") },
+            text = { Text("The vault is protected by your device's own screen lock (fingerprint, pattern or PIN). Set one up first, then try again.") }
+        )
+    }
+
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -173,8 +192,30 @@ fun ResultScreen(
                     onToggleVault = {
                         val target = scanForContent
                         when {
-                            target != null -> historyVm.setVault(target, !target.isVault, context)
-                            canSaveHistory -> historyVm.saveAsVaulted(data)
+                            target != null && target.isVault -> historyVm.setVault(target, false, context)
+                            target != null && !target.isVault -> {
+                                // Vault = move to vault, hide from history, and leave the result screen.
+                                if (!VaultAuth.hasDeviceLock(context)) {
+                                    showSetLockDialog = true
+                                } else {
+                                    runCatching { historyVm.setVault(target, true, context) }
+                                        .onSuccess {
+                                            Toast.makeText(context, "Moved to vault & hidden", Toast.LENGTH_SHORT).show()
+                                            done()
+                                        }
+                                }
+                            }
+                            canSaveHistory -> {
+                                if (!VaultAuth.hasDeviceLock(context)) {
+                                    showSetLockDialog = true
+                                } else {
+                                    runCatching { historyVm.saveAsVaulted(data) }
+                                        .onSuccess {
+                                            Toast.makeText(context, "Saved to vault", Toast.LENGTH_SHORT).show()
+                                            done()
+                                        }
+                                }
+                            }
                             else -> Toast.makeText(
                                 context,
                                 "History saving is off — enable it in Settings to use the vault",

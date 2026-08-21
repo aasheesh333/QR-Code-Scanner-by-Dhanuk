@@ -269,7 +269,7 @@ fun LeakCheckScreen(
                             )
                             Text(
                                 if (r.leaked) "Found in breach records (${r.breachCount} breach${if (r.breachCount != 1) "es" else ""}, first seen ${r.firstSeenYear})"
-                                else "No known breach for this domain",
+                                else "Not found in our database of 300+ documented public breaches",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = color
                             )
@@ -277,6 +277,8 @@ fun LeakCheckScreen(
                     }
                     if (r.signals.isNotEmpty()) {
                         Spacer(Modifier.height(10.dp))
+                        Text("Details", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(4.dp))
                         r.signals.forEach { signal ->
                             Text(
                                 "• $signal",
@@ -284,6 +286,22 @@ fun LeakCheckScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                    if (r.leaked) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "Advice: change any password you used on this site, and never reuse it elsewhere.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    } else if (r.signals.size > 1) {
+                        // Heuristic risk signals present even without a breach record.
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "Advice: treat this domain cautiously — at least one risk signal was detected.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }

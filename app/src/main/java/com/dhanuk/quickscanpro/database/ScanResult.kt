@@ -25,5 +25,9 @@ data class ScanResult(
     val autoCategory: String = "",
     @ColumnInfo(name = "translated_text", defaultValue = "")
     val translatedText: String = "",
+    @ColumnInfo(name = "batch_id")
+    val batchId: String? = null,
+    @ColumnInfo(name = "is_hidden", defaultValue = "0")
+    val isHidden: Boolean = false,
     val timestamp: Long = System.currentTimeMillis()
 )

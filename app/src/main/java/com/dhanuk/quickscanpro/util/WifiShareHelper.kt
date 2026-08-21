@@ -31,10 +31,13 @@ object WifiShareHelper {
     fun hasLocationPermission(context: Context): Boolean {
         return try {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
+            val fine = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
+            val coarse = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            fine || coarse
         } catch (_: Throwable) {
             false
         }

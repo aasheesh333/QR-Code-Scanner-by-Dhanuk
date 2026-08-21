@@ -84,7 +84,32 @@ fun WifiShareScreen(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+
+        // Live updates while the screen is open — connecting to Wi-Fi, or the
+        // transient null NetworkCapabilities right after connect, refresh the card.
+        val cm = runCatching {
+            context.applicationContext.getSystemService(android.net.ConnectivityManager::class.java)
+        }.getOrNull()
+        val callback = if (cm == null) null else object : android.net.ConnectivityManager.NetworkCallback() {
+            private fun refresh() {
+                current = runCatching { WifiShareHelper.getCurrentWifi(context) }.getOrNull()
+            }
+            override fun onAvailable(network: android.net.Network) = refresh()
+            override fun onCapabilitiesChanged(
+                network: android.net.Network,
+                networkCapabilities: android.net.NetworkCapabilities
+            ) = refresh()
+            override fun onLost(network: android.net.Network) = refresh()
+        }
+        if (callback != null && cm != null) {
+            runCatching { cm.registerDefaultNetworkCallback(callback) }
+        }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            if (callback != null && cm != null) {
+                runCatching { cm.unregisterNetworkCallback(callback) }
+            }
+        }
     }
 
     var ssid by rememberSaveable { mutableStateOf(current?.ssid ?: "") }

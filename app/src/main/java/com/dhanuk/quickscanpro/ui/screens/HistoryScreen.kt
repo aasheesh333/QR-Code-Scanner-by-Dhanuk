@@ -22,6 +22,10 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
@@ -29,13 +33,17 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -195,19 +203,50 @@ fun HistoryScreen(
                     onAction = onNavigateToScanner,
                     modifier = Modifier.fillMaxWidth().weight(1f)
                 )
-                else -> LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(visible, key = { it.id }) { scan ->
-                        HistoryRow(
-                            scan = scan,
-                            onClick = { onRowClick(scan) },
-                            onFavorite = { vm.toggleFavorite(scan) },
-                            onDelete = { pendingDelete = scan }
-                        )
+                else -> {
+                    val displayItems = remember(visible) {
+                        val out = mutableListOf<HistItem>()
+                        val seenBatches = mutableSetOf<String>()
+                        visible.forEach { s ->
+                            val b = s.batchId
+                            if (b == null) {
+                                out.add(HistItem.Single(s))
+                            } else if (seenBatches.add(b)) {
+                                val children = visible.filter { it.batchId == b }
+                                out.add(HistItem.Batch(b, children))
+                            }
+                        }
+                        out
                     }
-                    item { Spacer(Modifier.height(12.dp)) }
+                    var expandedBatch by rememberSaveable { mutableStateOf<String?>(null) }
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(displayItems, key = { it.key }) { item ->
+                            when (item) {
+                                is HistItem.Single -> HistoryRow(
+                                    scan = item.scan,
+                                    onClick = { onRowClick(item.scan) },
+                                    onFavorite = { vm.toggleFavorite(item.scan) },
+                                    onShare = { shareScan(context, item.scan) },
+                                    onHide = { vm.setHidden(item.scan, true) },
+                                    onDelete = { pendingDelete = item.scan }
+                                )
+                                is HistItem.Batch -> BatchGroupRow(
+                                    batch = item,
+                                    expanded = expandedBatch == item.batchId,
+                                    onToggleExpand = {
+                                        expandedBatch = if (expandedBatch == item.batchId) null else item.batchId
+                                    },
+                                    vm = vm,
+                                    onRowClick = onRowClick,
+                                    onDelete = { pendingDelete = it }
+                                )
+                            }
+                        }
+                        item { Spacer(Modifier.height(12.dp)) }
+                    }
                 }
             }
         }
@@ -233,11 +272,213 @@ fun HistoryScreen(
     }
 }
 
+private sealed class HistItem {
+    abstract val key: String
+    data class Single(val scan: ScanResult) : HistItem() {
+        override val key: String get() = "s${scan.id}"
+    }
+    data class Batch(val batchId: String, val children: List<ScanResult>) : HistItem() {
+        override val key: String get() = "b$batchId"
+    }
+}
+
+private fun shareScan(context: android.content.Context, scan: ScanResult) {
+    runCatching {
+        context.startActivity(android.content.Intent.createChooser(
+            android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_TEXT, scan.content)
+            },
+            "Share scan"
+        ))
+    }.onFailure { Toast.makeText(context, "No app to share with", Toast.LENGTH_SHORT).show() }
+}
+
+@Composable
+private fun BatchGroupRow(
+    batch: HistItem.Batch,
+    expanded: Boolean,
+    onToggleExpand: () -> Unit,
+    vm: HistoryViewModel,
+    onRowClick: (ScanResult) -> Unit,
+    onDelete: (ScanResult) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val batchId = batch.batchId
+    // Full children (incl. hidden) so hidden rows stay reachable / unhideable.
+    val allChildren by remember(batchId) { vm.batchItems(batchId) }
+        .collectAsState(initial = batch.children)
+    val children = if (allChildren.isEmpty()) batch.children else allChildren
+    val visibleChildren = children.filter { !it.isHidden }
+    val anyHidden = children.any { it.isHidden }
+    val latest = children.maxOfOrNull { it.timestamp } ?: 0L
+    var showBatchDelete by remember { mutableStateOf(false) }
+
+    QsCard(contentPadding = 14.dp) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            IconBadge(Icons.Filled.Layers)
+            Spacer(Modifier.size(12.dp))
+            Column(
+                Modifier
+                    .weight(1f)
+                    .clickable(onClick = onToggleExpand)
+            ) {
+                Text(
+                    "Bulk scan (${children.size} items)",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    "${visibleChildren.size} visible · ${relativeTime(latest)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(onClick = onToggleExpand) {
+                Icon(
+                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (expanded) {
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(Modifier.height(6.dp))
+
+            // Group-level actions
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+                IconButton(onClick = {
+                    scope.launch {
+                        if (visibleChildren.isEmpty()) {
+                            Toast.makeText(context, "Nothing visible to export — unhide rows first", Toast.LENGTH_SHORT).show()
+                        } else {
+                            val uri = HistoryExporter.exportAsCsv(context, visibleChildren)
+                            if (uri != null) HistoryExporter.shareCsv(context, uri)
+                        }
+                    }
+                }) { Icon(Icons.Filled.FileDownload, contentDescription = "Export batch", tint = MaterialTheme.colorScheme.primary) }
+                IconButton(onClick = {
+                    if (visibleChildren.isEmpty()) {
+                        Toast.makeText(context, "Nothing visible to share — unhide rows first", Toast.LENGTH_SHORT).show()
+                        return@IconButton
+                    }
+                    val text = buildString {
+                        appendLine("QuickScan Pro bulk scan — ${visibleChildren.size} items")
+                        visibleChildren.forEachIndexed { i, it -> appendLine("${i + 1}. [${it.type.uppercase()}] ${it.content}") }
+                    }
+                    runCatching {
+                        context.startActivity(android.content.Intent.createChooser(
+                            android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_TEXT, text)
+                            },
+                            "Share bulk scan"
+                        ))
+                    }
+                }) { Icon(Icons.Filled.Share, contentDescription = "Share batch", tint = MaterialTheme.colorScheme.primary) }
+                IconButton(onClick = {
+                    if (anyHidden) vm.setBatchHidden(batchId, false) else vm.setBatchHidden(batchId, true)
+                    Toast.makeText(
+                        context,
+                        if (anyHidden) "All rows unhidden" else "All rows hidden (excluded from export)",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }) {
+                    Icon(
+                        if (anyHidden) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = if (anyHidden) "Unhide all" else "Hide all",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { showBatchDelete = true }) {
+                    Icon(Icons.Outlined.Delete, contentDescription = "Delete batch", tint = MaterialTheme.colorScheme.error)
+                }
+            }
+
+            Spacer(Modifier.height(4.dp))
+            children.forEach { child ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !child.isHidden) { onRowClick(child) }
+                        .padding(vertical = 4.dp)
+                ) {
+                    Icon(
+                        historyIcon(child.type),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (child.isHidden) 0.3f else 1f),
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(Modifier.size(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            child.note.ifBlank { child.content },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (child.isHidden) 0.35f else 1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (child.isHidden) {
+                            Text(
+                                "Hidden — excluded from history & exports",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                    IconButton(onClick = { shareScan(context, child) }) {
+                        Icon(Icons.Filled.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(20.dp))
+                    }
+                    IconButton(onClick = { vm.setHidden(child, !child.isHidden) }) {
+                        Icon(
+                            if (child.isHidden) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (child.isHidden) "Unhide" else "Hide",
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(onClick = { onDelete(child) }) {
+                        Icon(Icons.Outlined.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(20.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    if (showBatchDelete) {
+        AlertDialog(
+            onDismissRequest = { showBatchDelete = false },
+            title = { Text("Delete this batch?") },
+            text = { Text("All ${children.size} scans in this bulk scan will be permanently removed.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deleteBatch(batchId)
+                    showBatchDelete = false
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { showBatchDelete = false }) { Text("Cancel") } }
+        )
+    }
+}
+
 @Composable
 private fun HistoryRow(
     scan: ScanResult,
     onClick: () -> Unit,
     onFavorite: () -> Unit,
+    onShare: () -> Unit,
+    onHide: () -> Unit,
     onDelete: () -> Unit
 ) {
     QsCard(onClick = onClick, contentPadding = 14.dp) {
@@ -269,6 +510,12 @@ private fun HistoryRow(
                     contentDescription = "Toggle favorite",
                     tint = if (scan.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                 )
+            }
+            IconButton(onClick = onShare) {
+                Icon(Icons.Filled.Share, contentDescription = "Share scan", tint = MaterialTheme.colorScheme.outline)
+            }
+            IconButton(onClick = onHide) {
+                Icon(Icons.Filled.VisibilityOff, contentDescription = "Hide from history", tint = MaterialTheme.colorScheme.outline)
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Outlined.Delete, contentDescription = "Delete scan", tint = MaterialTheme.colorScheme.outline)

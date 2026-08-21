@@ -159,6 +159,41 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    // ─── Batch (grouped bulk scan) ───
+
+    /** Saves a bulk-scan session as one history batch (single grouped row). */
+    fun saveBatch(items: List<ScanResult>) {
+        if (items.isEmpty()) return
+        val batchId = "batch-${System.currentTimeMillis()}"
+        viewModelScope.launch {
+            try {
+                items.forEach { raw ->
+                    val detectedType = BarcodeTypeDetector.detectType(raw.content)
+                    val autoCat = AutoOrganizer.categorize(detectedType, raw.content)
+                    scanResultDao.insert(
+                        raw.copy(type = detectedType, autoCategory = autoCat, batchId = batchId)
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save batch", e)
+            }
+        }
+    }
+
+    fun batchItems(batchId: String): Flow<List<ScanResult>> = scanResultDao.getBatch(batchId)
+
+    fun setHidden(scanResult: ScanResult, hidden: Boolean) {
+        viewModelScope.launch { scanResultDao.setHidden(scanResult.id, hidden) }
+    }
+
+    fun setBatchHidden(batchId: String, hidden: Boolean) {
+        viewModelScope.launch { scanResultDao.setBatchHidden(batchId, hidden) }
+    }
+
+    fun deleteBatch(batchId: String) {
+        viewModelScope.launch { scanResultDao.deleteBatch(batchId) }
+    }
+
     fun deleteAllVault() {
         viewModelScope.launch { scanResultDao.deleteAllVault() }
     }

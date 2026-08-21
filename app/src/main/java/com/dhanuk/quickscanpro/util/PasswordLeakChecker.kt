@@ -99,6 +99,42 @@ object PasswordLeakChecker {
         "friendfinder.com", "xsplit.com"
     )
 
+    /** Documented breach details for major entries: year, exposed accounts, data types. */
+    data class BreachDetail(val year: Int, val accounts: String, val dataExposed: String)
+
+    private val BREACH_DETAILS = mapOf(
+        "linkedin.com" to BreachDetail(2012, "167M accounts", "Emails, hashed passwords"),
+        "yahoo.com" to BreachDetail(2014, "3B accounts", "Names, emails, phone numbers, security Q&A"),
+        "adobe.com" to BreachDetail(2013, "153M accounts", "Emails, encrypted passwords, password hints"),
+        "dropbox.com" to BreachDetail(2013, "68M accounts", "Emails, bcrypt-hashed passwords"),
+        "myspace.com" to BreachDetail(2013, "427M accounts", "Emails, usernames, SHA-1 passwords"),
+        "tumblr.com" to BreachDetail(2013, "65M accounts", "Emails, salted SHA-1 passwords"),
+        "ebay.com" to BreachDetail(2014, "145M accounts", "Names, emails, addresses, DOB, hashed passwords"),
+        "ashleymadison.com" to BreachDetail(2015, "32M accounts", "Names, addresses, card details, private messages"),
+        "vk.com" to BreachDetail(2012, "100M accounts", "Emails, plaintext passwords"),
+        "mail.ru" to BreachDetail(2014, "57M accounts", "Emails, plaintext passwords"),
+        "canva.com" to BreachDetail(2019, "137M accounts", "Emails, names, bcrypt passwords"),
+        "zynga.com" to BreachDetail(2019, "218M accounts", "Emails, usernames, passwords"),
+        "quora.com" to BreachDetail(2018, "100M accounts", "Names, emails, hashed passwords, activity"),
+        "wattpad.com" to BreachDetail(2020, "268M accounts", "Emails, DOB, bcrypt passwords"),
+        "facebook.com" to BreachDetail(2019, "533M accounts", "Phone numbers, names, emails, DOB"),
+        "uber.com" to BreachDetail(2016, "57M accounts", "Names, emails, phone numbers"),
+        "t-mobile.com" to BreachDetail(2021, "48M accounts", "Names, DOB, SSN, driver's licenses"),
+        "optus.com.au" to BreachDetail(2022, "9.8M accounts", "Names, DOB, addresses, ID documents"),
+        "medibank.com.au" to BreachDetail(2022, "9.7M accounts", "Names, addresses, health claims data"),
+        "reddit.com" to BreachDetail(2021, "Email history", "Email addresses, campaign ads data"),
+        "twitch.tv" to BreachDetail(2021, "125GB data", "Source code, creator payouts, internal data"),
+        "twitter.com" to BreachDetail(2022, "200M accounts", "Email addresses, public profile data"),
+        "capitalone.com" to BreachDetail(2019, "100M accounts", "Names, SSNs, credit card applications"),
+        "epicgames.com" to BreachDetail(2020, "200M accounts", "Emails, usernames, salted passwords"),
+        "wish.com" to BreachDetail(2022, "16M accounts", "Emails, usernames, hashed passwords"),
+        "shein.com" to BreachDetail(2018, "39M accounts", "Emails, encrypted passwords"),
+        "imgur.com" to BreachDetail(2014, "1.7M accounts", "Emails, encrypted passwords"),
+        "last.fm" to BreachDetail(2012, "43M accounts", "Usernames, emails, MD5 passwords"),
+        "truecaller.com" to BreachDetail(2019, "299M accounts", "Phone numbers, names, emails"),
+        "bitly.com" to BreachDetail(2014, "9.3M accounts", "Emails, usernames, API keys")
+    )
+
     data class LeakReport(
         val domain: String,
         val leaked: Boolean,
@@ -195,7 +231,7 @@ object PasswordLeakChecker {
                 "dropbox.com", "tumblr.com" -> 1
                 else -> 1
             }
-            firstSeenYear = when (lookupDomain) {
+            firstSeenYear = BREACH_DETAILS[lookupDomain]?.year ?: when (lookupDomain) {
                 "linkedin.com" -> 2012
                 "adobe.com", "adobe.net" -> 2013
                 "dropbox.com", "tumblr.com" -> 2013
@@ -218,6 +254,10 @@ object PasswordLeakChecker {
                 else -> 2020
             }
             signals += "Website appears in our database of documented public data breaches"
+            BREACH_DETAILS[lookupDomain]?.let { d ->
+                signals += "Year: ${d.year} · ${d.accounts}"
+                signals += "Data exposed: ${d.dataExposed}"
+            }
         }
 
         // Heuristic phishing/risk signals — informational only, never counted as a breach.
