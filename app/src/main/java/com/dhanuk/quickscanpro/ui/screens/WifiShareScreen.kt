@@ -72,12 +72,15 @@ fun WifiShareScreen(
 
     // Detection may succeed only after the user grants permission / enables
     // location / connects to Wi-Fi — so re-check whenever we resume this screen.
-    var current by remember { mutableStateOf(WifiShareHelper.getCurrentWifi(context)) }
+    // runCatching guards against any OEM-specific ROM crash.
+    var current by remember {
+        mutableStateOf(runCatching { WifiShareHelper.getCurrentWifi(context) }.getOrNull())
+    }
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                current = WifiShareHelper.getCurrentWifi(context)
+                current = runCatching { WifiShareHelper.getCurrentWifi(context) }.getOrNull()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -160,7 +163,7 @@ fun WifiShareScreen(
             Spacer(Modifier.height(0.dp))
 
             val net = current
-            val wifiEnabled = WifiShareHelper.isWifiEnabled(context)
+            val wifiEnabled = runCatching { WifiShareHelper.isWifiEnabled(context) }.getOrDefault(false)
 
             QsCard {
                 Column(Modifier.fillMaxWidth()) {
