@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,6 +51,9 @@ import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -103,23 +107,29 @@ fun BulkGenerateScreen(onNavigateBack: () -> Unit) {
             )
 
             QsButton(
-                text = "Generate all",
+                text = if (processing) "Generating…" else "Generate all",
                 icon = Icons.Filled.QrCode2,
                 enabled = input.isNotBlank() && !processing,
                 onClick = {
-                    processing = true
                     val lines = input.lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
                     if (lines.size > 50) {
                         Toast.makeText(context, "Max 50 codes at a time", Toast.LENGTH_SHORT).show()
-                        processing = false
                     } else {
-                        val generated = lines.mapNotNull { line ->
-                            QRCodeGenerator.generate(line, 384)?.let { bmp -> BulkQr(line, bmp) }
+                        processing = true
+                        scope.launch {
+                            val generated = withContext(Dispatchers.Default) {
+                                lines.mapNotNull { line ->
+                                    QRCodeGenerator.generate(line, 384)?.let { bmp -> BulkQr(line, bmp) }
+                                }
+                            }
+                            entries.clear()
+                            entries.addAll(generated)
+                            input = ""
+                            processing = false
+                            if (generated.isEmpty()) {
+                                Toast.makeText(context, "Could not generate codes — check your input", Toast.LENGTH_SHORT).show()
+                            }
                         }
-                        entries.clear()
-                        entries.addAll(generated)
-                        input = ""
-                        processing = false
                     }
                 }
             )

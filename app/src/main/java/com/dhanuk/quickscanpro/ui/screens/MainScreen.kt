@@ -106,7 +106,9 @@ fun MainScreen() {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoutePrefix = navBackStackEntry?.destination?.route?.split("/")?.first()?.substringBefore("?")
-    val isTabRoute = currentRoutePrefix != null &&
+    // Treat null (before NavHost settles) as a tab route so the first frame
+    // doesn't double-apply navigation-bar padding on the Home screen.
+    val isTabRoute = currentRoutePrefix == null ||
         BottomNavItem.entries.any { it.route.split("/").first() == currentRoutePrefix }
 
     when {

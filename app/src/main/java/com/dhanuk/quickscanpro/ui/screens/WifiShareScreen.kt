@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -103,9 +102,11 @@ fun WifiShareScreen(
     }
 
     val locationLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
+        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        val fineGranted = grants[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseGranted = grants[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+        if (fineGranted || coarseGranted) {
             when {
                 !WifiShareHelper.isLocationServicesOn(context) -> {
                     Toast.makeText(context, "Please turn on location so the network name can be detected", Toast.LENGTH_LONG).show()
@@ -113,8 +114,12 @@ fun WifiShareScreen(
                 }
                 else -> {
                     val info = WifiShareHelper.getCurrentWifi(context)
+                    current = info
                     if (info != null) {
-                        ssid = info.ssid
+                        if (ssid.isBlank() || autoFilledSsid == ssid) {
+                            ssid = info.ssid
+                            autoFilledSsid = info.ssid
+                        }
                         Toast.makeText(context, "Using connected network: ${info.ssid}", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, "Network not detected — type the network name below", Toast.LENGTH_LONG).show()
@@ -154,9 +159,7 @@ fun WifiShareScreen(
             Spacer(Modifier.height(0.dp))
 
             val net = current
-            val wifiEnabled = runCatching {
-                (context.applicationContext.getSystemService(android.content.Context.WIFI_SERVICE) as android.net.wifi.WifiManager).isWifiEnabled
-            }.getOrDefault(false)
+            val wifiEnabled = WifiShareHelper.isWifiEnabled(context)
 
             QsCard {
                 Column(Modifier.fillMaxWidth()) {
@@ -197,14 +200,23 @@ fun WifiShareScreen(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             if (!WifiShareHelper.hasLocationPermission(context)) {
-                                locationLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                locationLauncher.launch(
+                                    arrayOf(
+                                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                        android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                    )
+                                )
                             } else if (!WifiShareHelper.isLocationServicesOn(context)) {
                                 Toast.makeText(context, "Please turn on location so the network name can be detected", Toast.LENGTH_LONG).show()
                                 WifiShareHelper.openLocationSettings(context)
                             } else {
                                 val info = WifiShareHelper.getCurrentWifi(context)
+                                current = info
                                 if (info != null) {
-                                    ssid = info.ssid
+                                    if (ssid.isBlank() || autoFilledSsid == ssid) {
+                                        ssid = info.ssid
+                                        autoFilledSsid = info.ssid
+                                    }
                                     Toast.makeText(context, "Using connected network: ${info.ssid}", Toast.LENGTH_SHORT).show()
                                 } else {
                                     Toast.makeText(context, "Network not detected — type the network name below", Toast.LENGTH_LONG).show()
@@ -232,6 +244,9 @@ fun WifiShareScreen(
                             onValueChange = { password = it },
                             label = { Text("Password") },
                             singleLine = true,
+                            supportingText = if (security != "NOPASS" && password.isBlank()) {
+                                { Text("Required for secured networks") }
+                            } else null,
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -280,7 +295,8 @@ fun WifiShareScreen(
             QsButton(
                 text = if (generating) "Generating…" else "Generate Wi-Fi QR",
                 icon = Icons.Filled.QrCode2,
-                enabled = ssid.isNotBlank() && !generating,
+                enabled = ssid.isNotBlank() && !generating &&
+                    (security == "NOPASS" || password.isNotBlank()),
                 onClick = {
                     val content = QRContentBuilder.buildWifi(ssid, password, security)
                     generating = true
@@ -293,10 +309,12 @@ fun WifiShareScreen(
                                 backgroundColor = 0xFFFFFFFF.toInt()
                             )
                         }
-                        bitmap = bmp
                         generating = false
-                        onShareReady(content)
-                        if (bmp == null) {
+                        if (bmp != null) {
+                            bitmap = bmp
+                            onShareReady(content)
+                        } else {
+                            bitmap = null
                             Toast.makeText(context, "Could not generate the QR — please retry", Toast.LENGTH_SHORT).show()
                         }
                     }

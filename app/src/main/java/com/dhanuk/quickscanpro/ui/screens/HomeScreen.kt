@@ -422,13 +422,7 @@ private fun PermissionPanel(showRationale: Boolean, onRequest: () -> Unit, onOpe
 private suspend fun decodeQrFromUri(context: android.content.Context, uri: Uri): String? {
     return suspendCancellableCoroutine { cont ->
         try {
-            val stream = context.contentResolver.openInputStream(uri)
-            if (stream == null) {
-                cont.resume(null, null)
-                return@suspendCancellableCoroutine
-            }
-            val bitmap = BitmapFactory.decodeStream(stream)
-            stream.close()
+            val bitmap = decodeSampledBitmap(context, uri, 2048)
             if (bitmap == null) {
                 cont.resume(null, null)
                 return@suspendCancellableCoroutine
@@ -448,5 +442,24 @@ private suspend fun decodeQrFromUri(context: android.content.Context, uri: Uri):
             Log.e(TAG, "decode failed", e)
             cont.resume(null, null)
         }
+    }
+}
+
+/** Decodes a content Uri, sub-sampling so the longest edge stays under [maxEdge] px. */
+private fun decodeSampledBitmap(context: android.content.Context, uri: Uri, maxEdge: Int): android.graphics.Bitmap? {
+    return try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+
+        var sample = 1
+        val longest = maxOf(bounds.outWidth, bounds.outHeight)
+        while (longest / sample > maxEdge) sample *= 2
+
+        val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+    } catch (e: Exception) {
+        Log.e(TAG, "bitmap decode failed", e)
+        null
     }
 }

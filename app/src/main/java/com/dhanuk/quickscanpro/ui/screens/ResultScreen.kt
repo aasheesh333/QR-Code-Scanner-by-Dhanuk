@@ -470,8 +470,18 @@ private fun WifiResult(data: String, onNavigateBack: () -> Unit) {
     }
 
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        ActionTile("Copy password", Icons.Filled.ContentCopy, filled = false, modifier = Modifier.weight(1f)) {
-            info?.let { copyToClipboard(context, it.password) }
+        ActionTile(
+            label = "Copy password",
+            icon = Icons.Filled.ContentCopy,
+            filled = false,
+            modifier = Modifier.weight(1f)
+        ) {
+            val pass = info?.password.orEmpty()
+            if (pass.isEmpty()) {
+                Toast.makeText(context, "No password stored in this code", Toast.LENGTH_SHORT).show()
+            } else {
+                copyToClipboard(context, pass)
+            }
         }
         ActionTile("Share", Icons.Filled.Share, filled = false, modifier = Modifier.weight(1f)) {
             shareText(context, data)

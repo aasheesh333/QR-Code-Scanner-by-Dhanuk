@@ -3,11 +3,15 @@ package com.dhanuk.quickscanpro.qrgenerator
 object QRContentBuilder {
 
     fun buildWifi(ssid: String, password: String, encryption: String): String {
-        val enc = when (encryption.uppercase()) {
+        val enc = when (encryption.uppercase().trim()) {
             "WPA", "WPA2", "WPA3" -> "WPA"
             "WEP" -> "WEP"
-            "NOPASS" -> "nopass"
+            "NOPASS", "NONE", "" -> "nopass"
             else -> "WPA"
+        }
+        // Open networks: omit the password field entirely per the ZXing spec.
+        if (enc == "nopass") {
+            return "WIFI:T:nopass;S:${escapeWifi(ssid)};;"
         }
         return "WIFI:T:$enc;S:${escapeWifi(ssid)};P:${escapeWifi(password)};;"
     }

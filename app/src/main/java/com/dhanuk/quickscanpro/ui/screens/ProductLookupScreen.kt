@@ -74,84 +74,88 @@ fun ProductLookupScreen(barcode: String, onNavigateBack: () -> Unit) {
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            when {
-                loading -> CircularProgressIndicator()
-                info != null -> {
-                    val p = info!!
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        QsCard {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                IconBadge(Icons.Filled.Storefront, size = 60.dp)
-                                Spacer(Modifier.height(12.dp))
+        when {
+            loading -> Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            info != null -> {
+                val p = info!!
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    QsCard {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            IconBadge(Icons.Filled.Storefront, size = 60.dp)
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                p.name,
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                p.brand,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (p.nutriscoreGrade.isNotBlank()) {
+                                Spacer(Modifier.height(10.dp))
                                 Text(
-                                    p.name,
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    textAlign = TextAlign.Center
+                                    "Nutri-Score: ${p.nutriscoreGrade}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
                                 )
-                                Text(
-                                    p.brand,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                if (p.nutriscoreGrade.isNotBlank()) {
-                                    Spacer(Modifier.height(10.dp))
-                                    Text(
-                                        "Nutri-Score: ${p.nutriscoreGrade}",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
                             }
                         }
-                        if (p.categories.isNotEmpty()) {
-                            QsCard {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconBadge(Icons.Filled.LocalOffer, size = 38.dp)
-                                    Spacer(Modifier.padding(horizontal = 6.dp))
-                                    Text(
-                                        p.categories.joinToString(", "),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
-                        if (p.quantity.isNotBlank()) {
-                            QsCard {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Quantity", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                                    Text(p.quantity, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                                }
-                            }
-                        }
-                        Text(
-                            "Barcode $barcode · Data from Open Food Facts",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                        )
                     }
+                    if (p.categories.isNotEmpty()) {
+                        QsCard {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconBadge(Icons.Filled.LocalOffer, size = 38.dp)
+                                Spacer(Modifier.padding(horizontal = 6.dp))
+                                Text(
+                                    p.categories.joinToString(", "),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                    if (p.quantity.isNotBlank()) {
+                        QsCard {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Quantity", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                                Text(p.quantity, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                        }
+                    }
+                    Text(
+                        "Barcode $barcode · Data from Open Food Facts",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    )
                 }
-                else -> QsEmptyState(
+            }
+            else -> Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                QsEmptyState(
                     icon = Icons.Filled.SearchOff,
                     title = "Product not found",
                     subtitle = "No information for barcode $barcode in the Open Food Facts database."

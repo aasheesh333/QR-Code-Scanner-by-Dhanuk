@@ -22,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CompareArrows
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +44,7 @@ import com.dhanuk.quickscanpro.ui.design.previewHeight
 import com.dhanuk.quickscanpro.ui.design.IconBadge
 import com.dhanuk.quickscanpro.ui.design.QsButton
 import com.dhanuk.quickscanpro.ui.design.QsCard
+import com.dhanuk.quickscanpro.ui.design.QsOutlinedButton
 import com.dhanuk.quickscanpro.ui.design.SectionLabel
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -132,11 +132,22 @@ fun CompareScanScreen(onNavigateBack: () -> Unit) {
                         modifier = Modifier.weight(1f)
                     )
                 }
-                QsButton(
-                    text = "Copy Code A",
-                    icon = Icons.Filled.SwapHoriz,
-                    onClick = { copy(context, a) }
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    QsOutlinedButton(
+                        text = "Copy Code A",
+                        modifier = Modifier.weight(1f),
+                        onClick = { copy(context, a) }
+                    )
+                    QsOutlinedButton(
+                        text = "Compare again",
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            left = null
+                            right = null
+                            scanningLeft = true
+                        }
+                    )
+                }
             } else {
                 QsButton(
                     text = if (a == null) "Scan code A first" else "Now scan code B",

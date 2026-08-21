@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContactPage
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
@@ -37,6 +38,8 @@ import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.TextSnippet
 import androidx.compose.material.icons.filled.ViewModule
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,8 +51,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -186,9 +191,15 @@ fun QRGeneratorScreen(
                 }
             }
 
+            val canGenerate = when (selectedType) {
+                QRContentBuilder.QRType.WIFI -> f1.isNotBlank() && (f3.equals("NOPASS", true) || f2.isNotBlank())
+                QRContentBuilder.QRType.CALENDAR -> f1.isNotBlank() && isValidDateTime(f3) && isValidDateTime(f4)
+                else -> f1.isNotBlank()
+            }
+
             QsButton(
                 text = "Generate QR code",
-                enabled = f1.isNotBlank(),
+                enabled = canGenerate,
                 onClick = { vm.generateFromInputs() }
             )
 
@@ -222,6 +233,10 @@ fun QRGeneratorScreen(
 }
 
 private data class QRChip(val type: QRContentBuilder.QRType, val label: String, val icon: ImageVector)
+
+/** Validates the iCal basic format YYYYMMDDTHHMMSS (optionally with Z suffix). */
+private fun isValidDateTime(value: String): Boolean =
+    Regex("""^\d{8}T\d{6}(Z?)$""").matches(value.trim())
 
 private val CHIPS = listOf(
     QRChip(QRContentBuilder.QRType.URL, "URL", Icons.Filled.Link),
@@ -260,7 +275,7 @@ private fun DynamicForm(
             QRContentBuilder.QRType.WIFI -> {
                 Field(f1, setF1, "Network name (SSID)", leadingIcon = Icons.Filled.Wifi)
                 Field(f2, setF2, "Password")
-                Field(f3, setF3, "Security (WPA / WEP / NOPASS)", "WPA")
+                SecurityField(f3, setF3)
             }
             QRContentBuilder.QRType.VCARD -> {
                 Field(f1, setF1, "Full name", leadingIcon = Icons.Filled.ContactPage)
@@ -271,8 +286,8 @@ private fun DynamicForm(
             QRContentBuilder.QRType.CALENDAR -> {
                 Field(f1, setF1, "Event title", leadingIcon = Icons.Filled.CalendarMonth)
                 Field(f2, setF2, "Location (optional)")
-                Field(f3, setF3, "Start · YYYYMMDDTHHMMSS", "20261231T180000")
-                Field(f4, setF4, "End · YYYYMMDDTHHMMSS", "20261231T210000")
+                DateTimeField(f3, setF3, "Start · YYYYMMDDTHHMMSS", "20261231T180000")
+                DateTimeField(f4, setF4, "End · YYYYMMDDTHHMMSS", "20261231T210000")
             }
         }
     }
@@ -297,4 +312,68 @@ private fun Field(
         shape = RoundedCornerShape(14.dp),
         modifier = Modifier.fillMaxWidth()
     )
+}
+
+@Composable
+private fun DateTimeField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String
+) {
+    val hasError = value.isNotBlank() && !isValidDateTime(value)
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        singleLine = true,
+        isError = hasError,
+        supportingText = if (hasError) {
+            { Text("Use format YYYYMMDDTHHMMSS, e.g. 20261231T180000") }
+        } else null,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun SecurityField(value: String, onValueChange: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = when (value.uppercase()) {
+        "WEP" -> "WEP"
+        "NOPASS" -> "None (open)"
+        else -> "WPA/WPA2/WPA3"
+    }
+    OutlinedTextField(
+        value = label,
+        onValueChange = {},
+        readOnly = true,
+        label = { Text("Security") },
+        shape = RoundedCornerShape(14.dp),
+        trailingIcon = {
+            IconButton(onClick = { expanded = true }) {
+                Icon(Icons.Filled.ExpandMore, contentDescription = "Choose security type")
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        listOf(
+            "WPA/WPA2/WPA3" to "WPA",
+            "WEP" to "WEP",
+            "None (open)" to "NOPASS"
+        ).forEach { (display, actual) ->
+            DropdownMenuItem(
+                text = { Text(display) },
+                onClick = {
+                    onValueChange(actual)
+                    expanded = false
+                }
+            )
+        }
+    }
 }

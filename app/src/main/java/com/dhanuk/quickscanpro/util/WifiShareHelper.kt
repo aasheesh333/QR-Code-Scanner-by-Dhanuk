@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
@@ -44,24 +47,52 @@ object WifiShareHelper {
 
     fun openLocationSettings(context: Context) {
         runCatching {
-            context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            context.startActivity(
+                Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
         }
+    }
+
+    fun isWifiEnabled(context: Context): Boolean {
+        val wm = context.applicationContext.getSystemService<WifiManager>() ?: return false
+        return runCatching { wm.isWifiEnabled }.getOrDefault(false)
     }
 
     fun getCurrentWifi(context: Context): CurrentWifi? {
         if (!hasLocationPermission(context)) return null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !isLocationServicesOn(context)) return null
-        return try {
-            val wm = context.applicationContext
-                .getSystemService(Context.WIFI_SERVICE) as WifiManager
-            if (!wm.isWifiEnabled) return null
-            val info = wm.connectionInfo ?: return null
-            var ssid = info.ssid ?: return null
-            ssid = ssid.removePrefix("\"").removeSuffix("\"")
-            if (ssid == "<unknown ssid>" || ssid.isBlank()) null
-            else CurrentWifi(ssid)
-        } catch (e: Exception) {
-            null
+        if (!isWifiEnabled(context)) return null
+        return readCurrentWifi(context)?.let(::sanitizeSsid)?.let(::CurrentWifi)
+    }
+
+    private fun readCurrentWifi(context: Context): String? {
+        val cm = context.applicationContext.getSystemService<ConnectivityManager>() ?: return null
+        val network = cm.activeNetwork ?: return null
+        val caps = runCatching { cm.getNetworkCapabilities(network) }.getOrNull() ?: return null
+        if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return null
+
+        // Modern path: NetworkCapabilities.transportInfo exposes the real SSID
+        // on Android 10+ (WifiManager.connectionInfo is deprecated and often
+        // returns <unknown ssid> on Android 12+).
+        val info = caps.transportInfo
+        if (info is WifiInfo) {
+            return runCatching { info.ssid }.getOrNull()
         }
+
+        // Legacy fallback for older devices / OEMs that don't fill transportInfo.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val wm = context.applicationContext.getSystemService<WifiManager>() ?: return null
+            return runCatching { wm.connectionInfo?.ssid }.getOrNull()
+        }
+        return null
+    }
+
+    private fun sanitizeSsid(raw: String): String? {
+        val ssid = raw
+            .removePrefix("\"")
+            .removeSuffix("\"")
+            .trim()
+        return if (ssid == "<unknown ssid>" || ssid.isBlank()) null else ssid
     }
 }
