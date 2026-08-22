@@ -120,13 +120,35 @@ object WifiShareHelper {
     fun isWifiEnabled(context: Context): Boolean {
         return try {
             if (!isWifiRadioOn(context)) return false
-            val cm = context.applicationContext.getSystemService(ConnectivityManager::class.java)
-                ?: return false
-            val network = cm.activeNetwork ?: return false
-            val caps = cm.getNetworkCapabilities(network) ?: return false
-            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+            findWifiCaps(context) != null
         } catch (_: Throwable) {
             false
+        }
+    }
+
+    /**
+     * Finds NetworkCapabilities for ANY connected Wi-Fi network — not just the
+     * default "active" one. On dual-SIM phones (common on Android 9/10), mobile
+     * data is often the default network while Wi-Fi stays connected in parallel,
+     * and `activeNetwork` alone then reports "no Wi-Fi".
+     */
+    @Suppress("DEPRECATION")
+    private fun findWifiCaps(context: Context): NetworkCapabilities? {
+        return try {
+            val cm = context.applicationContext.getSystemService(ConnectivityManager::class.java)
+                ?: return null
+            // Primary: the default network (covers single-stack devices too).
+            cm.activeNetwork?.let { cm.getNetworkCapabilities(it) }
+                ?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }
+                ?.let { return it }
+            // Fallback: all known networks (parallel Wi-Fi + LTE, captive portals).
+            for (network in cm.allNetworks ?: return null) {
+                val caps = cm.getNetworkCapabilities(network) ?: continue
+                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return caps
+            }
+            null
+        } catch (_: Throwable) {
+            null
         }
     }
 
@@ -153,15 +175,11 @@ object WifiShareHelper {
         }
     }
 
-    /** API 29+ modern path: NetworkCapabilities.transportInfo. */
+    /** API 29+ modern path: NetworkCapabilities.transportInfo (any Wi-Fi network). */
     private fun readTransportInfoSsid(context: Context): String? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
         return try {
-            val cm = context.applicationContext.getSystemService(ConnectivityManager::class.java)
-                ?: return null
-            val network = cm.activeNetwork ?: return null
-            val caps = cm.getNetworkCapabilities(network) ?: return null
-            if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return null
+            val caps = findWifiCaps(context) ?: return null
             val info = caps.transportInfo as? WifiInfo ?: return null
             info.ssid
         } catch (_: Throwable) {

@@ -1,6 +1,7 @@
 package com.dhanuk.quickscanpro.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -186,6 +189,13 @@ private fun VaultBody(modifier: Modifier) {
 
         val visible = if (favoritesOnly) vault.filter { it.isFavorite } else vault
 
+        // Group batch members into one expandable row, exactly like History —
+        // a hidden/vaulted bulk scan must stay a batch everywhere, never split
+        // into individual rows.
+        val batches = visible.filter { !it.batchId.isNullOrBlank() }.groupBy { it.batchId!! }
+        val singles = visible.filter { it.batchId.isNullOrBlank() }
+        var expandedBatch by rememberSaveable { mutableStateOf<String?>(null) }
+
         if (vault.isEmpty()) {
             QsEmptyState(
                 icon = Icons.Filled.Lock,
@@ -208,48 +218,63 @@ private fun VaultBody(modifier: Modifier) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item { Spacer(Modifier.height(4.dp)) }
-                items(visible, key = { it.id }) { scan ->
-                    QsCard(contentPadding = 14.dp) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconBadge(Icons.Filled.Lock)
-                            Spacer(Modifier.width(12.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    scan.note.ifBlank { scan.content },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    "${scan.type.uppercase()} · ${vaultTime(scan.timestamp)}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(onClick = { vm.toggleFavorite(scan) }) {
+
+                // One grouped row per hidden/vaulted batch (kept together, like History)
+                batches.forEach { (batchId, members) ->
+                    item(key = "group-$batchId") {
+                        val isExpanded = expandedBatch == batchId
+                        QsCard(contentPadding = 14.dp) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    expandedBatch = if (isExpanded) null else batchId
+                                }
+                            ) {
+                                IconBadge(Icons.Filled.Lock)
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "Bulk scan · ${members.size} items",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        vaultTime(members.last().timestamp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                                 Icon(
-                                    if (scan.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
-                                    contentDescription = "Toggle favorite",
-                                    tint = if (scan.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                )
-                            }
-                            IconButton(onClick = { confirmDelete = scan }) {
-                                Icon(
-                                    Icons.Filled.Delete,
-                                    contentDescription = "Delete",
+                                    if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                    contentDescription = if (isExpanded) "Collapse group" else "Expand group",
                                     tint = MaterialTheme.colorScheme.outline
-                                )
-                            }
-                            IconButton(onClick = { selectedItem = scan }) {
-                                Icon(
-                                    Icons.Filled.LockOpen,
-                                    contentDescription = "View / Unvault",
-                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
                     }
+                    if (isExpanded) {
+                        items(members, key = { it.id }) { scan ->
+                            Box(Modifier.padding(start = 24.dp)) {
+                                VaultItemRow(
+                                    scan = scan,
+                                    onFavorite = { vm.toggleFavorite(scan) },
+                                    onDelete = { confirmDelete = scan },
+                                    onView = { selectedItem = scan }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                items(singles, key = { it.id }) { scan ->
+                    VaultItemRow(
+                        scan = scan,
+                        onFavorite = { vm.toggleFavorite(scan) },
+                        onDelete = { confirmDelete = scan },
+                        onView = { selectedItem = scan }
+                    )
                 }
                 item { Spacer(Modifier.height(8.dp)) }
             }
@@ -304,6 +329,56 @@ private fun VaultBody(modifier: Modifier) {
                 TextButton(onClick = { confirmDelete = null }) { Text("Cancel") }
             }
         )
+    }
+}
+
+@Composable
+private fun VaultItemRow(
+    scan: ScanResult,
+    onFavorite: () -> Unit,
+    onDelete: () -> Unit,
+    onView: () -> Unit
+) {
+    QsCard(contentPadding = 14.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(Icons.Filled.Lock)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    scan.note.ifBlank { scan.content },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    "${scan.type.uppercase()} · ${vaultTime(scan.timestamp)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(onClick = onFavorite) {
+                Icon(
+                    if (scan.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                    contentDescription = "Toggle favorite",
+                    tint = if (scan.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                )
+            }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.outline
+                )
+            }
+            IconButton(onClick = onView) {
+                Icon(
+                    Icons.Filled.LockOpen,
+                    contentDescription = "View / Unvault",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
     }
 }
 
