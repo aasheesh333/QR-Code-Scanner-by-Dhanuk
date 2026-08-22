@@ -7,7 +7,7 @@ object AppConfig {
     const val SUPPORT_EMAIL = "support@dhanuksoftwares.com"
     const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.dhanuk.quickscanpro"
     const val WEBSITE_URL = "https://dhanuk.page.gd/QuickScan-Pro/"
-    const val SHARE_TEXT = """
+    val SHARE_TEXT = """
 Check out QuickScan Pro — the fastest QR & barcode scanner I've used.
 
 * Instant scanning for QR codes, links, Wi-Fi, contacts & more
