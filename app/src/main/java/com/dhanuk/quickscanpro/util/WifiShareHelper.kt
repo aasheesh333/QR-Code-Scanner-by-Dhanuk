@@ -153,22 +153,6 @@ object WifiShareHelper {
         }
     }
 
-            // Try every source and take the first real SSID.
-            val candidates = listOf(
-                { readTransportInfoSsid(context) },
-                { readConnectionInfoSsid(context) },
-                { matchSsidFromScan(context) }
-            )
-            for (candidate in candidates) {
-                val ssid = candidate()?.let(::sanitizeSsid)
-                if (ssid != null) return CurrentWifi(ssid)
-            }
-            null
-        } catch (_: Throwable) {
-            null
-        }
-    }
-
     /** API 29+ modern path: NetworkCapabilities.transportInfo. */
     private fun readTransportInfoSsid(context: Context): String? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
