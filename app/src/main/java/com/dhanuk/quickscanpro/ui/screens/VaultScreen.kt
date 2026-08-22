@@ -221,8 +221,8 @@ private fun VaultBody(modifier: Modifier) {
 
                 // One grouped row per hidden/vaulted batch (kept together, like History)
                 batches.forEach { (batchId, members) ->
+                    val isExpanded = expandedBatch == batchId
                     item(key = "group-$batchId") {
-                        val isExpanded = expandedBatch == batchId
                         QsCard(contentPadding = 14.dp) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
