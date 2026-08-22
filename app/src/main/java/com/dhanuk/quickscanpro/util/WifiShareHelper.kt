@@ -17,16 +17,42 @@ import androidx.core.content.ContextCompat
  * One-tap "share my WiFi" — reads the currently connected network's
  * SSID so the user can instantly generate a QR for guests.
  *
- * Requirements: ACCESS_FINE_LOCATION is needed to read the SSID, and
- * on Android 10+ location *services* must also be ON — otherwise Android
- * hands back `<unknown ssid>` and detection silently fails.
+ * Reality on modern Android (researched against platform docs, AOSP
+ * behaviour and OEM reports, Aug 2026):
  *
- * NOTE: every method is defensive — all platform calls are wrapped in
+ * 1. Android 10+ gates the SSID behind location: ACCESS_FINE_LOCATION
+ *    (or COARSE on most ROMs) **and** location services must be ON,
+ *    otherwise the platform hands back `<unknown ssid>`.
+ * 2. Even then there is no single reliable API:
+ *      - `NetworkCapabilities.transportInfo` (API 29+) is the modern path
+ *        but several OEM ROMs return `<unknown ssid>` there;
+ *      - `WifiManager.connectionInfo` is deprecated on 29+ yet *does*
+ *        work on many devices — so we try both;
+ *      - the most robust fallback is BSSID matching: read the connected
+ *        BSSID (often available even when the SSID is redacted) and look
+ *        it up in `WifiManager.scanResults`.
+ * 3. Android 13 (API 33)+ added NEARBY_WIFI_DEVICES with the
+ *    `neverForLocation` flag, which unlocks scan results without any
+ *    location permission — we use it as an extra source.
+ *
+ * Every method is defensive — all platform calls are wrapped in
  * try/catch(Throwable) so a misbehaving OEM ROM can never crash the app.
  */
 object WifiShareHelper {
 
     data class CurrentWifi(val ssid: String)
+
+    /** Permissions worth requesting on this device to unlock SSID reading. */
+    fun permissionsToRequest(): Array<String> {
+        val list = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            list.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        }
+        return list.toTypedArray()
+    }
 
     fun hasLocationPermission(context: Context): Boolean {
         return try {
@@ -41,6 +67,23 @@ object WifiShareHelper {
         } catch (_: Throwable) {
             false
         }
+    }
+
+    /** API 33+ scan permission that does NOT need location services. */
+    fun hasNearbyWifiPermission(context: Context): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.NEARBY_WIFI_DEVICES
+            ) == PackageManager.PERMISSION_GRANTED
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    /** Any permission that lets us attempt SSID detection at all. */
+    fun hasAnyDetectionPermission(context: Context): Boolean {
+        return hasLocationPermission(context) || hasNearbyWifiPermission(context)
     }
 
     fun isLocationServicesOn(context: Context): Boolean {
@@ -62,9 +105,21 @@ object WifiShareHelper {
         }
     }
 
+    /** True if the Wi-Fi radio is on (regardless of being connected). */
+    fun isWifiRadioOn(context: Context): Boolean {
+        return try {
+            val wm = context.applicationContext.getSystemService(WifiManager::class.java)
+                ?: return false
+            wm.isWifiEnabled
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
     /** True if the device currently has an active Wi-Fi network. */
     fun isWifiEnabled(context: Context): Boolean {
         return try {
+            if (!isWifiRadioOn(context)) return false
             val cm = context.applicationContext.getSystemService(ConnectivityManager::class.java)
                 ?: return false
             val network = cm.activeNetwork ?: return false
@@ -77,32 +132,46 @@ object WifiShareHelper {
 
     fun getCurrentWifi(context: Context): CurrentWifi? {
         return try {
-            if (!hasLocationPermission(context)) return null
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !isLocationServicesOn(context)) return null
+            if (!hasAnyDetectionPermission(context)) return null
             if (!isWifiEnabled(context)) return null
-            readCurrentWifi(context)?.let(::sanitizeSsid)?.let(::CurrentWifi)
+
+            // Try every source and take the first real SSID. Each source
+            // guards itself (redacted <unknown ssid> → null), so a source the
+            // device blocks is simply skipped rather than aborting detection.
+            val candidates = listOf(
+                { readTransportInfoSsid(context) },
+                { readConnectionInfoSsid(context) },
+                { matchSsidFromScan(context) }
+            )
+            for (candidate in candidates) {
+                val ssid = candidate()?.let(::sanitizeSsid)
+                if (ssid != null) return CurrentWifi(ssid)
+            }
+            null
         } catch (_: Throwable) {
             null
         }
     }
 
-    private fun readCurrentWifi(context: Context): String? {
-        // ── Legacy path (API 23–28): WifiManager.connectionInfo is the only way. ──
-        // getTransportInfo() does NOT exist below API 29 — calling it throws
-        // NoSuchMethodError, which is why the version check must come FIRST.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            return try {
-                val wm = context.applicationContext.getSystemService(WifiManager::class.java)
-                    ?: return null
-                wm.connectionInfo?.ssid
-            } catch (_: Throwable) {
-                null
+            // Try every source and take the first real SSID.
+            val candidates = listOf(
+                { readTransportInfoSsid(context) },
+                { readConnectionInfoSsid(context) },
+                { matchSsidFromScan(context) }
+            )
+            for (candidate in candidates) {
+                val ssid = candidate()?.let(::sanitizeSsid)
+                if (ssid != null) return CurrentWifi(ssid)
             }
+            null
+        } catch (_: Throwable) {
+            null
         }
+    }
 
-        // ── Modern path (API 29+): NetworkCapabilities.transportInfo exposes the
-        // real SSID. WifiManager.connectionInfo is deprecated and often returns
-        // <unknown ssid> on Android 12+.
+    /** API 29+ modern path: NetworkCapabilities.transportInfo. */
+    private fun readTransportInfoSsid(context: Context): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
         return try {
             val cm = context.applicationContext.getSystemService(ConnectivityManager::class.java)
                 ?: return null
@@ -112,14 +181,43 @@ object WifiShareHelper {
             val info = caps.transportInfo as? WifiInfo ?: return null
             info.ssid
         } catch (_: Throwable) {
-            // OEM-specific SecurityException / dead object — fall back to legacy.
-            try {
-                val wm = context.applicationContext.getSystemService(WifiManager::class.java)
-                    ?: return null
-                wm.connectionInfo?.ssid
-            } catch (_: Throwable) {
-                null
-            }
+            null
+        }
+    }
+
+    /**
+     * Legacy path — the only one below API 29, and still a valid fallback on
+     * newer versions where some OEMs return a real SSID here but `<unknown
+     * ssid>` from transportInfo (seen on various MIUI/ColorOS builds).
+     */
+    private fun readConnectionInfoSsid(context: Context): String? {
+        return try {
+            val wm = context.applicationContext.getSystemService(WifiManager::class.java)
+                ?: return null
+            wm.connectionInfo?.ssid
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    /**
+     * Most robust fallback: the connected BSSID is usually available even when
+     * the SSID string is redacted — match it against scan results. This is the
+     * approach recommended for Android 13+ (works with NEARBY_WIFI_DEVICES
+     * alone, no location needed).
+     */
+    private fun matchSsidFromScan(context: Context): String? {
+        return try {
+            val wm = context.applicationContext.getSystemService(WifiManager::class.java)
+                ?: return null
+            val info = wm.connectionInfo ?: return null
+            val bssid = info.bssid ?: return null
+            if (bssid.equals("02:00:00:00:00:00", ignoreCase = true)) return null
+            val results = wm.scanResults ?: return null
+            results.firstOrNull { it.BSSID.equals(bssid, ignoreCase = true) }
+                ?.SSID
+        } catch (_: Throwable) {
+            null
         }
     }
 

@@ -6,6 +6,18 @@ object AppConfig {
     const val APP_NAME = "QuickScan Pro"
     const val SUPPORT_EMAIL = "support@dhanuksoftwares.com"
     const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.dhanuk.quickscanpro"
+    const val WEBSITE_URL = "https://dhanuk.page.gd/QuickScan-Pro/"
+    const val SHARE_TEXT = """
+Check out QuickScan Pro — the fastest QR & barcode scanner I've used.
+
+* Instant scanning for QR codes, links, Wi-Fi, contacts & more
+* Generate and share Wi-Fi QR codes so friends connect in one scan
+* Bulk scan & export to Excel/CSV, secure vault for private scans
+* Password security check, compare mode, dark theme — all free & ad-light
+
+Download: $PLAY_STORE_URL
+Website: $WEBSITE_URL
+""".trimIndent()
 
     object AdMob {
         const val BANNER_AD_UNIT_ID_HOME = BuildConfig.BANNER_AD_ID

@@ -210,9 +210,10 @@ fun SettingsScreen(
                             context.startActivity(Intent.createChooser(
                                 Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, "QuickScan Pro — ${AppConfig.PLAY_STORE_URL}")
+                                    putExtra(Intent.EXTRA_SUBJECT, "QuickScan Pro — QR & barcode scanner")
+                                    putExtra(Intent.EXTRA_TEXT, AppConfig.SHARE_TEXT)
                                 },
-                                "Share via"
+                                "Share QuickScan Pro"
                             ))
                         }
                     }

@@ -135,9 +135,11 @@ fun WifiShareScreen(
     ) { grants ->
         val fineGranted = grants[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
         val coarseGranted = grants[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
-        if (fineGranted || coarseGranted) {
+        val nearbyGranted = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+            (grants[android.Manifest.permission.NEARBY_WIFI_DEVICES] ?: false)
+        if (fineGranted || coarseGranted || nearbyGranted) {
             when {
-                !WifiShareHelper.isLocationServicesOn(context) -> {
+                !WifiShareHelper.isLocationServicesOn(context) && !nearbyGranted -> {
                     Toast.makeText(context, "Please turn on location so the network name can be detected", Toast.LENGTH_LONG).show()
                     WifiShareHelper.openLocationSettings(context)
                 }
@@ -151,12 +153,19 @@ fun WifiShareScreen(
                         }
                         Toast.makeText(context, "Using connected network: ${info.ssid}", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context, "Network not detected — type the network name below", Toast.LENGTH_LONG).show()
+                        // Location may be off while nearby-devices is granted —
+                        // retry once with location on, else guide to manual entry.
+                        if (!WifiShareHelper.isLocationServicesOn(context)) {
+                            Toast.makeText(context, "Turn on location too — Android often requires it to reveal the network name", Toast.LENGTH_LONG).show()
+                            WifiShareHelper.openLocationSettings(context)
+                        } else {
+                            Toast.makeText(context, "Network not detected — type the network name below", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
         } else {
-            Toast.makeText(context, "Location permission is needed to read the connected network", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Location or nearby-devices permission is needed to read the connected network", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -208,9 +217,9 @@ fun WifiShareScreen(
                                 when {
                                     net != null ->
                                         "Fill in the password once, then your guests can scan the QR to join instantly."
-                                    !WifiShareHelper.hasLocationPermission(context) ->
-                                        "Detecting your network needs location permission — the network password itself is never readable by any app, so type it once below."
-                                    !WifiShareHelper.isLocationServicesOn(context) ->
+                                    !WifiShareHelper.hasAnyDetectionPermission(context) ->
+                                        "Detecting your network needs location or nearby-devices permission — the network password itself is never readable by any app, so type it once below."
+                                    !WifiShareHelper.isLocationServicesOn(context) && !WifiShareHelper.hasNearbyWifiPermission(context) ->
                                         "Turn on location services to auto-detect your network (Android requires it to reveal the network name)."
                                     !wifiEnabled ->
                                         "Wi-Fi is off or nothing is connected. Type the network name below instead."
@@ -228,14 +237,9 @@ fun WifiShareScreen(
                         icon = Icons.Filled.Wifi,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            if (!WifiShareHelper.hasLocationPermission(context)) {
-                                locationLauncher.launch(
-                                    arrayOf(
-                                        android.Manifest.permission.ACCESS_FINE_LOCATION,
-                                        android.Manifest.permission.ACCESS_COARSE_LOCATION
-                                    )
-                                )
-                            } else if (!WifiShareHelper.isLocationServicesOn(context)) {
+                            if (!WifiShareHelper.hasAnyDetectionPermission(context)) {
+                                locationLauncher.launch(WifiShareHelper.permissionsToRequest())
+                            } else if (!WifiShareHelper.isLocationServicesOn(context) && !WifiShareHelper.hasNearbyWifiPermission(context)) {
                                 Toast.makeText(context, "Please turn on location so the network name can be detected", Toast.LENGTH_LONG).show()
                                 WifiShareHelper.openLocationSettings(context)
                             } else {
