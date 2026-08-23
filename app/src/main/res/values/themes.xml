@@ -14,7 +14,7 @@
 
     <style name="Theme.QuickScanPro.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/dhanuk_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.QuickScanPro</item>
     </style>
 </resources>
