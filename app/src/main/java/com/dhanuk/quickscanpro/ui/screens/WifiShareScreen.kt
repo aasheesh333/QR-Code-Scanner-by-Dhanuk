@@ -102,7 +102,12 @@ fun WifiShareScreen(
             override fun onLost(network: android.net.Network) = refresh()
         }
         if (callback != null && cm != null) {
-            runCatching { cm.registerDefaultNetworkCallback(callback) }
+            // Listen specifically for Wi-Fi. The default callback can point to
+            // mobile data on dual-SIM devices even while Wi-Fi is connected.
+            val wifiRequest = android.net.NetworkRequest.Builder()
+                .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+                .build()
+            runCatching { cm.registerNetworkCallback(wifiRequest, callback) }
         }
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -117,6 +122,8 @@ fun WifiShareScreen(
     var security by rememberSaveable { mutableStateOf("WPA") }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var generating by remember { mutableStateOf(false) }
+    var detecting by remember { mutableStateOf(false) }
+    var askedForWifiPermissions by rememberSaveable { mutableStateOf(false) }
     var autoFilledSsid by remember { mutableStateOf<String?>(null) }
 
     // Auto-fill the SSID when detection succeeds, but never overwrite what the
@@ -130,6 +137,32 @@ fun WifiShareScreen(
         }
     }
 
+    fun detectConnectedNetwork(showToastOnFailure: Boolean) {
+        if (detecting) return
+        detecting = true
+        scope.launch {
+            val info = withContext(Dispatchers.IO) {
+                WifiShareHelper.getCurrentWifiWithRetries(context)
+            }
+            detecting = false
+            current = info
+            if (info != null) {
+                if (ssid.isBlank() || autoFilledSsid == ssid) {
+                    ssid = info.ssid
+                    autoFilledSsid = info.ssid
+                }
+                Toast.makeText(context, "Using connected network: ${info.ssid}", Toast.LENGTH_SHORT).show()
+            } else if (showToastOnFailure) {
+                if (!WifiShareHelper.isLocationServicesOn(context)) {
+                    Toast.makeText(context, "Turn on location too — Android often requires it to reveal the network name", Toast.LENGTH_LONG).show()
+                    WifiShareHelper.openLocationSettings(context)
+                } else {
+                    Toast.makeText(context, "Network not detected — type the network name below", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     val locationLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
@@ -138,34 +171,27 @@ fun WifiShareScreen(
         val nearbyGranted = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
             (grants[android.Manifest.permission.NEARBY_WIFI_DEVICES] ?: false)
         if (fineGranted || coarseGranted || nearbyGranted) {
-            when {
-                !WifiShareHelper.isLocationServicesOn(context) && !nearbyGranted -> {
-                    Toast.makeText(context, "Please turn on location so the network name can be detected", Toast.LENGTH_LONG).show()
-                    WifiShareHelper.openLocationSettings(context)
-                }
-                else -> {
-                    val info = WifiShareHelper.getCurrentWifi(context)
-                    current = info
-                    if (info != null) {
-                        if (ssid.isBlank() || autoFilledSsid == ssid) {
-                            ssid = info.ssid
-                            autoFilledSsid = info.ssid
-                        }
-                        Toast.makeText(context, "Using connected network: ${info.ssid}", Toast.LENGTH_SHORT).show()
-                    } else {
-                        // Location may be off while nearby-devices is granted —
-                        // retry once with location on, else guide to manual entry.
-                        if (!WifiShareHelper.isLocationServicesOn(context)) {
-                            Toast.makeText(context, "Turn on location too — Android often requires it to reveal the network name", Toast.LENGTH_LONG).show()
-                            WifiShareHelper.openLocationSettings(context)
-                        } else {
-                            Toast.makeText(context, "Network not detected — type the network name below", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
+            if (!WifiShareHelper.isLocationServicesOn(context) && !nearbyGranted) {
+                Toast.makeText(context, "Please turn on location so the network name can be detected", Toast.LENGTH_LONG).show()
+                WifiShareHelper.openLocationSettings(context)
+            } else {
+                detectConnectedNetwork(showToastOnFailure = true)
             }
         } else {
             Toast.makeText(context, "Location or nearby-devices permission is needed to read the connected network", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // Open → this screen means the user wants to share the network, so request
+    // the detection permission immediately instead of waiting for a second tap.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (!WifiShareHelper.hasAnyDetectionPermission(context)) {
+            if (!askedForWifiPermissions) {
+                askedForWifiPermissions = true
+                locationLauncher.launch(WifiShareHelper.permissionsToRequest())
+            }
+        } else if (current == null) {
+            detectConnectedNetwork(showToastOnFailure = false)
         }
     }
 
@@ -208,6 +234,7 @@ fun WifiShareScreen(
                             Text(
                                 when {
                                     net != null -> "Connected to ${net.ssid}"
+                                    detecting -> "Detecting network…"
                                     else -> "No network detected"
                                 },
                                 style = MaterialTheme.typography.titleSmall,
@@ -217,6 +244,8 @@ fun WifiShareScreen(
                                 when {
                                     net != null ->
                                         "Fill in the password once, then your guests can scan the QR to join instantly."
+                                    detecting ->
+                                        "Reading the connected Wi-Fi name from Android…"
                                     !WifiShareHelper.hasAnyDetectionPermission(context) ->
                                         "Detecting your network needs location or nearby-devices permission — the network password itself is never readable by any app, so type it once below."
                                     !WifiShareHelper.isLocationServicesOn(context) && !WifiShareHelper.hasNearbyWifiPermission(context) ->
@@ -233,8 +262,9 @@ fun WifiShareScreen(
                     }
                     Spacer(Modifier.height(10.dp))
                     QsOutlinedButton(
-                        text = "Use connected network",
+                        text = if (detecting) "Detecting network…" else "Use connected network",
                         icon = Icons.Filled.Wifi,
+                        enabled = !detecting,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             if (!WifiShareHelper.hasAnyDetectionPermission(context)) {
@@ -243,17 +273,7 @@ fun WifiShareScreen(
                                 Toast.makeText(context, "Please turn on location so the network name can be detected", Toast.LENGTH_LONG).show()
                                 WifiShareHelper.openLocationSettings(context)
                             } else {
-                                val info = WifiShareHelper.getCurrentWifi(context)
-                                current = info
-                                if (info != null) {
-                                    if (ssid.isBlank() || autoFilledSsid == ssid) {
-                                        ssid = info.ssid
-                                        autoFilledSsid = info.ssid
-                                    }
-                                    Toast.makeText(context, "Using connected network: ${info.ssid}", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, "Network not detected — type the network name below", Toast.LENGTH_LONG).show()
-                                }
+                                detectConnectedNetwork(showToastOnFailure = true)
                             }
                         }
                     )

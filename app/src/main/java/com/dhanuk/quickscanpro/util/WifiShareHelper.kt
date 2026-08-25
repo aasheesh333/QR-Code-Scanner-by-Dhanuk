@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.delay
 
 /**
  * One-tap "share my WiFi" — reads the currently connected network's
@@ -163,6 +164,7 @@ object WifiShareHelper {
             val candidates = listOf(
                 { readTransportInfoSsid(context) },
                 { readConnectionInfoSsid(context) },
+                { readConfiguredNetworkSsid(context) },
                 { matchSsidFromScan(context) }
             )
             for (candidate in candidates) {
@@ -172,6 +174,34 @@ object WifiShareHelper {
             null
         } catch (_: Throwable) {
             null
+        }
+    }
+
+    /**
+     * Detection can lag behind the system by a moment after a network connects
+     * or permissions are granted. Try a few times and request one fresh scan;
+     * this avoids false "not detected" states on Xiaomi/Oppo/Vivo/Realme ROMs.
+     */
+    suspend fun getCurrentWifiWithRetries(
+        context: Context,
+        attempts: Int = 5,
+        delayMs: Long = 350
+    ): CurrentWifi? {
+        repeat(attempts) { attempt ->
+            getCurrentWifi(context)?.let { return it }
+            if (attempt < attempts - 1) {
+                requestFreshScan(context)
+                delay(delayMs)
+            }
+        }
+        return null
+    }
+
+    /** Best-effort scan refresh. Android may throttle it; false is safe to ignore. */
+    @Suppress("DEPRECATION")
+    private fun requestFreshScan(context: Context) {
+        runCatching {
+            context.applicationContext.getSystemService(WifiManager::class.java)?.startScan()
         }
     }
 
@@ -197,6 +227,24 @@ object WifiShareHelper {
             val wm = context.applicationContext.getSystemService(WifiManager::class.java)
                 ?: return null
             wm.connectionInfo?.ssid
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    /**
+     * Some OEM builds redact WifiInfo.ssid but still expose the configured
+     * network matching connectionInfo.networkId. Use it when available.
+     */
+    @Suppress("DEPRECATION")
+    private fun readConfiguredNetworkSsid(context: Context): String? {
+        return try {
+            val wm = context.applicationContext.getSystemService(WifiManager::class.java)
+                ?: return null
+            val networkId = wm.connectionInfo?.networkId ?: return null
+            wm.configuredNetworks
+                ?.firstOrNull { it.networkId == networkId }
+                ?.SSID
         } catch (_: Throwable) {
             null
         }
