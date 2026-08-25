@@ -251,7 +251,13 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     fun saveAsVaulted(content: String) {
         val detectedType = BarcodeTypeDetector.detectType(content)
         val autoCat = AutoOrganizer.categorize(detectedType, content)
-        val enriched = ScanResult(content = content, type = detectedType, autoCategory = autoCat, isVault = true)
+        val enriched = ScanResult(
+            content = content,
+            type = detectedType,
+            autoCategory = autoCat,
+            isVault = true,
+            isHidden = true
+        )
 
         lastSavedContent = content
         lastSavedTime = System.currentTimeMillis()

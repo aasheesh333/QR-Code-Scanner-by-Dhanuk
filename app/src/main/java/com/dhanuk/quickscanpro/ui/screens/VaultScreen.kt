@@ -102,10 +102,23 @@ fun VaultScreen(onNavigateBack: () -> Unit) {
                     IconBadge(Icons.Filled.Lock, size = 76.dp)
                     Text("Vault is off", style = MaterialTheme.typography.titleLarge)
                     Text(
-                        "Your vault uses your phone's own screen lock. Turn on \"Phone lock\" for the vault in Settings to protect your scans.",
+                        "Your vault uses your phone's own screen lock. Turn on phone lock to view hidden scans after unlocking.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (hasDeviceLock) {
+                        QsButton(
+                            text = "Turn on phone lock",
+                            icon = Icons.Filled.Fingerprint,
+                            onClick = { settingsVm.setVaultLockMode("device") }
+                        )
+                    } else {
+                        QsButton(
+                            text = "Set up device lock",
+                            icon = Icons.Filled.Lock,
+                            onClick = { VaultAuth.openSecuritySettings(context) }
+                        )
+                    }
                     QsOutlinedButton(text = "Go back", onClick = onNavigateBack)
                 }
             }
@@ -200,7 +213,7 @@ private fun VaultBody(modifier: Modifier) {
             QsEmptyState(
                 icon = Icons.Filled.Lock,
                 title = "Vault is empty",
-                subtitle = "From any scan result, tap Vault to hide it here behind your phone lock.",
+                subtitle = "Tap the eye icon in History or Vault on a result to protect it here behind your screen lock.",
                 modifier = Modifier.fillMaxWidth().weight(1f)
             )
         } else if (visible.isEmpty()) {

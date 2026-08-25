@@ -37,7 +37,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.outlined.Delete
@@ -79,7 +78,9 @@ import com.dhanuk.quickscanpro.ui.design.QsCard
 import com.dhanuk.quickscanpro.ui.design.QsEmptyState
 import com.dhanuk.quickscanpro.util.BarcodeTypeDetector
 import com.dhanuk.quickscanpro.util.HistoryExporter
+import com.dhanuk.quickscanpro.util.VaultAuth
 import com.dhanuk.quickscanpro.viewmodel.HistoryViewModel
+import com.dhanuk.quickscanpro.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -94,6 +95,8 @@ fun HistoryScreen(
     onRowClick: (ScanResult) -> Unit
 ) {
     val vm: HistoryViewModel = viewModel()
+    val settingsVm: SettingsViewModel = viewModel()
+    val vaultLockMode by settingsVm.vaultLockMode.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val items by vm.filteredHistory.collectAsState()
@@ -103,6 +106,23 @@ fun HistoryScreen(
     var search by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf("All") }
     var pendingDelete by remember { mutableStateOf<ScanResult?>(null) }
+
+    fun ensureVaultLockAvailable(): Boolean {
+        if (VaultAuth.hasDeviceLock(context)) {
+            // Hiding into Vault must not strand data behind the "vault off" state.
+            if (vaultLockMode == "none") settingsVm.setVaultLockMode("device")
+            return true
+        }
+        Toast.makeText(context, "Set a phone screen lock to use the vault", Toast.LENGTH_LONG).show()
+        VaultAuth.openSecuritySettings(context)
+        return false
+    }
+
+    fun hideToVault(scan: ScanResult) {
+        if (!ensureVaultLockAvailable()) return
+        vm.setHidden(scan, true)
+        Toast.makeText(context, "Hidden and moved to vault", Toast.LENGTH_SHORT).show()
+    }
 
     fun exportNow() {
         if (all.isEmpty()) {
@@ -230,7 +250,7 @@ fun HistoryScreen(
                                     onClick = { onRowClick(item.scan) },
                                     onFavorite = { vm.toggleFavorite(item.scan) },
                                     onShare = { shareScan(context, item.scan) },
-                                    onHide = { vm.setHidden(item.scan, true) },
+                                    onHide = { hideToVault(item.scan) },
                                     onDelete = { pendingDelete = item.scan }
                                 )
                                 is HistItem.Batch -> BatchGroupRow(
@@ -240,6 +260,7 @@ fun HistoryScreen(
                                         expandedBatch = if (expandedBatch == item.batchId) null else item.batchId
                                     },
                                     vm = vm,
+                                    canHideToVault = { ensureVaultLockAvailable() },
                                     onRowClick = onRowClick,
                                     onDelete = { pendingDelete = it }
                                 )
@@ -300,19 +321,21 @@ private fun BatchGroupRow(
     expanded: Boolean,
     onToggleExpand: () -> Unit,
     vm: HistoryViewModel,
+    canHideToVault: () -> Boolean,
     onRowClick: (ScanResult) -> Unit,
     onDelete: (ScanResult) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val batchId = batch.batchId
-    // Full children (incl. hidden) so hidden rows stay reachable / unhideable.
+    // Read the full batch for accurate counts, but render only visible children.
     val allChildren by remember(batchId) { vm.batchItems(batchId) }
         .collectAsState(initial = batch.children)
-    val children = if (allChildren.isEmpty()) batch.children else allChildren
-    val visibleChildren = children.filter { !it.isHidden }
-    val anyHidden = children.any { it.isHidden }
-    val latest = children.maxOfOrNull { it.timestamp } ?: 0L
+    val batchChildren = if (allChildren.isEmpty()) batch.children else allChildren
+    // Hidden rows belong only to Vault; never reveal their content in History.
+    val children = batchChildren.filter { !it.isHidden && !it.isVault }
+    val vaultedCount = batchChildren.count { it.isHidden || it.isVault }
+    val latest = batchChildren.maxOfOrNull { it.timestamp } ?: 0L
     var showBatchDelete by remember { mutableStateOf(false) }
 
     QsCard(contentPadding = 14.dp) {
@@ -328,14 +351,18 @@ private fun BatchGroupRow(
                     .clickable(onClick = onToggleExpand)
             ) {
                 Text(
-                    "Bulk scan (${children.size} items)",
+                    "Bulk scan (${batchChildren.size} items)",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    "${visibleChildren.size} visible · ${relativeTime(latest)}",
+                    buildString {
+                        append("${children.size} visible")
+                        if (vaultedCount > 0) append(" · $vaultedCount in Vault")
+                        append(" · ${relativeTime(latest)}")
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -358,22 +385,22 @@ private fun BatchGroupRow(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = {
                     scope.launch {
-                        if (visibleChildren.isEmpty()) {
+                        if (children.isEmpty()) {
                             Toast.makeText(context, "Nothing visible to export — unhide rows first", Toast.LENGTH_SHORT).show()
                         } else {
-                            val uri = HistoryExporter.exportAsCsv(context, visibleChildren)
+                            val uri = HistoryExporter.exportAsCsv(context, children)
                             if (uri != null) HistoryExporter.shareCsv(context, uri)
                         }
                     }
                 }) { Icon(Icons.Filled.FileDownload, contentDescription = "Export batch", tint = MaterialTheme.colorScheme.primary) }
                 IconButton(onClick = {
-                    if (visibleChildren.isEmpty()) {
+                    if (children.isEmpty()) {
                         Toast.makeText(context, "Nothing visible to share — unhide rows first", Toast.LENGTH_SHORT).show()
                         return@IconButton
                     }
                     val text = buildString {
-                        appendLine("QuickScan Pro bulk scan — ${visibleChildren.size} items")
-                        visibleChildren.forEachIndexed { i, it -> appendLine("${i + 1}. [${it.type.uppercase()}] ${it.content}") }
+                        appendLine("QuickScan Pro bulk scan — ${children.size} items")
+                        children.forEachIndexed { i, it -> appendLine("${i + 1}. [${it.type.uppercase()}] ${it.content}") }
                     }
                     runCatching {
                         context.startActivity(android.content.Intent.createChooser(
@@ -386,16 +413,16 @@ private fun BatchGroupRow(
                     }
                 }) { Icon(Icons.Filled.Share, contentDescription = "Share batch", tint = MaterialTheme.colorScheme.primary) }
                 IconButton(onClick = {
-                    if (anyHidden) vm.setBatchHidden(batchId, false) else vm.setBatchHidden(batchId, true)
-                    Toast.makeText(
-                        context,
-                        if (anyHidden) "All rows unhidden" else "All rows hidden (excluded from export)",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    if (children.isEmpty()) {
+                        Toast.makeText(context, "No visible rows to hide", Toast.LENGTH_SHORT).show()
+                    } else if (canHideToVault()) {
+                        vm.setBatchHidden(batchId, true)
+                        Toast.makeText(context, "All rows hidden and moved to vault", Toast.LENGTH_SHORT).show()
+                    }
                 }) {
                     Icon(
-                        if (anyHidden) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                        contentDescription = if (anyHidden) "Unhide all" else "Hide all",
+                        Icons.Filled.VisibilityOff,
+                        contentDescription = "Hide all visible rows in Vault",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -411,13 +438,13 @@ private fun BatchGroupRow(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(enabled = !child.isHidden) { onRowClick(child) }
+                        .clickable { onRowClick(child) }
                         .padding(vertical = 4.dp)
                 ) {
                     Icon(
                         historyIcon(child.type),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (child.isHidden) 0.3f else 1f),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(Modifier.size(10.dp))
@@ -425,25 +452,22 @@ private fun BatchGroupRow(
                         Text(
                             child.note.ifBlank { child.content },
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (child.isHidden) 0.35f else 1f),
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        if (child.isHidden) {
-                            Text(
-                                "Hidden — excluded from history & exports",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        }
                     }
                     IconButton(onClick = { shareScan(context, child) }) {
                         Icon(Icons.Filled.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(20.dp))
                     }
-                    IconButton(onClick = { vm.setHidden(child, !child.isHidden) }) {
+                    IconButton(onClick = {
+                        if (!canHideToVault()) return@IconButton
+                        vm.setHidden(child, true)
+                        Toast.makeText(context, "Hidden and moved to vault", Toast.LENGTH_SHORT).show()
+                    }) {
                         Icon(
-                            if (child.isHidden) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = if (child.isHidden) "Unhide" else "Hide",
+                            Icons.Filled.VisibilityOff,
+                            contentDescription = "Hide in Vault",
                             tint = MaterialTheme.colorScheme.outline,
                             modifier = Modifier.size(20.dp)
                         )
@@ -515,7 +539,7 @@ private fun HistoryRow(
                 Icon(Icons.Filled.Share, contentDescription = "Share scan", tint = MaterialTheme.colorScheme.outline)
             }
             IconButton(onClick = onHide) {
-                Icon(Icons.Filled.VisibilityOff, contentDescription = "Hide from history", tint = MaterialTheme.colorScheme.outline)
+                Icon(Icons.Filled.VisibilityOff, contentDescription = "Hide and move to Vault", tint = MaterialTheme.colorScheme.outline)
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Outlined.Delete, contentDescription = "Delete scan", tint = MaterialTheme.colorScheme.outline)

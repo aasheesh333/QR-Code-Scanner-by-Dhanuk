@@ -16,7 +16,8 @@ interface ScanResultDao {
     @Query("SELECT * FROM scan_results WHERE is_vault = 0 AND is_hidden = 0 ORDER BY timestamp DESC")
     fun getAll(): Flow<List<ScanResult>>
 
-    @Query("SELECT * FROM scan_results WHERE is_vault = 1 ORDER BY timestamp DESC")
+    /** Vault shows both new vaulted rows and legacy rows hidden before hide-to-vault sync. */
+    @Query("SELECT * FROM scan_results WHERE is_vault = 1 OR is_hidden = 1 ORDER BY timestamp DESC")
     fun getVaultScans(): Flow<List<ScanResult>>
 
     @Query("SELECT * FROM scan_results WHERE is_favorite = 1 AND is_vault = 0 AND is_hidden = 0 ORDER BY timestamp DESC")
@@ -37,7 +38,7 @@ interface ScanResultDao {
     @Query("SELECT COUNT(*) FROM scan_results WHERE timestamp >= :since AND is_vault = 0 AND is_hidden = 0")
     fun getCountSince(since: Long): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM scan_results WHERE is_vault = 1")
+    @Query("SELECT COUNT(*) FROM scan_results WHERE is_vault = 1 OR is_hidden = 1")
     fun getVaultCount(): Flow<Int>
 
     @Query("SELECT auto_category, COUNT(*) as count FROM scan_results WHERE is_vault = 0 AND auto_category != '' AND is_hidden = 0 GROUP BY auto_category ORDER BY count DESC")
@@ -61,7 +62,8 @@ interface ScanResultDao {
     @Query("UPDATE scan_results SET collection_id = :collectionId WHERE id = :id")
     suspend fun setCollection(id: Int, collectionId: Int?)
 
-    @Query("UPDATE scan_results SET is_vault = :vault WHERE id = :id")
+    /** Vaulting always hides from normal history; unvaulting restores it back. */
+    @Query("UPDATE scan_results SET is_vault = :vault, is_hidden = :vault WHERE id = :id")
     suspend fun setVault(id: Int, vault: Boolean)
 
     @Query("UPDATE scan_results SET reminder_time = :time WHERE id = :id")
@@ -79,25 +81,26 @@ interface ScanResultDao {
     @Query("DELETE FROM scan_results WHERE id = :id")
     suspend fun delete(id: Int)
 
-    @Query("DELETE FROM scan_results WHERE is_vault = 0")
+    @Query("DELETE FROM scan_results WHERE is_vault = 0 AND is_hidden = 0")
     suspend fun deleteAll()
 
     @Query("DELETE FROM scan_results")
     suspend fun deleteEverything()
 
-    @Query("DELETE FROM scan_results WHERE is_vault = 1")
+    @Query("DELETE FROM scan_results WHERE is_vault = 1 OR is_hidden = 1")
     suspend fun deleteAllVault()
 
     // ─── Batch (grouped bulk scan) ───
 
-    /** All children of a batch, including hidden ones (so they can be unhidden). */
+    /** Full batch; History renders visible members while Vault renders protected members. */
     @Query("SELECT * FROM scan_results WHERE batch_id = :batchId ORDER BY timestamp ASC")
     fun getBatch(batchId: String): Flow<List<ScanResult>>
 
-    @Query("UPDATE scan_results SET is_hidden = :hidden WHERE id = :id")
+    /** Eye/hide action means "hide into Vault"; unhide restores to normal history. */
+    @Query("UPDATE scan_results SET is_hidden = :hidden, is_vault = :hidden WHERE id = :id")
     suspend fun setHidden(id: Int, hidden: Boolean)
 
-    @Query("UPDATE scan_results SET is_hidden = :hidden WHERE batch_id = :batchId")
+    @Query("UPDATE scan_results SET is_hidden = :hidden, is_vault = :hidden WHERE batch_id = :batchId")
     suspend fun setBatchHidden(batchId: String, hidden: Boolean)
 
     @Query("DELETE FROM scan_results WHERE batch_id = :batchId")

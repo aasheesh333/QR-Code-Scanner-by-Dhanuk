@@ -103,6 +103,7 @@ fun ResultScreen(
     val settingsVm: SettingsViewModel = viewModel()
     val historyEnabled by settingsVm.scanHistory.collectAsState()
     val incognito by settingsVm.incognitoMode.collectAsState()
+    val vaultLockMode by settingsVm.vaultLockMode.collectAsState()
     val canSaveHistory = historyEnabled && !incognito
     val history by historyVm.history.collectAsState()
     var savedOnce by rememberSaveable { mutableStateOf(false) }
@@ -133,6 +134,43 @@ fun ResultScreen(
     val done: () -> Unit = { VoiceSpeaker.stop(); onNavigateBack() }
 
     var showSetLockDialog by rememberSaveable { mutableStateOf(false) }
+
+    val toggleVault: () -> Unit = {
+        val target = scanForContent
+        when {
+            target != null && target.isVault -> historyVm.setVault(target, false, context)
+            target != null && !target.isVault -> {
+                // Vault = move to vault, hide from history, and leave the result screen.
+                if (!VaultAuth.hasDeviceLock(context)) {
+                    showSetLockDialog = true
+                } else {
+                    if (vaultLockMode == "none") settingsVm.setVaultLockMode("device")
+                    runCatching { historyVm.setVault(target, true, context) }
+                        .onSuccess {
+                            Toast.makeText(context, "Moved to vault & hidden", Toast.LENGTH_SHORT).show()
+                            done()
+                        }
+                }
+            }
+            canSaveHistory -> {
+                if (!VaultAuth.hasDeviceLock(context)) {
+                    showSetLockDialog = true
+                } else {
+                    if (vaultLockMode == "none") settingsVm.setVaultLockMode("device")
+                    runCatching { historyVm.saveAsVaulted(data) }
+                        .onSuccess {
+                            Toast.makeText(context, "Saved to vault", Toast.LENGTH_SHORT).show()
+                            done()
+                        }
+                }
+            }
+            else -> Toast.makeText(
+                context,
+                "History saving is off — enable it in Settings to use the vault",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     if (showSetLockDialog) {
         AlertDialog(
@@ -181,48 +219,31 @@ fun ResultScreen(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            val isVaulted = scanForContent?.isVault == true
             when (type) {
-                BarcodeTypeDetector.TYPE_WIFI -> WifiResult(data, done)
-                BarcodeTypeDetector.TYPE_VCARD -> ContactResult(data, done)
-                BarcodeTypeDetector.TYPE_CALENDAR -> EventResult(data, done)
+                BarcodeTypeDetector.TYPE_WIFI -> WifiResult(
+                    data = data,
+                    isVault = isVaulted,
+                    onToggleVault = toggleVault,
+                    onNavigateBack = done
+                )
+                BarcodeTypeDetector.TYPE_VCARD -> ContactResult(
+                    data = data,
+                    isVault = isVaulted,
+                    onToggleVault = toggleVault,
+                    onNavigateBack = done
+                )
+                BarcodeTypeDetector.TYPE_CALENDAR -> EventResult(
+                    data = data,
+                    isVault = isVaulted,
+                    onToggleVault = toggleVault,
+                    onNavigateBack = done
+                )
                 else -> GenericResult(
                     data = data,
                     type = type,
-                    isVault = scanForContent?.isVault == true,
-                    onToggleVault = {
-                        val target = scanForContent
-                        when {
-                            target != null && target.isVault -> historyVm.setVault(target, false, context)
-                            target != null && !target.isVault -> {
-                                // Vault = move to vault, hide from history, and leave the result screen.
-                                if (!VaultAuth.hasDeviceLock(context)) {
-                                    showSetLockDialog = true
-                                } else {
-                                    runCatching { historyVm.setVault(target, true, context) }
-                                        .onSuccess {
-                                            Toast.makeText(context, "Moved to vault & hidden", Toast.LENGTH_SHORT).show()
-                                            done()
-                                        }
-                                }
-                            }
-                            canSaveHistory -> {
-                                if (!VaultAuth.hasDeviceLock(context)) {
-                                    showSetLockDialog = true
-                                } else {
-                                    runCatching { historyVm.saveAsVaulted(data) }
-                                        .onSuccess {
-                                            Toast.makeText(context, "Saved to vault", Toast.LENGTH_SHORT).show()
-                                            done()
-                                        }
-                                }
-                            }
-                            else -> Toast.makeText(
-                                context,
-                                "History saving is off — enable it in Settings to use the vault",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
+                    isVault = isVaulted,
+                    onToggleVault = toggleVault,
                     onNavigateBack = done,
                     onOpenProductLookup = onOpenProductLookup
                 )
@@ -454,7 +475,12 @@ private fun GenericResult(
 // ───────────── WiFi variant ─────────────
 
 @Composable
-private fun WifiResult(data: String, onNavigateBack: () -> Unit) {
+private fun WifiResult(
+    data: String,
+    isVault: Boolean,
+    onToggleVault: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
     val context = LocalContext.current
     val info = remember(data) { BarcodeTypeDetector.parseWifi(data) }
     var showPass by rememberSaveable { mutableStateOf(false) }
@@ -528,6 +554,13 @@ private fun WifiResult(data: String, onNavigateBack: () -> Unit) {
             shareText(context, data)
         }
     }
+    ActionTile(
+        label = if (isVault) "Vaulted" else "Hide in Vault",
+        icon = if (isVault) Icons.Outlined.LockOpen else Icons.Filled.Lock,
+        filled = false,
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onToggleVault
+    )
 
     QsButton(
         text = "Connect to network",
@@ -543,7 +576,12 @@ private fun WifiResult(data: String, onNavigateBack: () -> Unit) {
 // ───────────── vCard variant ─────────────
 
 @Composable
-private fun ContactResult(data: String, onNavigateBack: () -> Unit) {
+private fun ContactResult(
+    data: String,
+    isVault: Boolean,
+    onToggleVault: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
     val context = LocalContext.current
     val contact = remember(data) { BarcodeTypeDetector.parseVCard(data) }
     val initials = remember(contact) {
@@ -586,6 +624,13 @@ private fun ContactResult(data: String, onNavigateBack: () -> Unit) {
             shareText(context, data)
         }
     }
+    ActionTile(
+        label = if (isVault) "Vaulted" else "Hide in Vault",
+        icon = if (isVault) Icons.Outlined.LockOpen else Icons.Filled.Lock,
+        filled = false,
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onToggleVault
+    )
 
     QsButton(
         text = "Save contact",
@@ -607,7 +652,12 @@ private fun ContactResult(data: String, onNavigateBack: () -> Unit) {
 // ───────────── Calendar variant ─────────────
 
 @Composable
-private fun EventResult(data: String, onNavigateBack: () -> Unit) {
+private fun EventResult(
+    data: String,
+    isVault: Boolean,
+    onToggleVault: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
     val context = LocalContext.current
     val parsed = remember(data) { com.dhanuk.quickscanpro.util.CalendarImporter.parse(data) }
 
@@ -656,6 +706,13 @@ private fun EventResult(data: String, onNavigateBack: () -> Unit) {
             shareText(context, data)
         }
     }
+    ActionTile(
+        label = if (isVault) "Vaulted" else "Hide in Vault",
+        icon = if (isVault) Icons.Outlined.LockOpen else Icons.Filled.Lock,
+        filled = false,
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onToggleVault
+    )
     QsOutlinedButton("Done", onClick = onNavigateBack)
 }
 
