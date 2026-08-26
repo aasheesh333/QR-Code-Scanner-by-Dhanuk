@@ -54,7 +54,7 @@ android {
         applicationId "com.dhanuk.quickscanpro"
         minSdk 23
         targetSdk 36
-        versionCode 7
+        versionCode 8
         versionName "3.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
